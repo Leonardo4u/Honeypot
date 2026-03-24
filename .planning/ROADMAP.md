@@ -95,10 +95,10 @@ Plans:
 **Depends on**: Phase 5
 **Requirements**: [DATA-01, DATA-02, DATA-03, DATA-04]
 **Gap Closure**: Closes audit drift in REQUIREMENTS/STATE consistency.
-**Plans**: TBD
+**Plans**: 1 plans
 
 Plans:
-- [ ] 06-01: Update traceability/state records and re-baseline milestone metadata.
+- [ ] 06-01-PLAN.md: Update traceability/state records and re-baseline milestone metadata.
 
 ## Progress
 
