@@ -14,7 +14,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "data"))
 
 from analisar_jogo import analisar_jogo, formatar_sinal
 from filtros import aplicar_triple_gate
-from database import inserir_sinal, buscar_sinais_hoje
+from database import (
+    buscar_sinais_hoje,
+    finalizar_execucao_job,
+    garantir_tabela_execucoes,
+    iniciar_execucao_job,
+    inserir_sinal,
+)
 from coletar_odds import buscar_jogos_com_odds, formatar_jogos
 from atualizar_stats import carregar_medias, atualizar_todas_ligas
 from forma_recente import calcular_ajuste_forma, calcular_confianca_dados
@@ -37,6 +43,12 @@ CANAL_FREE = os.getenv("CANAL_FREE")
 MAX_SINAIS_DIA = 10
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
+
+EXECUCAO_CICLO = {
+    "job_nome": None,
+    "status": "ok",
+    "reason_codes": [],
+}
 
 LIGAS = [
     "soccer_epl",
@@ -61,6 +73,94 @@ LIGA_KEY_MAP = {
     "Bundesliga": "soccer_germany_bundesliga",
     "Ligue 1": "soccer_france_ligue_one"
 }
+
+
+def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=None):
+    payload = {
+        "categoria": categoria,
+        "etapa": etapa,
+        "entidade": entidade,
+        "status": status,
+        "reason_code": reason_code,
+        "detalhes": detalhes or {},
+        "ts": datetime.now().isoformat(timespec="seconds"),
+    }
+    print(_json.dumps(payload, ensure_ascii=False))
+
+
+def resetar_execucao_ciclo(job_nome):
+    EXECUCAO_CICLO["job_nome"] = job_nome
+    EXECUCAO_CICLO["status"] = "ok"
+    EXECUCAO_CICLO["reason_codes"] = []
+
+
+def marcar_ciclo_degradado(reason_code, detalhes=None):
+    if EXECUCAO_CICLO["status"] == "failed":
+        return
+    EXECUCAO_CICLO["status"] = 'degraded'
+    if reason_code not in EXECUCAO_CICLO["reason_codes"]:
+        EXECUCAO_CICLO["reason_codes"].append(reason_code)
+    log_event("runtime", "cycle", EXECUCAO_CICLO.get("job_nome", "desconhecido"), "degraded", reason_code, detalhes)
+
+
+def marcar_ciclo_falha(reason_code, detalhes=None):
+    EXECUCAO_CICLO["status"] = "failed"
+    if reason_code not in EXECUCAO_CICLO["reason_codes"]:
+        EXECUCAO_CICLO["reason_codes"].append(reason_code)
+    log_event("runtime", "cycle", EXECUCAO_CICLO.get("job_nome", "desconhecido"), "failed", reason_code, detalhes)
+
+
+def construir_janela_chave(job_nome, bucket_minutes):
+    agora = datetime.now()
+    if bucket_minutes >= 60:
+        bucket_horas = max(1, bucket_minutes // 60)
+        hora_bucket = (agora.hour // bucket_horas) * bucket_horas
+        return f"{agora.strftime('%Y%m%d')}-{job_nome}-h{hora_bucket:02d}"
+
+    minuto_bucket = (agora.minute // bucket_minutes) * bucket_minutes
+    return f"{agora.strftime('%Y%m%d-%H')}-{job_nome}-m{minuto_bucket:02d}"
+
+
+def executar_job_guardado(job_nome, bucket_minutes, executor):
+    janela_chave = construir_janela_chave(job_nome, bucket_minutes)
+    inicio = iniciar_execucao_job(job_nome, janela_chave)
+
+    if not inicio.get("iniciado"):
+        log_event(
+            "scheduler",
+            "job_guard",
+            job_nome,
+            "skip",
+            "idempotent_skip",
+            {"janela_chave": janela_chave},
+        )
+        return
+
+    resetar_execucao_ciclo(job_nome)
+    log_event("scheduler", "job_guard", job_nome, "start", None, {"janela_chave": janela_chave})
+
+    try:
+        executor()
+    except Exception as e:
+        marcar_ciclo_falha("job_exception", {"erro": str(e), "janela_chave": janela_chave})
+    finally:
+        status_final = EXECUCAO_CICLO["status"]
+        reason_code_final = EXECUCAO_CICLO["reason_codes"][0] if EXECUCAO_CICLO["reason_codes"] else None
+        finalizar_execucao_job(
+            job_nome,
+            janela_chave,
+            status_final,
+            reason_code=reason_code_final,
+            detalhes_json={"reason_codes": EXECUCAO_CICLO["reason_codes"]},
+        )
+        log_event(
+            "scheduler",
+            "job_guard",
+            job_nome,
+            "end",
+            reason_code_final,
+            {"janela_chave": janela_chave, "status_final": status_final},
+        )
 
 
 def validar_entrada_analise(jogo, odd):
@@ -349,18 +449,22 @@ async def processar_jogos():
             message_id_free = msg_free.message_id
             print(f"Enviado FREE: {jogo['jogo']} | {item['mercado']}")
 
-        sinal_id = inserir_sinal(
-            liga=analise["liga"],
-            jogo=analise["jogo"],
-            mercado=analise["mercado"],
-            odd=analise["odd"],
-            ev=analise["ev"],
-            score=analise["edge_score"],
-            stake=stake_unidades,
-            message_id_vip=message_id_vip,
-            message_id_free=message_id_free,
-            horario=jogo["horario"]
-        )
+        try:
+            sinal_id = inserir_sinal(
+                liga=analise["liga"],
+                jogo=analise["jogo"],
+                mercado=analise["mercado"],
+                odd=analise["odd"],
+                ev=analise["ev"],
+                score=analise["edge_score"],
+                stake=stake_unidades,
+                message_id_vip=message_id_vip,
+                message_id_free=message_id_free,
+                horario=jogo["horario"]
+            )
+        except Exception as e:
+            marcar_ciclo_degradado("critical_persistence_insert_sinal", {"jogo": analise.get("jogo"), "erro": str(e)})
+            continue
 
         # CLV tracking
         try:
@@ -549,7 +653,11 @@ async def verificar_resultados_automatico():
             if not avaliacao:
                 continue
 
-            atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
+            try:
+                atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
+            except Exception as e:
+                marcar_ciclo_degradado("critical_persistence_update_resultado", {"sinal_id": sinal_id, "erro": str(e)})
+                continue
             resultado_registrado = True
 
             # Atualiza banca
@@ -683,22 +791,22 @@ async def enviar_resumo_diario():
     print("Resumo enviado.")
 
 def rodar_analise():
-    asyncio.run(processar_jogos())
+    executar_job_guardado("analise", 60, lambda: asyncio.run(processar_jogos()))
 
 def rodar_verificacao():
-    asyncio.run(verificar_resultados_automatico())
+    executar_job_guardado("verificacao", 30, lambda: asyncio.run(verificar_resultados_automatico()))
 
 def rodar_resumo():
-    asyncio.run(enviar_resumo_diario())
+    executar_job_guardado("resumo", 60, lambda: asyncio.run(enviar_resumo_diario()))
 
 def rodar_clv():
-    asyncio.run(verificar_clv_fechamento())
+    executar_job_guardado("clv", 5, lambda: asyncio.run(verificar_clv_fechamento()))
 
 def rodar_steam():
-    asyncio.run(monitorar_steam_sinais_ativos())
+    executar_job_guardado("steam", 30, lambda: asyncio.run(monitorar_steam_sinais_ativos()))
 
 def rodar_janela_expandida():
-    asyncio.run(monitorar_janela_expandida())
+    executar_job_guardado("janela_expandida", 120, lambda: asyncio.run(monitorar_janela_expandida()))
 
 def atualizar_stats_semanalmente():
     print("Atualizando médias de gols...")
@@ -709,6 +817,7 @@ def atualizar_stats_semanalmente():
     print("Stats atualizadas.")
 
 def iniciar_scheduler():
+    garantir_tabela_execucoes()
     print("=== SCHEDULER EDGE PROTOCOL ATIVO ===")
     print(f"Score mínimo: {MIN_EDGE_SCORE}/100")
     print(f"Confiança mínima: {MIN_CONFIANCA}/100")
