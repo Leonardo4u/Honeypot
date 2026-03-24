@@ -130,8 +130,13 @@ def construir_janela_chave(job_nome, bucket_minutes):
     return f"{agora.strftime('%Y%m%d-%H')}-{job_nome}-m{minuto_bucket:02d}"
 
 
-def executar_job_guardado(job_nome, bucket_minutes, executor):
-    janela_chave = construir_janela_chave(job_nome, bucket_minutes)
+def executar_job_guardado(job_nome, bucket_minutes, executor, force_once=False):
+    janela_base = construir_janela_chave(job_nome, bucket_minutes)
+    janela_chave = janela_base
+
+    if force_once:
+        janela_chave = f"{janela_base}-boot-{datetime.now().strftime('%H%M%S')}"
+
     inicio = iniciar_execucao_job(job_nome, janela_chave)
 
     if not inicio.get("iniciado"):
@@ -898,6 +903,19 @@ def rodar_steam():
 def rodar_janela_expandida():
     executar_job_guardado("janela_expandida", 120, lambda: asyncio.run(monitorar_janela_expandida()))
 
+
+def rodar_janela_expandida_boot():
+    executar_job_guardado(
+        "janela_expandida",
+        120,
+        lambda: asyncio.run(monitorar_janela_expandida()),
+        force_once=True,
+    )
+
+
+def rodar_analise_boot():
+    executar_job_guardado("analise", 60, lambda: asyncio.run(processar_jogos()), force_once=True)
+
 def atualizar_stats_semanalmente():
     print("Atualizando médias de gols...")
     atualizar_todas_ligas()
@@ -947,8 +965,8 @@ def iniciar_scheduler():
 
     log_event("startup", "boot", "scheduler", "ready")
 
-    rodar_janela_expandida()
-    rodar_analise()
+    rodar_janela_expandida_boot()
+    rodar_analise_boot()
 
     while True:
         schedule.run_pending()
