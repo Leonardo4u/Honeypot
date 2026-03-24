@@ -122,6 +122,11 @@ def carregar_historico():
                 df = df[cols].dropna(subset=["gols_casa", "gols_fora", "time_casa", "time_fora"])
                 df["gols_casa"] = df["gols_casa"].astype(int)
                 df["gols_fora"] = df["gols_fora"].astype(int)
+
+                if "data_jogo" in df.columns:
+                    df["data_jogo"] = pd.to_datetime(df["data_jogo"], errors="coerce")
+                    df["data_jogo"] = df["data_jogo"].dt.strftime("%Y-%m-%d")
+
                 dfs.append(df)
             except Exception as e:
                 print(f"Erro {liga}/{temp}: {e}")
@@ -130,6 +135,10 @@ def carregar_historico():
         return None
 
     df_total = pd.concat(dfs, ignore_index=True)
+    sort_cols = [c for c in ["liga", "temporada", "data_jogo", "time_casa", "time_fora"] if c in df_total.columns]
+    if sort_cols:
+        df_total = df_total.sort_values(sort_cols, kind="stable").reset_index(drop=True)
+
     print(f"Carregados: {len(df_total)} jogos")
     print(df_total.groupby("liga").size().rename("jogos").to_string())
     return df_total
