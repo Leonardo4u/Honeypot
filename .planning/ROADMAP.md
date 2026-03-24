@@ -27,7 +27,7 @@ v1.2 Win Rate Integrity and Runtime Quality
 ## Phases
 
 - [x] **Phase 10: Runtime Gate Integrity and Provider Health** - Restore effective gate inputs and complete health telemetry coverage.
-- [ ] **Phase 11: Settlement Label Integrity** - Make pending-signal closure deterministic and date-safe.
+- [x] **Phase 11: Settlement Label Integrity** - Make pending-signal closure deterministic and date-safe.
 - [ ] **Phase 12: Confidence De-bias and Quality Prior** - Remove confidence selection bias and apply market/league quality prior at runtime.
 - [ ] **Phase 13: No-vig Comparison, Market Coverage, and Test Baseline** - Upgrade market probability comparison, expand coverage, and lock reproducible tests.
 
@@ -74,13 +74,13 @@ v1.2 Win Rate Integrity and Runtime Quality
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 10. Runtime Gate Integrity and Provider Health | 2/2 | Completed | 2026-03-24 |
-| 11. Settlement Label Integrity | 0/2 | Planned | - |
+| 11. Settlement Label Integrity | 2/2 | Completed | 2026-03-24 |
 | 12. Confidence De-bias and Quality Prior | 0/0 | Planned | - |
 | 13. No-vig Comparison, Market Coverage, and Test Baseline | 0/0 | Planned | - |
 
 ## Next Step
 
-Run `/gsd-execute-phase 11` to execute settlement label integrity plans.
+Run `/gsd-plan-phase 12` to create confidence de-bias and quality-prior plans.
 
 ---
-*Last updated: 2026-03-24 after phase 11 planning*
+*Last updated: 2026-03-24 after phase 11 execution completion*

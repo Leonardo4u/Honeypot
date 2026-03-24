@@ -20,10 +20,17 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Operational resilience baseline (idempotent scheduler windows, startup preflight, structured diagnostics) is verified and stable (validated in Phase 3).
 - ✓ Deterministic model/gate tests, DB integration tests, and dry-run no-send runtime checks are established and verified (validated in Phases 4 and 5).
 - ✓ Historical calibration baseline is operational with cache-aware ingestion and league-level rho reporting (validated in Phase 7: Historical Calibration Baseline).
+- ✓ Settlement labeling is deterministic across pending days with fixture identity persistence and date-safe fallback resolution (validated in Phase 11: Settlement Label Integrity).
 
 ### Active
 
-- [ ] Define v1.2 scope and requirement baseline.
+- [ ] Reativar gates 2/3/4 no fluxo real de selecao de sinais.
+- [ ] Remover vies de selecao da confianca calibrada por time.
+- [ ] Aplicar prior historico de qualidade por mercado/liga no runtime.
+- [ ] Corrigir comparacao modelo vs mercado com probabilidade sem vigorish.
+- [ ] Ampliar cobertura de mercados com foco em hit-rate.
+- [ ] Completar observabilidade de health dos provedores.
+- [ ] Garantir baseline reprodutivel de testes e dependencias.
 
 ### Out of Scope
 
@@ -42,7 +49,19 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
 - Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- No active milestone is in execution.
+- Milestone v1.2 is active with phases 10 and 11 completed, and phase 12 as the next planning step.
+
+## Current Milestone: v1.2 Win Rate Integrity and Runtime Quality
+
+**Goal:** Increase real win rate reliability by fixing label integrity, restoring effective gates, reducing confidence bias, and using historical market quality in live selection.
+
+**Target features:**
+- Runtime gates receive real inputs (lineup/odd variation/daily limits) and block low-quality entries.
+- Settlement resolves matches deterministically with fixture/date-safe matching.
+- Confidence scoring uses less biased evidence and explicit quality priors.
+- Market-vs-model comparison uses no-vig market probabilities.
+- Runtime market selection expands with quality guardrails and measurable win-rate impact.
+- Provider health metrics and dependency baseline are reproducible in local validation.
 
 ## Last Shipped Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
 
@@ -55,7 +74,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ## Next Milestone Goals
 
-- Define v1.2 goals and requirements before planning phases.
+- Execute v1.2 requirements through roadmap phases 10+ with measurable win-rate safeguards.
 - Keep reliability-first approach while extending model quality checks.
 - Preserve current runtime safety guarantees while introducing incremental improvements only.
 
@@ -74,6 +93,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 | Prioritize reliability and validation before adding new product surfaces | Better signal trustworthiness gives highest immediate value | ✓ Confirmed in v1.0 |
 | Use phased hardening approach (data reliability -> model gates -> ops quality) | Reduces risk and keeps changes reviewable | ✓ Confirmed in v1.0 |
 | Prioritize calibration quality before market expansion in v1.1 | Better confidence calibration raises signal trust without adding product surface area | ✓ Confirmed in v1.1 |
+| Prioritize label integrity and effective gating in v1.2 | Win-rate improvement depends on clean feedback loop and strict pre-trade quality filters | Planned in v1.2 |
 
 ## Evolution
 
@@ -93,4 +113,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after v1.1 archive*
+*Last updated: 2026-03-24 after phase 11 completion*

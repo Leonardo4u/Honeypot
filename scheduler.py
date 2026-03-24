@@ -24,7 +24,12 @@ from database import (
     inserir_sinal,
     validar_schema_minimo,
 )
-from coletar_odds import buscar_jogos_com_odds, formatar_jogos
+from coletar_odds import (
+    buscar_jogos_com_odds,
+    buscar_jogos_com_odds_com_status,
+    formatar_jogos,
+    atualizar_contadores_provider_health,
+)
 from atualizar_stats import carregar_medias, atualizar_todas_ligas
 from forma_recente import calcular_ajuste_forma, calcular_confianca_dados
 from xg_understat import calcular_media_gols_com_xg
@@ -34,6 +39,7 @@ from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, 
 from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
+from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -356,16 +362,15 @@ async def processar_jogos(dry_run=False):
         "http_error": 0,
         "connection_error": 0,
         "empty_payload": 0,
+        "unknown_error": 0,
         "invalid_input": 0,
         "fallback_used": 0,
     }
 
     for liga_key in LIGAS:
-        dados_api = buscar_jogos_com_odds(liga_key)
-        if dados_api:
-            provider_health["ok"] += 1
-        else:
-            provider_health["empty_payload"] += 1
+        fetch_result = buscar_jogos_com_odds_com_status(liga_key)
+        atualizar_contadores_provider_health(provider_health, fetch_result.get("status"))
+        dados_api = fetch_result.get("data", [])
         jogos = formatar_jogos(dados_api)
 
         for jogo in jogos:
@@ -385,6 +390,7 @@ async def processar_jogos(dry_run=False):
                 if "SOS" in fonte_dados:
                     confianca = min(100, confianca + 5)
 
+                primeiro_mercado = True
                 for mercado, odd_key in [
                     ("1x2_casa", "casa"),
                     ("over_2.5", "over_2.5"),
@@ -417,37 +423,64 @@ async def processar_jogos(dry_run=False):
                         "banca": 1000
                     }
 
-                    analise = analisar_jogo(dados_analise)
+                    analise = analisar_jogo(dados_analise, log_dc=primeiro_mercado)
+                    primeiro_mercado = False
 
                     if analise["decisao"] == "DESCARTAR":
                         continue
 
                     dados_odds = buscar_odds_todas_casas(liga_key, home, away, mercado)
+                    steam_data = None
                     steam_bonus = 0
                     if dados_odds:
                         abertura = buscar_snapshot_abertura(jogo["jogo"], mercado)
                         if not abertura:
                             salvar_snapshot(jogo["jogo"], mercado, dados_odds, "abertura")
                         else:
-                            steam = calcular_steam(jogo["jogo"], mercado, dados_odds)
-                            if steam:
-                                steam_bonus = calcular_bonus_edge_score(steam)
-
-                    edge_score_final = min(100, analise["edge_score"] + steam_bonus)
-                    analise["edge_score"] = edge_score_final
-                    analise["steam_bonus"] = steam_bonus
-                    analise["fonte_dados"] = fonte_dados
+                            steam_data = calcular_steam(jogo["jogo"], mercado, dados_odds)
+                            if steam_data:
+                                steam_bonus = calcular_bonus_edge_score(steam_data)
 
                     if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
                         provider_health["fallback_used"] += 1
+
+                    escalacao_confirmada, origem_escalacao = inferir_escalacao_confirmada(jogo)
+                    variacao_odd_gate = calcular_variacao_odd_gate(steam_data)
+                    sinais_hoje_gate = calcular_sinais_hoje_gate(sinais_hoje, len(candidatos))
 
                     filtro = aplicar_triple_gate({
                         "ev": analise.get("ev", 0),
                         "odd": odd,
                         "mercado": mercado,
-                        "escalacao_confirmada": True,
-                        "variacao_odd": 0.0
-                    }, sinais_hoje=0)
+                        "escalacao_confirmada": escalacao_confirmada,
+                        "variacao_odd": variacao_odd_gate,
+                        "prob_modelo": analise.get("prob_modelo", None),
+                        "liga": jogo["liga"],
+                        "time_casa": home,
+                        "time_fora": away,
+                    }, sinais_hoje=sinais_hoje_gate)
+
+                    if not filtro.get("aprovado"):
+                        log_event(
+                            "runtime",
+                            "gate",
+                            f"{jogo['jogo']}|{mercado}",
+                            "reject",
+                            filtro.get("reason_code"),
+                            {
+                                "bloqueado_em": filtro.get("bloqueado_em"),
+                                "origem_escalacao": origem_escalacao,
+                                "sinais_hoje_gate": sinais_hoje_gate,
+                                "variacao_odd": variacao_odd_gate,
+                            },
+                        )
+                        continue
+
+                    penalizacao = filtro.get("penalizacao_score", 0)
+                    edge_score_final = min(100, analise["edge_score"] + steam_bonus + penalizacao)
+                    analise["edge_score"] = edge_score_final
+                    analise["steam_bonus"] = steam_bonus
+                    analise["fonte_dados"] = fonte_dados
 
                     if filtro["aprovado"] and edge_score_final >= MIN_EDGE_SCORE and confianca >= MIN_CONFIANCA:
                         candidatos.append({
@@ -613,6 +646,7 @@ async def processar_jogos(dry_run=False):
         f"http_error={provider_health['http_error']} "
         f"connection_error={provider_health['connection_error']} "
         f"empty_payload={provider_health['empty_payload']} "
+        f"unknown_error={provider_health['unknown_error']} "
         f"invalid_input={provider_health['invalid_input']} "
         f"fallback_used={provider_health['fallback_used']}"
     )
@@ -722,13 +756,19 @@ async def verificar_clv_fechamento():
 
 async def verificar_resultados_automatico():
     from verificar_resultados import buscar_resultado_jogo, avaliar_mercado
-    from database import atualizar_resultado
+    from database import atualizar_resultado, atualizar_fixture_referencia
     from exportar_excel import gerar_excel
 
     bot = Bot(token=TOKEN)
     conn = sqlite3.connect("data/edge_protocol.db")
     c = conn.cursor()
-    c.execute("SELECT id, jogo, mercado, odd FROM sinais WHERE status = 'pendente'")
+    c.execute(
+        """
+        SELECT id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api
+        FROM sinais
+        WHERE status = 'pendente'
+        """
+    )
     pendentes = c.fetchall()
     conn.close()
 
@@ -739,14 +779,30 @@ async def verificar_resultados_automatico():
     resultado_registrado = False
 
     for sinal in pendentes:
-        sinal_id, jogo, mercado, odd = sinal
+        sinal_id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api = sinal
         try:
             times = jogo.split(" vs ")
             if len(times) != 2:
                 continue
 
             time_casa, time_fora = times
-            resultado = buscar_resultado_jogo(time_casa.strip(), time_fora.strip())
+            resultado = buscar_resultado_jogo(
+                time_casa.strip(),
+                time_fora.strip(),
+                data=fixture_data_api,
+                horario=horario,
+                fixture_id=fixture_id_api,
+            )
+
+            if resultado and (resultado.get("fixture_id_api") or resultado.get("fixture_data_api")):
+                try:
+                    atualizar_fixture_referencia(
+                        sinal_id,
+                        fixture_id_api=resultado.get("fixture_id_api"),
+                        fixture_data_api=resultado.get("fixture_data_api"),
+                    )
+                except Exception as e:
+                    print(f"Erro persistindo fixture #{sinal_id}: {e}")
 
             if not resultado or resultado["status"] != "finalizado":
                 continue
@@ -793,19 +849,19 @@ async def verificar_resultados_automatico():
                         await bot.set_message_reaction(
                             chat_id=CANAL_VIP,
                             message_id=ids[0],
-                            reaction=[{"type": "emoji", "emoji": reacao}]
+                            reaction=[reacao]
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Erro reação VIP #{sinal_id}: {e}")
                 if ids[1]:
                     try:
                         await bot.set_message_reaction(
                             chat_id=CANAL_FREE,
                             message_id=ids[1],
-                            reaction=[{"type": "emoji", "emoji": reacao}]
+                            reaction=[reacao]
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Erro reação FREE #{sinal_id}: {e}")
 
             # Atualiza Excel com resultado
             try:
@@ -838,7 +894,7 @@ async def verificar_resultados_automatico():
 
 async def enviar_resumo_diario():
     from database import resumo_mensal
-    from exportar_excel import gerar_excel
+    from database import resumo_calibracao
     from clv_brier import calcular_metricas
 
     bot = Bot(token=TOKEN)
@@ -865,6 +921,16 @@ async def enviar_resumo_diario():
         status = "✅" if metricas["brier_medio"] < 0.25 else "⚠️"
         brier_linha = f"Brier Score: {metricas['brier_medio']:.4f} {status}\n"
 
+    cal = resumo_calibracao(50)
+    if cal["faltam"] > 0:
+        calibracao_linha = f"📊 Calibração: {cal['total']}/50 apostas\n"
+    elif cal.get("alerta"):
+        calibracao_linha = f"⚠️ WR real {cal['win_rate_real']}% abaixo do esperado\n"
+    elif cal.get("calibrado"):
+        calibracao_linha = f"✅ Modelo calibrado: {cal['win_rate_real']}% WR\n"
+    else:
+        calibracao_linha = ""
+
     msg = (
         f"📊 RESUMO DO DIA\n\n"
         f"Sinais: {total} | ✅ {vitorias} | ❌ {derrotas}\n"
@@ -875,6 +941,7 @@ async def enviar_resumo_diario():
         f"📉 Drawdown: {b['drawdown_atual_pct']:.1f}%\n"
         f"{clv_linha}"
         f"{brier_linha}"
+        f"{calibracao_linha}"
         f"\n━━━━━━━━━━━━━━━\n"
         f"⚡ Edge Protocol"
     )
@@ -884,7 +951,6 @@ async def enviar_resumo_diario():
 
     # Full refresh do Excel no resumo diário
     try:
-        gerar_excel()
         atualizar_excel({"acao": "full_refresh"})
         print("Excel atualizado (full refresh).")
     except Exception as e:
