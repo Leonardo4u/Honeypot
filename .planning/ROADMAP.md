@@ -41,11 +41,11 @@ Plans:
 	2. Edge/confidence thresholds are centralized and auditable.
 	3. Stake sizing always respects bankroll safety caps.
 	4. CLV/Brier metrics maintain consistent signal linkage.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 02-01: Centralize gate and threshold configuration.
-- [ ] 02-02: Improve stake safety guards and post-result linkage integrity.
+- [ ] 02-01-PLAN.md: Centralize signal policy and structured gate reject metadata.
+- [ ] 02-02-PLAN.md: Harden Kelly safety guards and CLV/Brier linkage integrity.
 
 ### Phase 3: Operational Resilience
 **Goal**: Make scheduled automation safer to run continuously with clear diagnostics and startup checks.
