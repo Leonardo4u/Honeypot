@@ -1,0 +1,770 @@
+{
+  "Brighton": {
+    "xg_marcado_casa": 1.777,
+    "xg_marcado_fora": 1.658,
+    "xg_sofrido_casa": 1.472,
+    "xg_sofrido_fora": 1.64,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Fulham": {
+    "xg_marcado_casa": 1.475,
+    "xg_marcado_fora": 1.578,
+    "xg_sofrido_casa": 1.182,
+    "xg_sofrido_fora": 1.409,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Wolverhampton Wanderers": {
+    "xg_marcado_casa": 1.306,
+    "xg_marcado_fora": 1.082,
+    "xg_sofrido_casa": 1.6,
+    "xg_sofrido_fora": 1.64,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Brentford": {
+    "xg_marcado_casa": 1.999,
+    "xg_marcado_fora": 1.533,
+    "xg_sofrido_casa": 1.596,
+    "xg_sofrido_fora": 1.607,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Nottingham Forest": {
+    "xg_marcado_casa": 1.419,
+    "xg_marcado_fora": 1.357,
+    "xg_sofrido_casa": 1.21,
+    "xg_sofrido_fora": 1.733,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Ipswich": {
+    "xg_marcado_casa": 1.019,
+    "xg_marcado_fora": 1.108,
+    "xg_sofrido_casa": 1.985,
+    "xg_sofrido_fora": 2.422,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Aston Villa": {
+    "xg_marcado_casa": 2.137,
+    "xg_marcado_fora": 1.357,
+    "xg_sofrido_casa": 1.013,
+    "xg_sofrido_fora": 1.882,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Everton": {
+    "xg_marcado_casa": 1.425,
+    "xg_marcado_fora": 1.042,
+    "xg_sofrido_casa": 1.345,
+    "xg_sofrido_fora": 1.48,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Bournemouth": {
+    "xg_marcado_casa": 1.924,
+    "xg_marcado_fora": 1.898,
+    "xg_sofrido_casa": 1.287,
+    "xg_sofrido_fora": 1.555,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Southampton": {
+    "xg_marcado_casa": 1.085,
+    "xg_marcado_fora": 0.948,
+    "xg_sofrido_casa": 2.804,
+    "xg_sofrido_fora": 2.372,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Leicester": {
+    "xg_marcado_casa": 1.09,
+    "xg_marcado_fora": 0.913,
+    "xg_sofrido_casa": 2.046,
+    "xg_sofrido_fora": 2.475,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Crystal Palace": {
+    "xg_marcado_casa": 1.812,
+    "xg_marcado_fora": 1.755,
+    "xg_sofrido_casa": 1.448,
+    "xg_sofrido_fora": 1.651,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Chelsea": {
+    "xg_marcado_casa": 2.134,
+    "xg_marcado_fora": 1.714,
+    "xg_sofrido_casa": 1.188,
+    "xg_sofrido_fora": 1.668,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "West Ham": {
+    "xg_marcado_casa": 1.34,
+    "xg_marcado_fora": 1.323,
+    "xg_sofrido_casa": 1.961,
+    "xg_sofrido_fora": 1.622,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Tottenham": {
+    "xg_marcado_casa": 1.839,
+    "xg_marcado_fora": 1.602,
+    "xg_sofrido_casa": 1.921,
+    "xg_sofrido_fora": 1.67,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Arsenal": {
+    "xg_marcado_casa": 2.013,
+    "xg_marcado_fora": 1.859,
+    "xg_sofrido_casa": 0.972,
+    "xg_sofrido_fora": 1.132,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Newcastle United": {
+    "xg_marcado_casa": 1.989,
+    "xg_marcado_fora": 1.773,
+    "xg_sofrido_casa": 1.355,
+    "xg_sofrido_fora": 1.486,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Liverpool": {
+    "xg_marcado_casa": 2.312,
+    "xg_marcado_fora": 2.595,
+    "xg_sofrido_casa": 1.037,
+    "xg_sofrido_fora": 1.191,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Manchester City": {
+    "xg_marcado_casa": 2.098,
+    "xg_marcado_fora": 1.752,
+    "xg_sofrido_casa": 1.25,
+    "xg_sofrido_fora": 1.535,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Manchester United": {
+    "xg_marcado_casa": 1.691,
+    "xg_marcado_fora": 1.305,
+    "xg_sofrido_casa": 1.483,
+    "xg_sofrido_fora": 1.714,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Sevilla": {
+    "xg_marcado_casa": 1.173,
+    "xg_marcado_fora": 1.201,
+    "xg_sofrido_casa": 1.207,
+    "xg_sofrido_fora": 1.466,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Real Sociedad": {
+    "xg_marcado_casa": 1.472,
+    "xg_marcado_fora": 1.049,
+    "xg_sofrido_casa": 1.121,
+    "xg_sofrido_fora": 1.467,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Espanyol": {
+    "xg_marcado_casa": 1.129,
+    "xg_marcado_fora": 0.906,
+    "xg_sofrido_casa": 1.275,
+    "xg_sofrido_fora": 1.832,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Getafe": {
+    "xg_marcado_casa": 1.151,
+    "xg_marcado_fora": 1.027,
+    "xg_sofrido_casa": 1.148,
+    "xg_sofrido_fora": 1.543,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Atletico Madrid": {
+    "xg_marcado_casa": 2.434,
+    "xg_marcado_fora": 1.372,
+    "xg_sofrido_casa": 0.824,
+    "xg_sofrido_fora": 1.206,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Las Palmas": {
+    "xg_marcado_casa": 1.193,
+    "xg_marcado_fora": 0.863,
+    "xg_sofrido_casa": 1.633,
+    "xg_sofrido_fora": 2.253,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Rayo Vallecano": {
+    "xg_marcado_casa": 1.518,
+    "xg_marcado_fora": 1.112,
+    "xg_sofrido_casa": 1.237,
+    "xg_sofrido_fora": 1.771,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Valencia": {
+    "xg_marcado_casa": 1.453,
+    "xg_marcado_fora": 1.016,
+    "xg_sofrido_casa": 1.123,
+    "xg_sofrido_fora": 1.813,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Athletic Club": {
+    "xg_marcado_casa": 1.857,
+    "xg_marcado_fora": 1.285,
+    "xg_sofrido_casa": 1.103,
+    "xg_sofrido_fora": 1.128,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Barcelona": {
+    "xg_marcado_casa": 2.94,
+    "xg_marcado_fora": 2.295,
+    "xg_sofrido_casa": 0.91,
+    "xg_sofrido_fora": 1.352,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Real Madrid": {
+    "xg_marcado_casa": 2.84,
+    "xg_marcado_fora": 1.797,
+    "xg_sofrido_casa": 1.042,
+    "xg_sofrido_fora": 1.382,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Celta Vigo": {
+    "xg_marcado_casa": 1.552,
+    "xg_marcado_fora": 1.524,
+    "xg_sofrido_casa": 1.153,
+    "xg_sofrido_fora": 1.495,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Real Betis": {
+    "xg_marcado_casa": 1.793,
+    "xg_marcado_fora": 1.407,
+    "xg_sofrido_casa": 1.023,
+    "xg_sofrido_fora": 1.699,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Villarreal": {
+    "xg_marcado_casa": 2.132,
+    "xg_marcado_fora": 1.766,
+    "xg_sofrido_casa": 1.509,
+    "xg_sofrido_fora": 1.201,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Osasuna": {
+    "xg_marcado_casa": 1.538,
+    "xg_marcado_fora": 1.064,
+    "xg_sofrido_casa": 1.349,
+    "xg_sofrido_fora": 1.73,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Alaves": {
+    "xg_marcado_casa": 1.187,
+    "xg_marcado_fora": 1.254,
+    "xg_sofrido_casa": 1.068,
+    "xg_sofrido_fora": 1.642,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Leganes": {
+    "xg_marcado_casa": 1.105,
+    "xg_marcado_fora": 0.924,
+    "xg_sofrido_casa": 1.627,
+    "xg_sofrido_fora": 1.812,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Girona": {
+    "xg_marcado_casa": 1.46,
+    "xg_marcado_fora": 0.975,
+    "xg_sofrido_casa": 1.431,
+    "xg_sofrido_fora": 1.537,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Real Valladolid": {
+    "xg_marcado_casa": 0.99,
+    "xg_marcado_fora": 0.909,
+    "xg_sofrido_casa": 1.663,
+    "xg_sofrido_fora": 2.391,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Mallorca": {
+    "xg_marcado_casa": 1.287,
+    "xg_marcado_fora": 1.05,
+    "xg_sofrido_casa": 1.349,
+    "xg_sofrido_fora": 1.484,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Bayern Munich": {
+    "xg_marcado_casa": 3.281,
+    "xg_marcado_fora": 2.309,
+    "xg_sofrido_casa": 0.795,
+    "xg_sofrido_fora": 0.852,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Bayer Leverkusen": {
+    "xg_marcado_casa": 2.086,
+    "xg_marcado_fora": 1.622,
+    "xg_sofrido_casa": 1.099,
+    "xg_sofrido_fora": 1.338,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Hoffenheim": {
+    "xg_marcado_casa": 1.747,
+    "xg_marcado_fora": 1.013,
+    "xg_sofrido_casa": 2.153,
+    "xg_sofrido_fora": 1.605,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Augsburg": {
+    "xg_marcado_casa": 1.51,
+    "xg_marcado_fora": 0.791,
+    "xg_sofrido_casa": 1.17,
+    "xg_sofrido_fora": 1.907,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Werder Bremen": {
+    "xg_marcado_casa": 1.785,
+    "xg_marcado_fora": 1.525,
+    "xg_sofrido_casa": 1.423,
+    "xg_sofrido_fora": 1.831,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Mainz 05": {
+    "xg_marcado_casa": 1.815,
+    "xg_marcado_fora": 1.469,
+    "xg_sofrido_casa": 1.252,
+    "xg_sofrido_fora": 1.757,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Borussia Dortmund": {
+    "xg_marcado_casa": 2.253,
+    "xg_marcado_fora": 1.791,
+    "xg_sofrido_casa": 1.019,
+    "xg_sofrido_fora": 1.823,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Borussia M.Gladbach": {
+    "xg_marcado_casa": 1.732,
+    "xg_marcado_fora": 1.413,
+    "xg_sofrido_casa": 1.835,
+    "xg_sofrido_fora": 2.134,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Wolfsburg": {
+    "xg_marcado_casa": 1.637,
+    "xg_marcado_fora": 1.503,
+    "xg_sofrido_casa": 1.636,
+    "xg_sofrido_fora": 1.778,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Eintracht Frankfurt": {
+    "xg_marcado_casa": 2.385,
+    "xg_marcado_fora": 1.9,
+    "xg_sofrido_casa": 1.155,
+    "xg_sofrido_fora": 1.962,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "VfB Stuttgart": {
+    "xg_marcado_casa": 2.326,
+    "xg_marcado_fora": 1.862,
+    "xg_sofrido_casa": 1.337,
+    "xg_sofrido_fora": 1.77,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Freiburg": {
+    "xg_marcado_casa": 1.582,
+    "xg_marcado_fora": 1.627,
+    "xg_sofrido_casa": 1.394,
+    "xg_sofrido_fora": 1.418,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "RasenBallsport Leipzig": {
+    "xg_marcado_casa": 1.795,
+    "xg_marcado_fora": 1.283,
+    "xg_sofrido_casa": 1.682,
+    "xg_sofrido_fora": 2.105,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Union Berlin": {
+    "xg_marcado_casa": 1.428,
+    "xg_marcado_fora": 1.101,
+    "xg_sofrido_casa": 1.302,
+    "xg_sofrido_fora": 1.735,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Bochum": {
+    "xg_marcado_casa": 1.494,
+    "xg_marcado_fora": 1.215,
+    "xg_sofrido_casa": 1.979,
+    "xg_sofrido_fora": 2.364,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "FC Heidenheim": {
+    "xg_marcado_casa": 1.28,
+    "xg_marcado_fora": 1.247,
+    "xg_sofrido_casa": 1.84,
+    "xg_sofrido_fora": 1.944,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Holstein Kiel": {
+    "xg_marcado_casa": 1.285,
+    "xg_marcado_fora": 1.278,
+    "xg_sofrido_casa": 1.788,
+    "xg_sofrido_fora": 2.364,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "St. Pauli": {
+    "xg_marcado_casa": 1.128,
+    "xg_marcado_fora": 1.194,
+    "xg_sofrido_casa": 1.285,
+    "xg_sofrido_fora": 1.862,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Genoa": {
+    "xg_marcado_casa": 1.213,
+    "xg_marcado_fora": 0.893,
+    "xg_sofrido_casa": 1.408,
+    "xg_sofrido_fora": 1.404,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Napoli": {
+    "xg_marcado_casa": 1.897,
+    "xg_marcado_fora": 1.105,
+    "xg_sofrido_casa": 0.834,
+    "xg_sofrido_fora": 0.826,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Inter": {
+    "xg_marcado_casa": 2.1,
+    "xg_marcado_fora": 1.939,
+    "xg_sofrido_casa": 1.213,
+    "xg_sofrido_fora": 1.02,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Atalanta": {
+    "xg_marcado_casa": 2.062,
+    "xg_marcado_fora": 2.142,
+    "xg_sofrido_casa": 1.014,
+    "xg_sofrido_fora": 1.214,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Empoli": {
+    "xg_marcado_casa": 0.781,
+    "xg_marcado_fora": 1.236,
+    "xg_sofrido_casa": 1.268,
+    "xg_sofrido_fora": 1.51,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Fiorentina": {
+    "xg_marcado_casa": 1.51,
+    "xg_marcado_fora": 1.338,
+    "xg_sofrido_casa": 1.018,
+    "xg_sofrido_fora": 1.444,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "AC Milan": {
+    "xg_marcado_casa": 1.667,
+    "xg_marcado_fora": 1.992,
+    "xg_sofrido_casa": 1.08,
+    "xg_sofrido_fora": 1.408,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Torino": {
+    "xg_marcado_casa": 1.011,
+    "xg_marcado_fora": 0.952,
+    "xg_sofrido_casa": 1.459,
+    "xg_sofrido_fora": 1.53,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Cagliari": {
+    "xg_marcado_casa": 1.48,
+    "xg_marcado_fora": 1.085,
+    "xg_sofrido_casa": 1.492,
+    "xg_sofrido_fora": 1.803,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Parma Calcio 1913": {
+    "xg_marcado_casa": 1.484,
+    "xg_marcado_fora": 1.04,
+    "xg_sofrido_casa": 1.667,
+    "xg_sofrido_fora": 1.807,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Lecce": {
+    "xg_marcado_casa": 1.06,
+    "xg_marcado_fora": 0.886,
+    "xg_sofrido_casa": 1.501,
+    "xg_sofrido_fora": 1.901,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Venezia": {
+    "xg_marcado_casa": 1.253,
+    "xg_marcado_fora": 0.938,
+    "xg_sofrido_casa": 1.399,
+    "xg_sofrido_fora": 2.018,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Monza": {
+    "xg_marcado_casa": 0.876,
+    "xg_marcado_fora": 0.815,
+    "xg_sofrido_casa": 1.541,
+    "xg_sofrido_fora": 1.892,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Como": {
+    "xg_marcado_casa": 1.455,
+    "xg_marcado_fora": 1.164,
+    "xg_sofrido_casa": 1.333,
+    "xg_sofrido_fora": 1.304,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Verona": {
+    "xg_marcado_casa": 1.043,
+    "xg_marcado_fora": 0.921,
+    "xg_sofrido_casa": 1.439,
+    "xg_sofrido_fora": 1.747,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Roma": {
+    "xg_marcado_casa": 1.656,
+    "xg_marcado_fora": 1.611,
+    "xg_sofrido_casa": 1.094,
+    "xg_sofrido_fora": 1.435,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Lazio": {
+    "xg_marcado_casa": 1.944,
+    "xg_marcado_fora": 1.494,
+    "xg_sofrido_casa": 1.007,
+    "xg_sofrido_fora": 1.282,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Bologna": {
+    "xg_marcado_casa": 1.975,
+    "xg_marcado_fora": 1.035,
+    "xg_sofrido_casa": 1.017,
+    "xg_sofrido_fora": 1.16,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Juventus": {
+    "xg_marcado_casa": 1.636,
+    "xg_marcado_fora": 1.423,
+    "xg_sofrido_casa": 0.875,
+    "xg_sofrido_fora": 0.986,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Udinese": {
+    "xg_marcado_casa": 1.19,
+    "xg_marcado_fora": 1.152,
+    "xg_sofrido_casa": 1.501,
+    "xg_sofrido_fora": 1.601,
+    "jogos_casa": 19,
+    "jogos_fora": 19
+  },
+  "Lille": {
+    "xg_marcado_casa": 1.737,
+    "xg_marcado_fora": 1.818,
+    "xg_sofrido_casa": 1.421,
+    "xg_sofrido_fora": 1.27,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Paris Saint Germain": {
+    "xg_marcado_casa": 3.287,
+    "xg_marcado_fora": 2.809,
+    "xg_sofrido_casa": 1.043,
+    "xg_sofrido_fora": 1.098,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Rennes": {
+    "xg_marcado_casa": 1.608,
+    "xg_marcado_fora": 1.556,
+    "xg_sofrido_casa": 1.235,
+    "xg_sofrido_fora": 1.753,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Marseille": {
+    "xg_marcado_casa": 2.354,
+    "xg_marcado_fora": 1.695,
+    "xg_sofrido_casa": 1.41,
+    "xg_sofrido_fora": 1.617,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Montpellier": {
+    "xg_marcado_casa": 1.452,
+    "xg_marcado_fora": 0.809,
+    "xg_sofrido_casa": 2.041,
+    "xg_sofrido_fora": 2.301,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Angers": {
+    "xg_marcado_casa": 1.16,
+    "xg_marcado_fora": 1.17,
+    "xg_sofrido_casa": 2.024,
+    "xg_sofrido_fora": 1.777,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Nantes": {
+    "xg_marcado_casa": 1.567,
+    "xg_marcado_fora": 1.074,
+    "xg_sofrido_casa": 1.335,
+    "xg_sofrido_fora": 2.198,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Nice": {
+    "xg_marcado_casa": 2.246,
+    "xg_marcado_fora": 1.686,
+    "xg_sofrido_casa": 0.928,
+    "xg_sofrido_fora": 1.718,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Monaco": {
+    "xg_marcado_casa": 2.513,
+    "xg_marcado_fora": 2.012,
+    "xg_sofrido_casa": 0.954,
+    "xg_sofrido_fora": 1.303,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Toulouse": {
+    "xg_marcado_casa": 1.403,
+    "xg_marcado_fora": 1.826,
+    "xg_sofrido_casa": 1.206,
+    "xg_sofrido_fora": 1.108,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Saint-Etienne": {
+    "xg_marcado_casa": 1.407,
+    "xg_marcado_fora": 0.975,
+    "xg_sofrido_casa": 2.113,
+    "xg_sofrido_fora": 2.83,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Reims": {
+    "xg_marcado_casa": 1.313,
+    "xg_marcado_fora": 1.135,
+    "xg_sofrido_casa": 1.681,
+    "xg_sofrido_fora": 2.04,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Lyon": {
+    "xg_marcado_casa": 2.22,
+    "xg_marcado_fora": 1.602,
+    "xg_sofrido_casa": 1.334,
+    "xg_sofrido_fora": 1.507,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Lens": {
+    "xg_marcado_casa": 1.897,
+    "xg_marcado_fora": 1.558,
+    "xg_sofrido_casa": 1.31,
+    "xg_sofrido_fora": 1.506,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Strasbourg": {
+    "xg_marcado_casa": 1.736,
+    "xg_marcado_fora": 1.429,
+    "xg_sofrido_casa": 1.725,
+    "xg_sofrido_fora": 1.909,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Brest": {
+    "xg_marcado_casa": 1.661,
+    "xg_marcado_fora": 1.444,
+    "xg_sofrido_casa": 1.67,
+    "xg_sofrido_fora": 2.227,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Auxerre": {
+    "xg_marcado_casa": 1.366,
+    "xg_marcado_fora": 1.15,
+    "xg_sofrido_casa": 1.462,
+    "xg_sofrido_fora": 2.235,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  },
+  "Le Havre": {
+    "xg_marcado_casa": 1.296,
+    "xg_marcado_fora": 1.372,
+    "xg_sofrido_casa": 2.227,
+    "xg_sofrido_fora": 1.829,
+    "jogos_casa": 17,
+    "jogos_fora": 17
+  }
+}
