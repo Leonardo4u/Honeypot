@@ -70,11 +70,11 @@ Plans:
 	1. Core scoring and gate behavior is covered by deterministic tests.
 	2. Database write paths for signals/results have integration-style checks.
 	3. End-to-end dry-run can validate flow without sending Telegram messages.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: Create model/gate unit tests with fixtures.
-- [ ] 04-02: Add DB integration tests and safe dry-run command.
+- [ ] 04-01-PLAN.md: Deterministic unit tests for model analysis and gate reason codes.
+- [ ] 04-02-PLAN.md: DB integration tests plus no-send scheduler dry-run smoke command.
 
 ## Progress
 
