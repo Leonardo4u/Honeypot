@@ -1,0 +1,66 @@
+{
+  "data": "2026-03-21",
+  "banca": {
+    "atual": 1030.48,
+    "inicial": 1000.0,
+    "maxima": 1038.94,
+    "drawdown_atual_pct": 0.81
+  },
+  "performance": {
+    "roi_acumulado_pct": 3.05,
+    "roi_30_dias_pct": 3.17,
+    "maior_sequencia_wins": 2,
+    "maior_sequencia_losses": 2
+  },
+  "apostas_hoje": [
+    {
+      "jogo": "Everton vs Chelsea",
+      "mercado": "1x2_casa",
+      "odd": 3.5,
+      "resultado": "verde",
+      "lucro_unidades": 2.5,
+      "edge_score": 87.8
+    },
+    {
+      "jogo": "Everton vs Chelsea",
+      "mercado": "over_2.5",
+      "odd": 1.95,
+      "resultado": "verde",
+      "lucro_unidades": 0.95,
+      "edge_score": 87.8
+    },
+    {
+      "jogo": "Sevilla vs Valencia",
+      "mercado": "1x2_casa",
+      "odd": 2.38,
+      "resultado": "vermelho",
+      "lucro_unidades": -1.0,
+      "edge_score": 87.8
+    },
+    {
+      "jogo": "Sevilla vs Valencia",
+      "mercado": "over_2.5",
+      "odd": 2.5,
+      "resultado": "vermelho",
+      "lucro_unidades": -1.0,
+      "edge_score": 87.8
+    },
+    {
+      "jogo": "Nice vs Paris Saint Germain",
+      "mercado": "over_2.5",
+      "odd": 2.2,
+      "resultado": "verde",
+      "lucro_unidades": 1.2,
+      "edge_score": 87.8
+    },
+    {
+      "jogo": "Sao Paulo vs Palmeiras",
+      "mercado": "1x2_casa",
+      "odd": 3.03,
+      "resultado": "pendente",
+      "lucro_unidades": null,
+      "edge_score": 84
+    }
+  ],
+  "total_apostas_hoje": 6
+}
