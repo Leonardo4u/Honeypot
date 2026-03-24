@@ -151,7 +151,9 @@ def calibrar_rho_por_liga(df):
     print(f"{'Liga':<28} {'Atual':>8} {'Calibrado':>10} {'Delta':>8} {'N jogos':>8}")
 
     rho_calibrado = {}
-    for liga in df["liga"].unique():
+    ligas_unicas = sorted(df["liga"].dropna().unique().tolist())
+
+    for liga in ligas_unicas:
         df_l = df[df["liga"] == liga]
         dados = df_l[["gols_casa", "gols_fora"]].to_dict("records")
         rho = estimar_rho(dados)
@@ -160,6 +162,8 @@ def calibrar_rho_por_liga(df):
         atual = RHO_POR_LIGA.get(liga, -0.10)
         delta = rho - atual
         print(f"{liga:<28} {atual:>8.4f} {rho:>10.4f} {delta:>+8.4f} {len(dados):>8}")
+
+    print("Observacao: ligas com menos de 50 jogos usam fallback de rho padrao.")
 
     print("\nCopie os valores acima e atualize RHO_POR_LIGA em poisson.py")
     return rho_calibrado
