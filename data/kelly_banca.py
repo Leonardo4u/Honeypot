@@ -1,6 +1,7 @@
 import sqlite3
 import json
 import os
+import math
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
 
@@ -91,6 +92,40 @@ def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, si
     Calcula stake via Kelly fracionado com todas as regras de segurança.
     Retorna dict com stake em % e em reais.
     """
+    try:
+        prob_modelo = float(prob_modelo)
+    except (TypeError, ValueError):
+        return {"aprovado": False, "motivo": "invalid_prob_modelo"}
+
+    try:
+        odd = float(odd)
+    except (TypeError, ValueError):
+        return {"aprovado": False, "motivo": "invalid_odd"}
+
+    try:
+        edge_score = float(edge_score)
+    except (TypeError, ValueError):
+        return {"aprovado": False, "motivo": "invalid_edge_score"}
+
+    try:
+        sinais_abertos = int(sinais_abertos)
+    except (TypeError, ValueError):
+        return {"aprovado": False, "motivo": "invalid_sinais_abertos"}
+
+    try:
+        sinais_liga_hoje = int(sinais_liga_hoje)
+    except (TypeError, ValueError):
+        return {"aprovado": False, "motivo": "invalid_sinais_liga_hoje"}
+
+    if not math.isfinite(prob_modelo) or prob_modelo < 0 or prob_modelo > 1:
+        return {"aprovado": False, "motivo": "invalid_prob_modelo_range"}
+    if not math.isfinite(odd) or odd <= 1:
+        return {"aprovado": False, "motivo": "invalid_odd_range"}
+    if not math.isfinite(edge_score):
+        return {"aprovado": False, "motivo": "invalid_edge_score_range"}
+    if sinais_abertos < 0 or sinais_liga_hoje < 0:
+        return {"aprovado": False, "motivo": "invalid_signal_counts"}
+
     estado = carregar_estado_banca()
     banca = estado["banca_atual"]
 
@@ -126,6 +161,9 @@ def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, si
 
     kelly_ajustado = min(kelly_ajustado, TETO_MAXIMO)
 
+    if not math.isfinite(kelly_ajustado) or kelly_ajustado < 0:
+        return {"aprovado": False, "motivo": "invalid_kelly_output"}
+
     if kelly_ajustado < PISO_MINIMO:
         return {
             "aprovado": False,
@@ -133,6 +171,8 @@ def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, si
         }
 
     valor_reais = round(banca * kelly_ajustado, 2)
+    if not math.isfinite(valor_reais) or valor_reais < 0:
+        return {"aprovado": False, "motivo": "invalid_stake_value"}
 
     return {
         "aprovado": True,

@@ -1,6 +1,7 @@
 import asyncio
 import sys
 import os
+import math
 import schedule
 import time
 import sqlite3
@@ -306,12 +307,32 @@ async def processar_jogos():
             sinais_liga_hoje=sinais_liga
         )
 
-        if not kelly["aprovado"]:
-            print(f"Kelly bloqueou: {jogo['jogo']} — {kelly['motivo']}")
+        if not isinstance(kelly, dict):
+            print(f"Kelly inválido: {jogo['jogo']} — resposta não é dict")
             continue
 
-        stake_reais = kelly["valor_reais"]
-        stake_unidades = round(kelly["kelly_final_pct"] / 1, 2)
+        if not kelly.get("aprovado"):
+            print(f"Kelly bloqueou: {jogo['jogo']} — {kelly.get('motivo', 'motivo_indefinido')}")
+            continue
+
+        required_fields = ["tier", "kelly_final_pct", "valor_reais"]
+        if any(field not in kelly for field in required_fields):
+            print(f"Kelly inválido: {jogo['jogo']} — payload incompleto")
+            continue
+
+        try:
+            kelly_final_pct = float(kelly["kelly_final_pct"])
+            valor_reais = float(kelly["valor_reais"])
+        except (TypeError, ValueError):
+            print(f"Kelly inválido: {jogo['jogo']} — valores não numéricos")
+            continue
+
+        if not math.isfinite(kelly_final_pct) or not math.isfinite(valor_reais) or kelly_final_pct < 0 or valor_reais < 0:
+            print(f"Kelly inválido: {jogo['jogo']} — stake fora da faixa segura")
+            continue
+
+        stake_reais = valor_reais
+        stake_unidades = round(kelly_final_pct / 1, 2)
         analise["stake_reais"] = stake_reais
         analise["stake_unidades"] = stake_unidades
 
