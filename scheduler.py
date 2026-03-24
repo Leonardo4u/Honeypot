@@ -15,11 +15,13 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "data"))
 from analisar_jogo import analisar_jogo, formatar_sinal
 from filtros import aplicar_triple_gate
 from database import (
+    DB_PATH,
     buscar_sinais_hoje,
     finalizar_execucao_job,
     garantir_tabela_execucoes,
     iniciar_execucao_job,
     inserir_sinal,
+    validar_schema_minimo,
 )
 from coletar_odds import buscar_jogos_com_odds, formatar_jogos
 from atualizar_stats import carregar_medias, atualizar_todas_ligas
@@ -193,6 +195,71 @@ def atualizar_excel(payload_dict):
         )
     except Exception as e:
         print(f"Erro update Excel: {e}")
+
+
+def executar_preflight():
+    log_event("startup", "preflight", "scheduler", "start")
+    falhas = []
+    avisos = []
+
+    if not TOKEN:
+        falhas.append("BOT_TOKEN ausente")
+
+    if not CANAL_VIP:
+        falhas.append("CANAL_VIP ausente")
+
+    db_dir = os.path.dirname(DB_PATH)
+    if not db_dir or not os.path.isdir(db_dir):
+        falhas.append(f"Diretorio do banco invalido: {db_dir}")
+
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        conn.close()
+    except Exception as e:
+        falhas.append(f"Falha ao abrir banco em {DB_PATH}: {e}")
+
+    schema_ok, missing_items = validar_schema_minimo()
+    if not schema_ok:
+        falhas.append(f"Schema minimo incompleto: {', '.join(missing_items)}")
+
+    if not os.path.isfile(EXCEL_PATH):
+        aviso = f"Arquivo Excel nao encontrado: {EXCEL_PATH}"
+        avisos.append(aviso)
+        log_event(
+            "startup",
+            "preflight",
+            "excel",
+            "warning",
+            "non_critical_excel_missing",
+            {"arquivo": EXCEL_PATH},
+        )
+
+    if falhas:
+        log_event(
+            "startup",
+            "preflight",
+            "scheduler",
+            "failed",
+            "critical_preflight_failed",
+            {"falhas": falhas, "avisos": avisos},
+        )
+        print("Preflight falhou. Corrija os itens criticos antes de iniciar:")
+        for item in falhas:
+            print(f"- {item}")
+        if avisos:
+            print("Avisos nao bloqueantes:")
+            for item in avisos:
+                print(f"- {item}")
+        raise SystemExit(1)
+
+    log_event(
+        "startup",
+        "preflight",
+        "scheduler",
+        "pass",
+        None,
+        {"avisos": avisos},
+    )
 
 def formatar_sinal_kelly(analise, kelly):
     if analise["decisao"] == "DESCARTAR":
@@ -527,6 +594,19 @@ async def processar_jogos():
         f"invalid_input={provider_health['invalid_input']} "
         f"fallback_used={provider_health['fallback_used']}"
     )
+    log_event(
+        "scheduler",
+        "cycle_totals",
+        "analise",
+        EXECUCAO_CICLO["status"],
+        EXECUCAO_CICLO["reason_codes"][0] if EXECUCAO_CICLO["reason_codes"] else None,
+        {
+            "candidatos": len(candidatos),
+            "enviados": sinais_enviados,
+            "max_diario": MAX_SINAIS_DIA,
+            "provider_health": provider_health,
+        },
+    )
 
 async def monitorar_janela_expandida():
     todas_ligas = LIGAS_COPA + LIGAS_FIM_DE_SEMANA
@@ -817,6 +897,8 @@ def atualizar_stats_semanalmente():
     print("Stats atualizadas.")
 
 def iniciar_scheduler():
+    log_event("startup", "boot", "scheduler", "start")
+    executar_preflight()
     garantir_tabela_execucoes()
     print("=== SCHEDULER EDGE PROTOCOL ATIVO ===")
     print(f"Score mínimo: {MIN_EDGE_SCORE}/100")
@@ -851,6 +933,8 @@ def iniciar_scheduler():
                 schedule.every().day.at(horario).do(rodar_verificacao)
 
     schedule.every().monday.at("06:00").do(atualizar_stats_semanalmente)
+
+    log_event("startup", "boot", "scheduler", "ready")
 
     rodar_janela_expandida()
     rodar_analise()
