@@ -949,4 +949,8 @@ def iniciar_scheduler():
         time.sleep(60)
 
 if __name__ == "__main__":
-    iniciar_scheduler()
+    try:
+        iniciar_scheduler()
+    except KeyboardInterrupt:
+        log_event("runtime", "shutdown", "scheduler", "stopped", "keyboard_interrupt")
+        print("\nScheduler encerrado pelo operador.")
