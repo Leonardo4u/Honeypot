@@ -26,6 +26,8 @@ def criar_banco():
             message_id_vip INTEGER,
             message_id_free INTEGER,
             horario TEXT,
+            fixture_id_api TEXT,
+            fixture_data_api TEXT,
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -56,6 +58,7 @@ def criar_banco():
         )
     ''')
     conn.commit()
+    garantir_colunas_sinais()
     garantir_schema_historico_sinais()
     conn.close()
     print("Banco de dados criado com sucesso.")
@@ -72,6 +75,8 @@ def garantir_colunas_sinais():
         "message_id_free": "INTEGER",
         "horario": "TEXT",
         "fonte": "TEXT DEFAULT 'bot'",
+        "fixture_id_api": "TEXT",
+        "fixture_data_api": "TEXT",
     }
 
     for coluna, tipo in colunas_requeridas.items():
@@ -286,6 +291,22 @@ def atualizar_resultado(sinal_id, resultado, lucro):
         UPDATE sinais SET status = 'finalizado', resultado = ?, lucro_unidades = ?
         WHERE id = ?
     ''', (resultado, lucro, sinal_id))
+    conn.commit()
+    conn.close()
+
+
+def atualizar_fixture_referencia(sinal_id, fixture_id_api=None, fixture_data_api=None):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        UPDATE sinais
+        SET fixture_id_api = COALESCE(?, fixture_id_api),
+            fixture_data_api = COALESCE(?, fixture_data_api)
+        WHERE id = ?
+        ''',
+        (fixture_id_api, fixture_data_api, sinal_id),
+    )
     conn.commit()
     conn.close()
 
