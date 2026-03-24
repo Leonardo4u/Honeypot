@@ -5,12 +5,12 @@ import math
 
 # ── RHO POR LIGA (estimativas empíricas) ──────────────────────
 RHO_POR_LIGA = {
-    "Premier League":         -0.08,
-    "EPL":                    -0.08,
-    "La Liga":                -0.10,
-    "Serie A":                -0.13,
-    "Bundesliga":             -0.09,
-    "Ligue 1":                -0.12,
+    "Premier League":          0.00,
+    "EPL":                     0.00,
+    "La Liga":                -0.0075,
+    "Serie A":                -0.0359,
+    "Bundesliga":             -0.1120,
+    "Ligue 1":                -0.0617,
     "UEFA Champions League":  -0.09,
     "UEFA Europa League":     -0.10,
     "Brasileirao Serie A":    -0.11,
