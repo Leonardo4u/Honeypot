@@ -84,10 +84,10 @@ Plans:
 **Depends on**: Phase 4
 **Requirements**: [TEST-01, TEST-02, TEST-03]
 **Gap Closure**: Closes audit gaps for missing phase-4 verification and milestone verification-chain integration.
-**Plans**: TBD
+**Plans**: 1 plans
 
 Plans:
-- [ ] 05-01: Create and validate phase-4 verification artifact from test/UAT evidence.
+- [ ] 05-01-PLAN.md: Create and validate phase-4 verification artifact from test/UAT evidence.
 
 ### Phase 6: Requirements and Metadata Reconciliation
 **Goal**: Reconcile requirement traceability and planning state metadata to match delivered milestone evidence.
