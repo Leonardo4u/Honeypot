@@ -63,6 +63,14 @@ def atualizar_resultado(sinal_id, resultado, lucro):
     conn.commit()
     conn.close()
 
+def sinal_existe(sinal_id):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("SELECT 1 FROM sinais WHERE id = ? LIMIT 1", (sinal_id,))
+    existe = c.fetchone() is not None
+    conn.close()
+    return existe
+
 def buscar_sinais_hoje():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

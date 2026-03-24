@@ -4,6 +4,7 @@ import os
 import json
 from datetime import datetime, timezone
 from dotenv import load_dotenv
+from database import sinal_existe
 
 load_dotenv()
 
@@ -48,21 +49,33 @@ def criar_tabelas_validacao():
     print("Tabelas de validação criadas.")
 
 def registrar_aposta_clv(sinal_id, jogo, mercado, odd_entrada, prob_prevista):
+    if not sinal_existe(sinal_id):
+        print(f"[clv_link_invalid] sinal_id inexistente: {sinal_id}")
+        return False
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute('''
-        INSERT INTO clv_tracking (sinal_id, jogo, mercado, odd_entrada, timestamp_entrada)
-        VALUES (?, ?, ?, ?, ?)
-    ''', (sinal_id, jogo, mercado, odd_entrada, datetime.now(timezone.utc).isoformat()))
+    c.execute("SELECT id FROM clv_tracking WHERE sinal_id = ?", (sinal_id,))
+    clv_exists = c.fetchone() is not None
+    c.execute("SELECT id FROM brier_tracking WHERE sinal_id = ?", (sinal_id,))
+    brier_exists = c.fetchone() is not None
 
-    c.execute('''
-        INSERT INTO brier_tracking (sinal_id, jogo, mercado, prob_prevista)
-        VALUES (?, ?, ?, ?)
-    ''', (sinal_id, jogo, mercado, prob_prevista))
+    if not clv_exists:
+        c.execute('''
+            INSERT INTO clv_tracking (sinal_id, jogo, mercado, odd_entrada, timestamp_entrada)
+            VALUES (?, ?, ?, ?, ?)
+        ''', (sinal_id, jogo, mercado, odd_entrada, datetime.now(timezone.utc).isoformat()))
+
+    if not brier_exists:
+        c.execute('''
+            INSERT INTO brier_tracking (sinal_id, jogo, mercado, prob_prevista)
+            VALUES (?, ?, ?, ?)
+        ''', (sinal_id, jogo, mercado, prob_prevista))
 
     conn.commit()
     conn.close()
+    return True
 
 def buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key):
     if not API_KEY:
@@ -106,17 +119,25 @@ def buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key):
         return None
 
 def atualizar_clv(sinal_id, odd_fechamento):
+    if not sinal_existe(sinal_id):
+        print(f"[clv_link_invalid] sinal_id inexistente no fechamento: {sinal_id}")
+        return None
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("SELECT odd_entrada FROM clv_tracking WHERE sinal_id = ?", (sinal_id,))
+    c.execute("SELECT odd_entrada, status, odd_fechamento, clv_percentual FROM clv_tracking WHERE sinal_id = ?", (sinal_id,))
     row = c.fetchone()
 
     if not row:
         conn.close()
         return None
 
-    odd_entrada = row[0]
+    odd_entrada, status, odd_fechamento_atual, clv_existente = row
+    if status == "fechado" and odd_fechamento_atual is not None:
+        conn.close()
+        return clv_existente
+
     clv = (odd_fechamento / odd_entrada - 1) * 100
     clv = round(clv, 3)
 
@@ -132,17 +153,25 @@ def atualizar_clv(sinal_id, odd_fechamento):
     return clv
 
 def atualizar_brier(sinal_id, acertou):
+    if not sinal_existe(sinal_id):
+        print(f"[brier_link_invalid] sinal_id inexistente na atualização: {sinal_id}")
+        return None
+
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
 
-    c.execute("SELECT prob_prevista FROM brier_tracking WHERE sinal_id = ?", (sinal_id,))
+    c.execute("SELECT prob_prevista, resultado_real, brier_score FROM brier_tracking WHERE sinal_id = ?", (sinal_id,))
     row = c.fetchone()
 
     if not row:
         conn.close()
         return None
 
-    prob = row[0]
+    prob, resultado_existente, brier_existente = row
+    if resultado_existente is not None:
+        conn.close()
+        return brier_existente
+
     resultado = 1 if acertou else 0
     brier = round((prob - resultado) ** 2, 4)
 
