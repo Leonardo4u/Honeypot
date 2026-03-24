@@ -56,11 +56,11 @@ Plans:
 	2. Per-game failures do not abort full job batches.
 	3. Logs expose critical execution milestones for daily diagnosis.
 	4. Missing env/db prerequisites fail fast with actionable messages.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 03-01: Implement idempotency and failure isolation across scheduler loops.
-- [ ] 03-02: Add startup preflight checks and structured operational logging.
+- [ ] 03-01-PLAN.md: Persistent idempotency registry + guarded scheduler failure isolation.
+- [ ] 03-02-PLAN.md: Startup preflight fail-fast + structured operational diagnostics.
 
 ### Phase 4: Testing and Verification Baseline
 **Goal**: Add automated confidence checks for core model, DB writes, and a safe dry-run path.
