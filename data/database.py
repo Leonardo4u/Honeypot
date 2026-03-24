@@ -76,6 +76,14 @@ def garantir_tabela_execucoes():
     conn.close()
 
 
+def garantir_schema_minimo():
+    if not os.path.exists(DB_PATH):
+        criar_banco()
+        return
+
+    garantir_tabela_execucoes()
+
+
 def validar_schema_minimo(tabelas_criticas=None):
     if tabelas_criticas is None:
         tabelas_criticas = ["sinais", "job_execucoes"]

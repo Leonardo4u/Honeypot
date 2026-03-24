@@ -18,6 +18,7 @@ from database import (
     DB_PATH,
     buscar_sinais_hoje,
     finalizar_execucao_job,
+    garantir_schema_minimo,
     garantir_tabela_execucoes,
     iniciar_execucao_job,
     inserir_sinal,
@@ -201,6 +202,9 @@ def executar_preflight():
     log_event("startup", "preflight", "scheduler", "start")
     falhas = []
     avisos = []
+
+    # Bootstrap required execution table before schema validation to avoid first-run false negatives.
+    garantir_schema_minimo()
 
     if not TOKEN:
         falhas.append("BOT_TOKEN ausente")
@@ -898,6 +902,7 @@ def atualizar_stats_semanalmente():
 
 def iniciar_scheduler():
     log_event("startup", "boot", "scheduler", "start")
+    garantir_schema_minimo()
     executar_preflight()
     garantir_tabela_execucoes()
     print("=== SCHEDULER EDGE PROTOCOL ATIVO ===")
