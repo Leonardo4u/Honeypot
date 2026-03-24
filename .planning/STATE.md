@@ -1,35 +1,36 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: milestone
-status: v1.1 milestone complete
-last_updated: "2026-03-24T21:20:08.864Z"
+milestone: v1.2
+milestone_name: win-rate-integrity-and-runtime-quality
+status: v1.2 phase-11 planned
+last_updated: "2026-03-24T23:59:00.000Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 4
+  completed_phases: 0
+  total_plans: 4
+  completed_plans: 2
 ---
 
 # STATE
 
 ## Status
 
-- Milestone: v1.1 - Calibracao Estatistica e Backtesting Operacional
-- Current phase: none (milestone archived)
-- Current command: awaiting next milestone initialization
-- Overall progress: v1.1 implementation and archive complete
+- Milestone: v1.2 - Win Rate Integrity and Runtime Quality
+- Current phase: phase 11 planned (plans 01 and 02 ready to execute)
+- Current command: /gsd-execute-phase 11
+- Overall progress: milestone initialized, phase 10 completed and phase 11 execution-ready
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Define next milestone scope (v1.2)
+**Current focus:** Plan and execute highest-impact win-rate integrity fixes
 
 ## Artifacts
 
 - Project context: .planning/PROJECT.md
+- Current requirements: .planning/REQUIREMENTS.md
 - Roadmap: .planning/ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.0-ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.1-ROADMAP.md
@@ -54,10 +55,15 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - 2026-03-24: Phase 8 executed (08-01 and 08-02), verification passed, and EVAL requirements marked complete.
 - 2026-03-24: Phase 9 executed (09-01), verification passed, and HIST requirements marked complete.
 - 2026-03-24: v1.1 milestone archived with roadmap/requirements snapshots and post-milestone state update.
+- 2026-03-24: v1.2 initialized with active requirements and phases 10-13 focused on win-rate integrity.
+- 2026-03-24: Phase 10 planning artifacts created (10-RESEARCH, 10-01-PLAN, 10-02-PLAN).
+- 2026-03-24: Phase 10 plan 01 executed and summary created (runtime gate context integrity).
+- 2026-03-24: Phase 10 plan 02 executed and summary created (provider-health observability), with provider and dry-run tests passing.
+- 2026-03-24: Phase 11 planning artifacts created (11-RESEARCH, 11-01-PLAN, 11-02-PLAN) for settlement label integrity.
 
 ## Next Step
 
-Run `/gsd-init-milestone v1.2` (or chosen version) to start the next planning cycle.
+Run `/gsd-execute-phase 11` to execute settlement label integrity plans.
 
 ---
-*Last updated: 2026-03-24 after v1.1 archive*
+*Last updated: 2026-03-24 after phase 11 planning*
