@@ -4,6 +4,14 @@
 
 Milestone v1.1 expands model quality operations through calibration and historical backtesting while preserving the reliability baseline from v1.0.
 
+## Scope Additions (2026-03-24)
+
+- Fix `full_refresh` flow in `logs/update_excel.py` to regenerate Excel via `exportar_excel.gerar_excel()` and report failures correctly.
+- Add EV sanity ceiling and model-vs-market divergence guard in Gate 1 (`model/filtros.py`).
+- Add asymmetric motivation Gate 5 with cached standings lookup and score penalty support.
+- Remove duplicated Dixon-Coles log emission in market loops.
+- Add local historical confidence calibration helpers and daily calibration status line in summary flow.
+
 ## Milestones
 
 - [x] v1.0 Reliability and Signal Quality Hardening (shipped 2026-03-24) -> see `.planning/milestones/v1.0-ROADMAP.md`
@@ -72,4 +80,4 @@ Plans:
 | 9. Historical Persistence and Operator Safety | 0/1 | Not Started | — |
 
 ---
-*Last updated: 2026-03-24 after phase 07 execution*
+*Last updated: 2026-03-24 after phase 08 planning*
