@@ -79,16 +79,22 @@ LIGA_KEY_MAP = {
 
 
 def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=None):
-    payload = {
-        "categoria": categoria,
-        "etapa": etapa,
-        "entidade": entidade,
-        "status": status,
-        "reason_code": reason_code,
-        "detalhes": detalhes or {},
-        "ts": datetime.now().isoformat(timespec="seconds"),
-    }
-    print(_json.dumps(payload, ensure_ascii=False))
+    ts = datetime.now().strftime("%H:%M:%S")
+    header = f"[{ts}] {categoria}/{etapa} {entidade} -> {status}"
+
+    extra = []
+    if reason_code:
+        extra.append(f"reason={reason_code}")
+
+    if detalhes:
+        detalhes_txt = _json.dumps(detalhes, ensure_ascii=False, separators=(",", ":"))
+        extra.append(f"detalhes={detalhes_txt}")
+
+    if extra:
+        print(f"{header} | {' | '.join(extra)}")
+        return
+
+    print(header)
 
 
 def resetar_execucao_ciclo(job_nome):
