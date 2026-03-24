@@ -22,6 +22,7 @@ def criar_banco():
             status TEXT DEFAULT 'pendente',
             resultado TEXT,
             lucro_unidades REAL,
+            fonte TEXT DEFAULT 'bot',
             message_id_vip INTEGER,
             message_id_free INTEGER,
             horario TEXT,
@@ -55,6 +56,7 @@ def criar_banco():
         )
     ''')
     conn.commit()
+    garantir_schema_historico_sinais()
     conn.close()
     print("Banco de dados criado com sucesso.")
 
@@ -69,11 +71,40 @@ def garantir_colunas_sinais():
         "message_id_vip": "INTEGER",
         "message_id_free": "INTEGER",
         "horario": "TEXT",
+        "fonte": "TEXT DEFAULT 'bot'",
     }
 
     for coluna, tipo in colunas_requeridas.items():
         if coluna not in colunas_existentes:
             c.execute(f"ALTER TABLE sinais ADD COLUMN {coluna} {tipo}")
+
+    conn.commit()
+    conn.close()
+
+
+def garantir_schema_historico_sinais(db_path=None):
+    path = db_path or DB_PATH
+    conn = sqlite3.connect(path)
+    c = conn.cursor()
+
+    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sinais'")
+    if not c.fetchone():
+        conn.close()
+        return
+
+    c.execute("PRAGMA table_info(sinais)")
+    colunas = {row[1] for row in c.fetchall()}
+    if "fonte" not in colunas:
+        c.execute("ALTER TABLE sinais ADD COLUMN fonte TEXT DEFAULT 'bot'")
+
+    # Idempotencia: garante unicidade apenas para linhas historicas.
+    c.execute(
+        '''
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_sinais_historico_unico
+        ON sinais(data, liga, jogo, mercado, odd)
+        WHERE fonte = 'historico'
+        '''
+    )
 
     conn.commit()
     conn.close()
@@ -106,6 +137,7 @@ def garantir_schema_minimo():
 
     garantir_tabela_execucoes()
     garantir_colunas_sinais()
+    garantir_schema_historico_sinais()
 
 
 def validar_schema_minimo(tabelas_criticas=None):
@@ -289,6 +321,80 @@ def resumo_mensal():
     row = c.fetchone()
     conn.close()
     return row
+
+
+def buscar_historico_time(time, ultimos=20):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        SELECT jogo, mercado, odd, resultado, lucro_unidades,
+               ev_estimado, edge_score
+        FROM sinais
+        WHERE (jogo LIKE ? OR jogo LIKE ?)
+        AND status = 'finalizado'
+        ORDER BY criado_em DESC LIMIT ?
+        ''',
+        (f'{time} vs %', f'% vs {time}', ultimos),
+    )
+    rows = c.fetchall()
+    conn.close()
+    return rows
+
+
+def calcular_confianca_calibrada(time_casa, time_fora):
+    hc = buscar_historico_time(time_casa)
+    hf = buscar_historico_time(time_fora)
+    nc, nf = len(hc), len(hf)
+    conf = 50
+    if nc >= 5 and nf >= 5:
+        conf = 70
+    if nc >= 10 and nf >= 10:
+        conf = 75
+    if nc >= 20 and nf >= 20:
+        conf = 80
+
+    if nc > 0 and nf > 0:
+        wrc = sum(1 for r in hc if r[3] == 'verde') / nc
+        wrf = sum(1 for r in hf if r[3] == 'verde') / nf
+        wrm = (wrc + wrf) / 2
+        if wrm >= 0.60 and nc >= 10:
+            conf = min(100, conf + 15)
+        elif wrm >= 0.55 and nc >= 10:
+            conf = min(100, conf + 8)
+        elif wrm < 0.45 and nc >= 10:
+            conf = max(50, conf - 15)
+
+    return conf
+
+
+def resumo_calibracao(n_minimo=50):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''SELECT COUNT(*),
+           SUM(CASE WHEN resultado='verde' THEN 1 ELSE 0 END),
+           AVG(ev_estimado), AVG(edge_score)
+           FROM sinais WHERE status='finalizado' '''
+    )
+    row = c.fetchone()
+    conn.close()
+
+    total = row[0] or 0
+    if total < n_minimo:
+        return {"total": total, "faltam": n_minimo - total, "calibrado": False}
+
+    v = row[1] or 0
+    wr = v / total
+    return {
+        "total": total,
+        "faltam": 0,
+        "win_rate_real": round(wr * 100, 1),
+        "ev_medio_pct": round((row[2] or 0) * 100, 2),
+        "score_medio": round(row[3] or 0, 1),
+        "calibrado": wr >= 0.55,
+        "alerta": wr < 0.50,
+    }
 
 if __name__ == "__main__":
     criar_banco()

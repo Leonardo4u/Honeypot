@@ -352,8 +352,11 @@ def calcular_win_rate_historico(df):
 def popular_banco_historico(df, n_max=2000):
     from poisson import calcular_probabilidades, calcular_prob_over_under
     from xg_understat import calcular_media_gols_com_xg
+    from database import garantir_schema_historico_sinais
 
     print(f"\n=== POPULANDO BANCO COM HISTORICO (max {n_max} registros) ===")
+
+    garantir_schema_historico_sinais(DB_PATH)
 
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -365,23 +368,10 @@ def popular_banco_historico(df, n_max=2000):
         conn.close()
         return 0
 
-    # Verificar se coluna 'fonte' existe
-    c.execute("PRAGMA table_info(sinais)")
-    colunas = [r[1] for r in c.fetchall()]
-    if "fonte" not in colunas:
-        c.execute("ALTER TABLE sinais ADD COLUMN fonte TEXT DEFAULT 'bot'")
-        print("[MIGRACAO] Coluna 'fonte' adicionada")
-
-    # Nao duplicar
-    c.execute("SELECT COUNT(*) FROM sinais WHERE fonte='historico'")
-    ja_tem = c.fetchone()[0]
-    if ja_tem > 0:
-        print(f"Banco ja tem {ja_tem} registros historicos. Pulando.")
-        conn.close()
-        return ja_tem
-
     amostra = df.sample(min(n_max, len(df)), random_state=42)
     inseridos = 0
+    duplicados = 0
+    falhas = 0
     ev_min = 0.06
 
     for _, row in amostra.iterrows():
@@ -409,7 +399,7 @@ def popular_banco_historico(df, n_max=2000):
 
                 c.execute(
                     """
-                    INSERT INTO sinais
+                    INSERT OR IGNORE INTO sinais
                     (data, liga, jogo, mercado, odd, ev_estimado,
                      edge_score, stake_unidades, status, resultado,
                      lucro_unidades, fonte)
@@ -430,15 +420,26 @@ def popular_banco_historico(df, n_max=2000):
                         "historico",
                     ),
                 )
-                inseridos += 1
+                if c.rowcount == 0:
+                    duplicados += 1
+                else:
+                    inseridos += 1
         except Exception:
+            falhas += 1
             continue
 
     conn.commit()
     conn.close()
-    print(f"{inseridos} registros historicos inseridos.")
+    print(
+        f"Backfill historico: inseridos={inseridos} | "
+        f"duplicados={duplicados} | falhas={falhas}"
+    )
     print("calcular_confianca_calibrada() ja pode usar esses dados.")
-    return inseridos
+    return {
+        "inseridos": inseridos,
+        "duplicados": duplicados,
+        "falhas": falhas,
+    }
 
 
 def rodar_calibracao_completa():

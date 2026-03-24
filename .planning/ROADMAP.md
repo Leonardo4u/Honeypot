@@ -27,7 +27,8 @@ Milestone v1.1 expands model quality operations through calibration and historic
  (completed 2026-03-24)
 - [x] **Phase 8: Diagnostic Quality Evaluation** - Add reproducible Brier and market-level evaluation outputs.
  (completed 2026-03-24)
-- [ ] **Phase 9: Historical Persistence and Operator Safety** - Harden historical backfill behavior and usage flow.
+- [x] **Phase 9: Historical Persistence and Operator Safety** - Harden historical backfill behavior and usage flow.
+ (completed 2026-03-24)
 
 ## Phase Details
 
@@ -70,7 +71,7 @@ Plans:
 **Plans**: 1 plans
 
 Plans:
-- [ ] 09-01-PLAN.md: Historical backfill idempotency and failure-isolation hardening.
+- [x] 09-01-PLAN.md: Historical backfill idempotency and failure-isolation hardening.
 
 ## Progress
 
@@ -78,7 +79,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 7. Historical Calibration Baseline | 2/2 | Complete    | 2026-03-24 |
 | 8. Diagnostic Quality Evaluation | 2/2 | Complete | 2026-03-24 |
-| 9. Historical Persistence and Operator Safety | 0/1 | Not Started | — |
+| 9. Historical Persistence and Operator Safety | 1/1 | Complete | 2026-03-24 |
 
 ---
-*Last updated: 2026-03-24 after phase 09 planning*
+*Last updated: 2026-03-24 after phase 09 execution*

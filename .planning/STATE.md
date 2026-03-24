@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: milestone
-status: Phase 8 complete, ready for phase 9 planning
-last_updated: "2026-03-24T23:10:00.000Z"
+status: Phase 9 complete, ready for milestone completion audit
+last_updated: "2026-03-24T23:45:00.000Z"
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # STATE
@@ -16,9 +16,9 @@ progress:
 ## Status
 
 - Milestone: v1.1 - Calibracao Estatistica e Backtesting Operacional
-- Current phase: 9 (Historical Persistence and Operator Safety) - not started
-- Current command: /gsd-plan-phase 9
-- Overall progress: Phases 7 and 8 executed and verified; v1.1 continues with phase 9
+- Current phase: milestone wrap-up (v1.1)
+- Current command: /gsd-complete-milestone
+- Overall progress: Phases 7, 8 and 9 executed and verified; v1.1 implementation scope complete
 
 ## Project Reference
 
@@ -51,10 +51,11 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - 2026-03-24: v1.1 initialized with research-first flow, new REQUIREMENTS.md, and phases 7-9 in ROADMAP.md.
 - 2026-03-24: Phase 7 executed (07-01 and 07-02), verification passed, and CAL requirements marked complete.
 - 2026-03-24: Phase 8 executed (08-01 and 08-02), verification passed, and EVAL requirements marked complete.
+- 2026-03-24: Phase 9 executed (09-01), verification passed, and HIST requirements marked complete.
 
 ## Next Step
 
-Run `/gsd-plan-phase 9` to create executable plans for the next v1.1 phase.
+Run `/gsd-complete-milestone` to close v1.1 and prepare the next milestone.
 
 ---
-*Last updated: 2026-03-24 after phase 08 execution*
+*Last updated: 2026-03-24 after phase 09 execution*
