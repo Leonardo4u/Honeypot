@@ -76,6 +76,25 @@ def garantir_tabela_execucoes():
     conn.close()
 
 
+def validar_schema_minimo(tabelas_criticas=None):
+    if tabelas_criticas is None:
+        tabelas_criticas = ["sinais", "job_execucoes"]
+
+    conn = None
+    try:
+        conn = sqlite3.connect(DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+        tabelas_existentes = {row[0] for row in c.fetchall()}
+        faltantes = [nome for nome in tabelas_criticas if nome not in tabelas_existentes]
+        return len(faltantes) == 0, faltantes
+    except Exception as e:
+        return False, [f"db_error:{str(e)}"]
+    finally:
+        if conn:
+            conn.close()
+
+
 def buscar_execucao_job(job_nome, janela_chave):
     garantir_tabela_execucoes()
     conn = sqlite3.connect(DB_PATH)
