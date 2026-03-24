@@ -19,9 +19,9 @@
 
 ### Historical Persistence and Safety
 
-- [ ] **HIST-01**: Historical backfill inserts tagged records into `sinais` with `fonte='historico'`.
-- [ ] **HIST-02**: Backfill process is idempotent and skips insertion when historical records already exist.
-- [ ] **HIST-03**: Backfill tolerates row-level failures and continues processing remaining matches.
+- [x] **HIST-01**: Historical backfill inserts tagged records into `sinais` with `fonte='historico'`.
+- [x] **HIST-02**: Backfill process is idempotent and skips insertion when historical records already exist.
+- [x] **HIST-03**: Backfill tolerates row-level failures and continues processing remaining matches.
 
 ## v2 Requirements
 
@@ -49,9 +49,9 @@
 | EVAL-01 | Phase 8 | Complete |
 | EVAL-02 | Phase 8 | Complete |
 | EVAL-03 | Phase 8 | Complete |
-| HIST-01 | Phase 9 | Pending |
-| HIST-02 | Phase 9 | Pending |
-| HIST-03 | Phase 9 | Pending |
+| HIST-01 | Phase 9 | Complete |
+| HIST-02 | Phase 9 | Complete |
+| HIST-03 | Phase 9 | Complete |
 
 **Coverage:**
 - v1 requirements: 9 total
@@ -60,4 +60,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after phase 08 execution*
+*Last updated: 2026-03-24 after phase 09 execution*
