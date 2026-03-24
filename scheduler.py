@@ -62,6 +62,23 @@ LIGA_KEY_MAP = {
     "Ligue 1": "soccer_france_ligue_one"
 }
 
+
+def validar_entrada_analise(jogo, odd):
+    required_fields = ["home_team", "away_team", "jogo", "liga", "horario"]
+    for field in required_fields:
+        if not jogo.get(field):
+            return False, "invalid_input_missing_field"
+
+    try:
+        odd_val = float(odd)
+    except (TypeError, ValueError):
+        return False, "invalid_input_odd"
+
+    if odd_val <= 1.0:
+        return False, "invalid_input_odd"
+
+    return True, "ok"
+
 def obter_media_gols(time_casa, time_fora, liga_key="soccer_epl"):
     xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
     return xg_casa, xg_fora, fonte
@@ -149,9 +166,22 @@ async def processar_jogos():
 
     jogos_processados = set()
     candidatos = []
+    provider_health = {
+        "ok": 0,
+        "timeout": 0,
+        "http_error": 0,
+        "connection_error": 0,
+        "empty_payload": 0,
+        "invalid_input": 0,
+        "fallback_used": 0,
+    }
 
     for liga_key in LIGAS:
         dados_api = buscar_jogos_com_odds(liga_key)
+        if dados_api:
+            provider_health["ok"] += 1
+        else:
+            provider_health["empty_payload"] += 1
         jogos = formatar_jogos(dados_api)
 
         for jogo in jogos:
@@ -176,7 +206,10 @@ async def processar_jogos():
                     ("over_2.5", "over_2.5"),
                 ]:
                     odd = jogo["odds"].get(odd_key, 0)
-                    if odd == 0:
+                    valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
+                    if not valid_entrada:
+                        provider_health["invalid_input"] += 1
+                        print(f"Skip entrada {motivo_entrada}: {jogo.get('jogo', 'desconhecido')} | {mercado}")
                         continue
 
                     chave = f"{jogo['jogo']}|{mercado}"
@@ -221,6 +254,9 @@ async def processar_jogos():
                     analise["steam_bonus"] = steam_bonus
                     analise["fonte_dados"] = fonte_dados
 
+                    if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
+                        provider_health["fallback_used"] += 1
+
                     filtro = aplicar_triple_gate({
                         "ev": analise.get("ev", 0),
                         "odd": odd,
@@ -242,6 +278,7 @@ async def processar_jogos():
                         })
 
             except Exception as e:
+                provider_health["connection_error"] += 1
                 print(f"Erro ao processar {jogo['jogo']}: {e}")
 
     candidatos.sort(key=lambda x: x["score"], reverse=True)
@@ -356,6 +393,16 @@ async def processar_jogos():
         print(f"Sinal #{sinal_id}: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']} | Kelly:{kelly['kelly_final_pct']}%=R${stake_reais:.2f}{steam_info}")
 
     print(f"[{agora}] Concluído. {sinais_enviados} sinais enviados.")
+    print(
+        "Health summary: "
+        f"ok={provider_health['ok']} "
+        f"timeout={provider_health['timeout']} "
+        f"http_error={provider_health['http_error']} "
+        f"connection_error={provider_health['connection_error']} "
+        f"empty_payload={provider_health['empty_payload']} "
+        f"invalid_input={provider_health['invalid_input']} "
+        f"fallback_used={provider_health['fallback_used']}"
+    )
 
 async def monitorar_janela_expandida():
     todas_ligas = LIGAS_COPA + LIGAS_FIM_DE_SEMANA
