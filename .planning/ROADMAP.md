@@ -45,7 +45,7 @@ Plans:
 
 Plans:
 - [x] 02-01-PLAN.md: Centralize signal policy and structured gate reject metadata.
-- [ ] 02-02-PLAN.md: Harden Kelly safety guards and CLV/Brier linkage integrity.
+- [x] 02-02-PLAN.md: Harden Kelly safety guards and CLV/Brier linkage integrity.
 
 ### Phase 3: Operational Resilience
 **Goal**: Make scheduled automation safer to run continuously with clear diagnostics and startup checks.
