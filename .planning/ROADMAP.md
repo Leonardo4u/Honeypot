@@ -1,75 +1,89 @@
 # Roadmap: Edge Protocol Bot
 
-**Milestone:** v1 - Reliability and Signal Quality Hardening  
-**Created:** 2026-03-24
+## Overview
 
-## Phase 1 - Data Ingestion Reliability
+Harden the existing signal bot in four phases: first stabilize external data ingestion, then improve signal-quality controls, then make runtime operations more resilient, and finally add an automated testing baseline to reduce regression risk.
 
-**Goal:** Make external data ingestion resilient and observable so daily runs degrade gracefully instead of failing hard.
+## Phases
 
-**Covers:** DATA-01, DATA-02, DATA-03, DATA-04
+**Phase Numbering:**
+- Integer phases (1, 2, 3): Planned milestone work
+- Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-**Deliverables:**
-- Standardized retry/backoff wrappers for API calls.
-- Provider-specific error classification and fallback paths.
-- Input validation for xG/form payloads before model execution.
-- Data-health summary output per run.
+- [ ] **Phase 1: Data Ingestion Reliability** - Make data inputs resilient and observable.
+- [ ] **Phase 2: Signal Quality Controls** - Improve gate transparency and threshold consistency.
+- [ ] **Phase 3: Operational Resilience** - Strengthen scheduler safety and diagnostics.
+- [ ] **Phase 4: Testing and Verification Baseline** - Add deterministic tests and safe dry-run checks.
 
-**Definition of Done:**
-- Scheduler can complete cycles despite partial provider failures.
-- Failures are visible and categorized in logs.
+## Phase Details
 
-## Phase 2 - Signal Quality Controls
+### Phase 1: Data Ingestion Reliability
+**Goal**: Make external data ingestion resilient and observable so daily runs degrade gracefully instead of failing hard.
+**Depends on**: Nothing (first phase)
+**Requirements**: [DATA-01, DATA-02, DATA-03, DATA-04]
+**Success Criteria** (what must be TRUE):
+	1. Scheduler completes cycles despite partial provider failures.
+	2. Failures are categorized with clear operational logs.
+	3. Missing or malformed xG/form inputs are handled without crashing analysis.
+	4. Data-provider health is summarized each run.
+**Plans**: 2 plans
 
-**Goal:** Improve decision transparency and consistency for gating, thresholds, and stake sizing.
+Plans:
+- [ ] 01-01-PLAN.md: Shared retry/classification boundary for odds and results providers.
+- [ ] 01-02-PLAN.md: Input validation gates + per-run provider health summary.
 
-**Covers:** QUAL-01, QUAL-02, QUAL-03, QUAL-04
+### Phase 2: Signal Quality Controls
+**Goal**: Improve decision transparency and consistency for gating, thresholds, and stake sizing.
+**Depends on**: Phase 1
+**Requirements**: [QUAL-01, QUAL-02, QUAL-03, QUAL-04]
+**Success Criteria** (what must be TRUE):
+	1. Every rejected signal has explicit reason metadata.
+	2. Edge/confidence thresholds are centralized and auditable.
+	3. Stake sizing always respects bankroll safety caps.
+	4. CLV/Brier metrics maintain consistent signal linkage.
+**Plans**: TBD
 
-**Deliverables:**
-- Gate outputs with structured reject reasons.
-- Centralized threshold configuration with change trace.
-- Hard safety caps in stake sizing path.
-- Consistent CLV/Brier linkage by signal ID.
+Plans:
+- [ ] 02-01: Centralize gate and threshold configuration.
+- [ ] 02-02: Improve stake safety guards and post-result linkage integrity.
 
-**Definition of Done:**
-- Every signal decision is explainable and auditable.
-- No unsafe stake can be emitted from malformed inputs.
+### Phase 3: Operational Resilience
+**Goal**: Make scheduled automation safer to run continuously with clear diagnostics and startup checks.
+**Depends on**: Phase 2
+**Requirements**: [OPS-01, OPS-02, OPS-03, OPS-04]
+**Success Criteria** (what must be TRUE):
+	1. Repeated scheduler windows do not double-process the same work.
+	2. Per-game failures do not abort full job batches.
+	3. Logs expose critical execution milestones for daily diagnosis.
+	4. Missing env/db prerequisites fail fast with actionable messages.
+**Plans**: TBD
 
-## Phase 3 - Operational Resilience
+Plans:
+- [ ] 03-01: Implement idempotency and failure isolation across scheduler loops.
+- [ ] 03-02: Add startup preflight checks and structured operational logging.
 
-**Goal:** Make scheduled automation safer to run continuously with clear diagnostics and startup checks.
+### Phase 4: Testing and Verification Baseline
+**Goal**: Add automated confidence checks for core model, DB writes, and a safe dry-run path.
+**Depends on**: Phase 3
+**Requirements**: [TEST-01, TEST-02, TEST-03]
+**Success Criteria** (what must be TRUE):
+	1. Core scoring and gate behavior is covered by deterministic tests.
+	2. Database write paths for signals/results have integration-style checks.
+	3. End-to-end dry-run can validate flow without sending Telegram messages.
+**Plans**: TBD
 
-**Covers:** OPS-01, OPS-02, OPS-03, OPS-04
+Plans:
+- [ ] 04-01: Create model/gate unit tests with fixtures.
+- [ ] 04-02: Add DB integration tests and safe dry-run command.
 
-**Deliverables:**
-- Idempotent guards for repeated scheduler windows.
-- Isolation boundaries around per-game and per-task failures.
-- Structured logging for critical workflow milestones.
-- Preflight checks for env vars and DB connectivity.
+## Progress
 
-**Definition of Done:**
-- Bot tolerates recurring runtime issues without operational collapse.
-- Startup fails fast with actionable messages when prerequisites are missing.
-
-## Phase 4 - Testing and Verification Baseline
-
-**Goal:** Add automated confidence checks for core model, DB writes, and a safe dry-run path.
-
-**Covers:** TEST-01, TEST-02, TEST-03
-
-**Deliverables:**
-- Deterministic unit tests for scoring/gating logic.
-- Integration-style tests for persistence flow.
-- Dry-run command to validate end-to-end flow without live messaging.
-
-**Definition of Done:**
-- Core logic has repeatable test coverage.
-- Regressions are detectable before production runs.
-
-## Notes
-
-- Phases are intentionally ordered to reduce production risk early.
-- If urgent defects appear, add an inserted phase before continuing.
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Data Ingestion Reliability | 0/2 | Not started | - |
+| 2. Signal Quality Controls | 0/2 | Not started | - |
+| 3. Operational Resilience | 0/2 | Not started | - |
+| 4. Testing and Verification Baseline | 0/2 | Not started | - |
 
 ---
 *Last updated: 2026-03-24 after initialization*
