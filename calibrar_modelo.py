@@ -441,13 +441,15 @@ def rodar_calibracao_completa():
     print("   com os valores calibrados mostrados acima")
     print("2. O banco ja tem historico - forma_recente.py")
     print("   vai usar calcular_confianca_calibrada() automaticamente")
+    print("3. Este script nao altera poisson.py automaticamente")
+    print("   (apenas mostra os valores calibrados para aplicacao manual)")
     if brier:
         if brier < 0.20:
-            print("3. Brier Score EXCELENTE - modelo bem calibrado")
+            print("4. Brier Score EXCELENTE - modelo bem calibrado")
         elif brier < 0.25:
-            print("3. Brier Score BOM - monitorar com dados reais")
+            print("4. Brier Score BOM - monitorar com dados reais")
         else:
-            print("3. Brier Score ALTO - revisar xG de entrada do modelo")
+            print("4. Brier Score ALTO - revisar xG de entrada do modelo")
     print("\nRODAR: python calibrar_modelo.py")
 
 
