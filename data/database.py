@@ -22,6 +22,9 @@ def criar_banco():
             status TEXT DEFAULT 'pendente',
             resultado TEXT,
             lucro_unidades REAL,
+            message_id_vip INTEGER,
+            message_id_free INTEGER,
+            horario TEXT,
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -56,6 +59,26 @@ def criar_banco():
     print("Banco de dados criado com sucesso.")
 
 
+def garantir_colunas_sinais():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute("PRAGMA table_info(sinais)")
+    colunas_existentes = {row[1] for row in c.fetchall()}
+
+    colunas_requeridas = {
+        "message_id_vip": "INTEGER",
+        "message_id_free": "INTEGER",
+        "horario": "TEXT",
+    }
+
+    for coluna, tipo in colunas_requeridas.items():
+        if coluna not in colunas_existentes:
+            c.execute(f"ALTER TABLE sinais ADD COLUMN {coluna} {tipo}")
+
+    conn.commit()
+    conn.close()
+
+
 def garantir_tabela_execucoes():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -82,6 +105,7 @@ def garantir_schema_minimo():
         return
 
     garantir_tabela_execucoes()
+    garantir_colunas_sinais()
 
 
 def validar_schema_minimo(tabelas_criticas=None):

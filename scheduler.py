@@ -327,8 +327,10 @@ def formatar_sinal_kelly(analise, kelly):
     )
     return msg
 
-async def processar_jogos():
-    bot = Bot(token=TOKEN)
+async def processar_jogos(dry_run=False):
+    bot = None
+    if not dry_run:
+        bot = Bot(token=TOKEN)
     agora = datetime.now().strftime("%H:%M")
     print(f"\n[{agora}] Iniciando análise automática...")
 
@@ -520,6 +522,11 @@ async def processar_jogos():
 
         msg = formatar_sinal_kelly(analise, kelly)
         if not msg:
+            continue
+
+        if dry_run:
+            sinais_enviados += 1
+            print(f"[dry-run] Simulado sinal: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']}")
             continue
 
         msg_vip = await bot.send_message(chat_id=CANAL_VIP, text=msg)
@@ -972,7 +979,21 @@ def iniciar_scheduler():
         schedule.run_pending()
         time.sleep(60)
 
+
+def executar_dry_run_once():
+    log_event("runtime", "dry_run", "scheduler", "start")
+    try:
+        asyncio.run(processar_jogos(dry_run=True))
+        log_event("runtime", "dry_run", "scheduler", "end")
+        return 0
+    except Exception as e:
+        log_event("runtime", "dry_run", "scheduler", "failed", "dry_run_exception", {"erro": str(e)})
+        return 1
+
 if __name__ == "__main__":
+    if "--dry-run-once" in sys.argv:
+        raise SystemExit(executar_dry_run_once())
+
     try:
         iniciar_scheduler()
     except KeyboardInterrupt:
