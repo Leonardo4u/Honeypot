@@ -13,7 +13,10 @@ Harden the existing signal bot in four phases: first stabilize external data ing
 - [x] **Phase 1: Data Ingestion Reliability** - Make data inputs resilient and observable.
 - [x] **Phase 2: Signal Quality Controls** - Improve gate transparency and threshold consistency.
 - [x] **Phase 3: Operational Resilience** - Strengthen scheduler safety and diagnostics.
-- [x] **Phase 4: Testing and Verification Baseline** - Add deterministic tests and safe dry-run checks. (completed 2026-03-24)
+- [x] **Phase 4: Testing and Verification Baseline** - Add deterministic tests and safe dry-run checks.
+ (completed 2026-03-24)
+- [ ] **Phase 5: Verification Chain Closure** - Close missing phase-4 verification artifacts and milestone chain consistency gaps.
+- [ ] **Phase 6: Requirements and Metadata Reconciliation** - Reconcile requirement traceability and planning metadata with delivered evidence.
 
 ## Phase Details
 
@@ -76,6 +79,26 @@ Plans:
 - [x] 04-01-PLAN.md: Deterministic unit tests for model analysis and gate reason codes.
 - [x] 04-02-PLAN.md: DB integration tests plus no-send scheduler dry-run smoke command.
 
+### Phase 5: Verification Chain Closure
+**Goal**: Restore end-to-end milestone verification consistency by adding missing phase-level verification artifacts.
+**Depends on**: Phase 4
+**Requirements**: [TEST-01, TEST-02, TEST-03]
+**Gap Closure**: Closes audit gaps for missing phase-4 verification and milestone verification-chain integration.
+**Plans**: TBD
+
+Plans:
+- [ ] 05-01: Create and validate phase-4 verification artifact from test/UAT evidence.
+
+### Phase 6: Requirements and Metadata Reconciliation
+**Goal**: Reconcile requirement traceability and planning state metadata to match delivered milestone evidence.
+**Depends on**: Phase 5
+**Requirements**: [DATA-01, DATA-02, DATA-03, DATA-04]
+**Gap Closure**: Closes audit drift in REQUIREMENTS/STATE consistency.
+**Plans**: TBD
+
+Plans:
+- [ ] 06-01: Update traceability/state records and re-baseline milestone metadata.
+
 ## Progress
 
 | Phase | Plans Complete | Status | Completed |
@@ -84,6 +107,8 @@ Plans:
 | 2. Signal Quality Controls | 2/2 | Complete | 2026-03-24 |
 | 3. Operational Resilience | 2/2 | Complete | 2026-03-24 |
 | 4. Testing and Verification Baseline | 2/2 | Complete   | 2026-03-24 |
+| 5. Verification Chain Closure | 0/1 | Not started | - |
+| 6. Requirements and Metadata Reconciliation | 0/1 | Not started | - |
 
 ---
 *Last updated: 2026-03-24 after initialization*
