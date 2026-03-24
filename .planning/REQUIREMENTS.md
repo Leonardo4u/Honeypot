@@ -21,8 +21,8 @@
 
 ### Operational Resilience
 
-- [ ] **OPS-01**: Scheduler jobs are idempotent for repeated/overlapping execution windows.
-- [ ] **OPS-02**: Per-game failures are isolated and logged without aborting the full job batch.
+- [x] **OPS-01**: Scheduler jobs are idempotent for repeated/overlapping execution windows.
+- [x] **OPS-02**: Per-game failures are isolated and logged without aborting the full job batch.
 - [ ] **OPS-03**: Critical workflow steps emit structured logs suitable for daily diagnostics.
 - [ ] **OPS-04**: Startup checks validate required env variables and database availability before running loops.
 
@@ -60,8 +60,8 @@
 | QUAL-02 | Phase 2 | Complete |
 | QUAL-03 | Phase 2 | Complete |
 | QUAL-04 | Phase 2 | Complete |
-| OPS-01 | Phase 3 | Pending |
-| OPS-02 | Phase 3 | Pending |
+| OPS-01 | Phase 3 | Complete |
+| OPS-02 | Phase 3 | Complete |
 | OPS-03 | Phase 3 | Pending |
 | OPS-04 | Phase 3 | Pending |
 | TEST-01 | Phase 4 | Pending |

@@ -59,7 +59,7 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 03-01-PLAN.md: Persistent idempotency registry + guarded scheduler failure isolation.
+- [x] 03-01-PLAN.md: Persistent idempotency registry + guarded scheduler failure isolation.
 - [ ] 03-02-PLAN.md: Startup preflight fail-fast + structured operational diagnostics.
 
 ### Phase 4: Testing and Verification Baseline
