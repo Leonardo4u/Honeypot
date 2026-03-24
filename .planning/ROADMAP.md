@@ -10,9 +10,9 @@ Harden the existing signal bot in four phases: first stabilize external data ing
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Data Ingestion Reliability** - Make data inputs resilient and observable.
-- [ ] **Phase 2: Signal Quality Controls** - Improve gate transparency and threshold consistency.
-- [ ] **Phase 3: Operational Resilience** - Strengthen scheduler safety and diagnostics.
+- [x] **Phase 1: Data Ingestion Reliability** - Make data inputs resilient and observable.
+- [x] **Phase 2: Signal Quality Controls** - Improve gate transparency and threshold consistency.
+- [x] **Phase 3: Operational Resilience** - Strengthen scheduler safety and diagnostics.
 - [ ] **Phase 4: Testing and Verification Baseline** - Add deterministic tests and safe dry-run checks.
 
 ## Phase Details
@@ -60,7 +60,7 @@ Plans:
 
 Plans:
 - [x] 03-01-PLAN.md: Persistent idempotency registry + guarded scheduler failure isolation.
-- [ ] 03-02-PLAN.md: Startup preflight fail-fast + structured operational diagnostics.
+- [x] 03-02-PLAN.md: Startup preflight fail-fast + structured operational diagnostics.
 
 ### Phase 4: Testing and Verification Baseline
 **Goal**: Add automated confidence checks for core model, DB writes, and a safe dry-run path.
@@ -81,8 +81,8 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Ingestion Reliability | 2/2 | Complete | 2026-03-24 |
-| 2. Signal Quality Controls | 0/2 | Not started | - |
-| 3. Operational Resilience | 0/2 | Not started | - |
+| 2. Signal Quality Controls | 2/2 | Complete | 2026-03-24 |
+| 3. Operational Resilience | 2/2 | Complete | 2026-03-24 |
 | 4. Testing and Verification Baseline | 0/2 | Not started | - |
 
 ---

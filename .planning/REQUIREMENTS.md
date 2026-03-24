@@ -23,8 +23,8 @@
 
 - [x] **OPS-01**: Scheduler jobs are idempotent for repeated/overlapping execution windows.
 - [x] **OPS-02**: Per-game failures are isolated and logged without aborting the full job batch.
-- [ ] **OPS-03**: Critical workflow steps emit structured logs suitable for daily diagnostics.
-- [ ] **OPS-04**: Startup checks validate required env variables and database availability before running loops.
+- [x] **OPS-03**: Critical workflow steps emit structured logs suitable for daily diagnostics.
+- [x] **OPS-04**: Startup checks validate required env variables and database availability before running loops.
 
 ### Testing and Verification
 
@@ -62,8 +62,8 @@
 | QUAL-04 | Phase 2 | Complete |
 | OPS-01 | Phase 3 | Complete |
 | OPS-02 | Phase 3 | Complete |
-| OPS-03 | Phase 3 | Pending |
-| OPS-04 | Phase 3 | Pending |
+| OPS-03 | Phase 3 | Complete |
+| OPS-04 | Phase 3 | Complete |
 | TEST-01 | Phase 4 | Pending |
 | TEST-02 | Phase 4 | Pending |
 | TEST-03 | Phase 4 | Pending |
