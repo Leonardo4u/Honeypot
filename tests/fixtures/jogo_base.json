@@ -1,0 +1,16 @@
+{
+  "liga": "Premier League",
+  "jogo": "Arsenal vs Chelsea",
+  "horario": "2026-03-24T17:30:00Z",
+  "media_gols_casa": 2.1,
+  "media_gols_fora": 1.0,
+  "mercado": "1x2_casa",
+  "odd": 1.92,
+  "ajuste_lesoes": -0.03,
+  "ajuste_motivacao": 0.02,
+  "ajuste_fadiga": 0.0,
+  "confianca_dados": 85,
+  "estabilidade_odd": 80,
+  "contexto_jogo": 75,
+  "banca": 1000
+}
