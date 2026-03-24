@@ -23,6 +23,7 @@ from clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_
 from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
 from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
+from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -33,8 +34,6 @@ CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
 
 MAX_SINAIS_DIA = 10
-MIN_EDGE_SCORE = 72
-MIN_CONFIANCA = 70
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
 
