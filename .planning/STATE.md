@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 06 Complete
-last_updated: "2026-03-24T12:10:00-03:00"
+status: v1.0 milestone complete
+last_updated: "2026-03-24T15:09:52.197Z"
 progress:
   total_phases: 6
   completed_phases: 6
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 11
+  completed_plans: 11
 ---
 
 # STATE
@@ -16,9 +16,9 @@ progress:
 ## Status
 
 - Milestone: v1 - Reliability and Signal Quality Hardening
-- Current phase: 6
-- Current command: /gsd-audit-milestone
-- Overall progress: phase 6 completed
+- Current phase: complete
+- Current command: /gsd-new-milestone
+- Overall progress: v1.0 milestone shipped and archived
 
 ## Project Reference
 
@@ -30,8 +30,9 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 ## Artifacts
 
 - Project context: .planning/PROJECT.md
-- Requirements: .planning/REQUIREMENTS.md
+- Requirements archive: .planning/milestones/v1.0-REQUIREMENTS.md
 - Roadmap: .planning/ROADMAP.md
+- Roadmap archive: .planning/milestones/v1.0-ROADMAP.md
 - Codebase map: .planning/codebase/
 
 ## Recent Events
@@ -45,10 +46,11 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - 2026-03-24: Phase 4 testing/UAT evidence finalized and verification artifact created.
 - 2026-03-24: Phase 5 verification-chain closure executed with 1/1 plan and verification report generated.
 - 2026-03-24: Phase 6 requirements and metadata reconciliation executed with 1/1 plan and evidence-chain metadata updates.
+- 2026-03-24: v1.0 milestone audit passed and milestone was archived.
 
 ## Next Step
 
-Run `/gsd-audit-milestone` to verify gap closure before milestone completion.
+Run `/gsd-new-milestone` to define the next milestone requirements and roadmap.
 
 ---
-*Last updated: 2026-03-24 after phase 06 execution*
+*Last updated: 2026-03-24 after v1.0 milestone completion*

@@ -16,12 +16,15 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Telegram delivery and command-based bot interactions are available via `scheduler.py` and `bot/telegram_bot.py`.
 - ✓ Persistent storage and historical tracking are implemented with SQLite in `data/database.py`.
 - ✓ Signal-quality controls were hardened with centralized thresholds, structured reject reasons, and safer stake/linkage handling (validated in Phase 2: Signal Quality Controls).
+- ✓ Data ingestion resilience and provider-health observability were hardened with retry categorization and validation/fallback controls (validated in Phases 1 and 6 reconciliation).
+- ✓ Operational resilience baseline (idempotent scheduler windows, startup preflight, structured diagnostics) is verified and stable (validated in Phase 3).
+- ✓ Deterministic model/gate tests, DB integration tests, and dry-run no-send runtime checks are established and verified (validated in Phases 4 and 5).
 
 ### Active
 
-- [ ] Increase reliability of external data ingestion (odds/results/xG) with better retries, fallbacks, and observability.
-- [ ] Strengthen operational safety (idempotency, failure isolation, and monitoring) for long-running scheduler execution.
-- [ ] Formalize validation and test coverage for critical business logic.
+- [ ] Improve Nyquist validation completeness for legacy phases and automation checks.
+- [ ] Expand testing depth to include more business edge cases and failure-injection scenarios.
+- [ ] Define v1.1 goals (scope, requirements, and acceptance criteria) for the next milestone.
 
 ### Out of Scope
 
@@ -35,6 +38,19 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - Runtime uses local files + SQLite + Telegram + external APIs.
 - Codebase map already exists in `.planning/codebase/` and should be treated as architectural reference.
 
+## Current State
+
+- Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
+- All v1 requirements currently tracked in the v1.0 archive were marked complete and reconciled to phase evidence.
+- Milestone audit status is `passed` with no blocking gaps.
+- Remaining technical debt is primarily process-level Nyquist coverage for earlier phases.
+
+## Next Milestone Goals
+
+- Define v1.1 requirement set with explicit scope boundaries before new implementation work.
+- Keep reliability-first approach while extending verification depth.
+- Preserve current runtime safety guarantees while introducing incremental improvements only.
+
 ## Constraints
 
 - **Execution Model**: Long-running scheduler on Windows environment — must remain robust to transient API/network failures.
@@ -46,9 +62,9 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Keep script-oriented architecture for now | Fast iteration and existing operational familiarity | — Pending |
-| Prioritize reliability and validation before adding new product surfaces | Better signal trustworthiness gives highest immediate value | — Pending |
-| Use phased hardening approach (data reliability -> model gates -> ops quality) | Reduces risk and keeps changes reviewable | — Pending |
+| Keep script-oriented architecture for now | Fast iteration and existing operational familiarity | ✓ Confirmed in v1.0 |
+| Prioritize reliability and validation before adding new product surfaces | Better signal trustworthiness gives highest immediate value | ✓ Confirmed in v1.0 |
+| Use phased hardening approach (data reliability -> model gates -> ops quality) | Reduces risk and keeps changes reviewable | ✓ Confirmed in v1.0 |
 
 ## Evolution
 
@@ -68,4 +84,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after initialization*
+*Last updated: 2026-03-24 after v1.0 milestone completion*
