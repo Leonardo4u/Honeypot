@@ -1,6 +1,7 @@
 import requests
 import os
 from dotenv import load_dotenv
+from ingestion_resilience import request_with_retry
 
 load_dotenv()
 
@@ -21,16 +22,26 @@ def buscar_jogos_com_odds(liga, mercados="h2h,totals"):
         "dateFormat": "iso"
     }
 
-    try:
-        response = requests.get(url, params=params, timeout=10)
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print(f"Erro na API: {response.status_code} — {response.text}")
-            return []
-    except Exception as e:
-        print(f"Erro de conexão: {e}")
-        return []
+    result = request_with_retry(
+        url=url,
+        params=params,
+        timeout=10,
+        attempts=3,
+        backoff_seconds=0.8,
+        source_name=f"odds_api:{liga}",
+    )
+
+    if result["ok"]:
+        return result["data"]
+
+    print(
+        "Erro API odds "
+        f"[{result.get('status')}] "
+        f"status_code={result.get('status_code')} "
+        f"attempts={result.get('attempts_used')} "
+        f"error={result.get('error')}"
+    )
+    return []
 
 def extrair_melhor_odd(jogo):
     melhor_casa = 0

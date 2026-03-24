@@ -3,6 +3,7 @@ import os
 import sys
 from datetime import datetime, date
 from dotenv import load_dotenv
+from ingestion_resilience import request_with_retry
 
 load_dotenv()
 
@@ -32,21 +33,29 @@ def buscar_resultado_jogo(time_casa, time_fora, data=None):
         data = str(date.today())
 
     try:
-        response = requests.get(
-            "https://v3.football.api-sports.io/fixtures",
+        result = request_with_retry(
+            url="https://v3.football.api-sports.io/fixtures",
             headers=HEADERS,
             params={
                 "date": data,
                 "timezone": "America/Sao_Paulo"
             },
-            timeout=10
+            timeout=10,
+            attempts=3,
+            backoff_seconds=0.8,
+            source_name="api_football:fixtures",
         )
 
-        if response.status_code != 200:
-            print(f"Erro API: {response.status_code}")
+        if not result["ok"]:
+            print(
+                "Erro API resultados "
+                f"[{result.get('status')}] "
+                f"status_code={result.get('status_code')} "
+                f"attempts={result.get('attempts_used')}"
+            )
             return None
 
-        fixtures = response.json().get("response", [])
+        fixtures = result["data"].get("response", [])
 
         for fixture in fixtures:
             home = fixture["teams"]["home"]["name"]

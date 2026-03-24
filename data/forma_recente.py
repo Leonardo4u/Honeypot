@@ -27,7 +27,15 @@ def calcular_forma_local(time, ultimos=5):
     conn.close()
 
     if not jogos:
-        return None
+        return {
+            "pontos": 0,
+            "forma_percent": 50.0,
+            "sequencia": [],
+            "jogos": 0,
+            "fonte": "local_fallback",
+            "fallback": True,
+            "source_marker": "fallback_no_local_history"
+        }
 
     pontos = 0
     sequencia = []
@@ -57,7 +65,9 @@ def calcular_forma_local(time, ultimos=5):
         "forma_percent": forma_percent,
         "sequencia": sequencia,
         "jogos": n,
-        "fonte": "local"
+        "fonte": "local",
+        "fallback": False,
+        "source_marker": "local_history"
     }
 
 def calcular_ajuste_forma(time_casa, time_fora):
@@ -108,9 +118,9 @@ def calcular_confianca_dados(time_casa, time_fora):
     forma_casa = calcular_forma_local(time_casa)
     forma_fora = calcular_forma_local(time_fora)
 
-    if forma_casa:
+    if forma_casa and not forma_casa.get("fallback", False):
         confianca += 5
-    if forma_fora:
+    if forma_fora and not forma_fora.get("fallback", False):
         confianca += 5
 
     return min(100, confianca)

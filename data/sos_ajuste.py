@@ -164,7 +164,7 @@ def calcular_xg_com_sos(time_casa, time_fora, liga_key="soccer_epl"):
     if detalhes:
         comparar_probabilidades(media_casa, media_fora, xg_ajustado_casa, xg_ajustado_fora)
 
-    fonte_final = f"{fonte}+SOS" if status == "sos_aplicado" else fonte
+    fonte_final = f"{fonte}+SOS" if status == "sos_aplicado" else f"{fonte}+fallback_sos"
 
     return xg_ajustado_casa, xg_ajustado_fora, fonte_final
 

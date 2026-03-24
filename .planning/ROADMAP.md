@@ -29,8 +29,8 @@ Harden the existing signal bot in four phases: first stabilize external data ing
 **Plans**: 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md: Shared retry/classification boundary for odds and results providers.
-- [ ] 01-02-PLAN.md: Input validation gates + per-run provider health summary.
+- [x] 01-01-PLAN.md: Shared retry/classification boundary for odds and results providers.
+- [x] 01-02-PLAN.md: Input validation gates + per-run provider health summary.
 
 ### Phase 2: Signal Quality Controls
 **Goal**: Improve decision transparency and consistency for gating, thresholds, and stake sizing.
@@ -80,7 +80,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Ingestion Reliability | 0/2 | Not started | - |
+| 1. Data Ingestion Reliability | 2/2 | Complete | 2026-03-24 |
 | 2. Signal Quality Controls | 0/2 | Not started | - |
 | 3. Operational Resilience | 0/2 | Not started | - |
 | 4. Testing and Verification Baseline | 0/2 | Not started | - |
