@@ -25,7 +25,8 @@ Milestone v1.1 expands model quality operations through calibration and historic
 
 - [x] **Phase 7: Historical Calibration Baseline** - Build deterministic ingestion and rho calibration workflow.
  (completed 2026-03-24)
-- [ ] **Phase 8: Diagnostic Quality Evaluation** - Add reproducible Brier and market-level evaluation outputs.
+- [x] **Phase 8: Diagnostic Quality Evaluation** - Add reproducible Brier and market-level evaluation outputs.
+ (completed 2026-03-24)
 - [ ] **Phase 9: Historical Persistence and Operator Safety** - Harden historical backfill behavior and usage flow.
 
 ## Phase Details
@@ -55,8 +56,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md: Brier workflow and reproducible sampling/reporting guardrails.
-- [ ] 08-02-PLAN.md: Market-level win-rate and ROI diagnostics with minimum quality checks.
+- [x] 08-01-PLAN.md: Brier workflow and reproducible sampling/reporting guardrails.
+- [x] 08-02-PLAN.md: Market-level win-rate and ROI diagnostics with minimum quality checks.
 
 ### Phase 9: Historical Persistence and Operator Safety
 **Goal**: Persist useful historical records safely so confidence calibration can consume them without data pollution.
@@ -76,8 +77,8 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 7. Historical Calibration Baseline | 2/2 | Complete    | 2026-03-24 |
-| 8. Diagnostic Quality Evaluation | 0/2 | Not Started | — |
+| 8. Diagnostic Quality Evaluation | 2/2 | Complete | 2026-03-24 |
 | 9. Historical Persistence and Operator Safety | 0/1 | Not Started | — |
 
 ---
-*Last updated: 2026-03-24 after phase 08 planning*
+*Last updated: 2026-03-24 after phase 08 execution*

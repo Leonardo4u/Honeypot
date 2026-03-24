@@ -13,9 +13,9 @@
 
 ### Historical Evaluation
 
-- [ ] **EVAL-01**: Model computes historical Brier score over reproducible random sample.
-- [ ] **EVAL-02**: Evaluation reports `% without xG` fallback usage to expose data quality.
-- [ ] **EVAL-03**: Model reports historical win-rate and ROI by core markets with clear signal counts.
+- [x] **EVAL-01**: Model computes historical Brier score over reproducible random sample.
+- [x] **EVAL-02**: Evaluation reports `% without xG` fallback usage to expose data quality.
+- [x] **EVAL-03**: Model reports historical win-rate and ROI by core markets with clear signal counts.
 
 ### Historical Persistence and Safety
 
@@ -46,9 +46,9 @@
 | CAL-01 | Phase 7 | Complete |
 | CAL-02 | Phase 7 | Complete |
 | CAL-03 | Phase 7 | Complete |
-| EVAL-01 | Phase 8 | Pending |
-| EVAL-02 | Phase 8 | Pending |
-| EVAL-03 | Phase 8 | Pending |
+| EVAL-01 | Phase 8 | Complete |
+| EVAL-02 | Phase 8 | Complete |
+| EVAL-03 | Phase 8 | Complete |
 | HIST-01 | Phase 9 | Pending |
 | HIST-02 | Phase 9 | Pending |
 | HIST-03 | Phase 9 | Pending |
@@ -60,4 +60,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after phase 07 execution*
+*Last updated: 2026-03-24 after phase 08 execution*

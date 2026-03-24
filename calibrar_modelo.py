@@ -83,7 +83,9 @@ def carregar_historico():
                 continue
 
             try:
-                df = pd.read_csv(path, on_bad_lines="skip")
+                # copy() evita fragmentacao interna em CSVs com muitas colunas
+                # antes de adicionarmos colunas auxiliares como liga/temporada.
+                df = pd.read_csv(path, on_bad_lines="skip").copy()
                 df["liga"] = liga
                 df["temporada"] = temp
 
@@ -124,7 +126,11 @@ def carregar_historico():
                 df["gols_fora"] = df["gols_fora"].astype(int)
 
                 if "data_jogo" in df.columns:
-                    df["data_jogo"] = pd.to_datetime(df["data_jogo"], errors="coerce")
+                    df["data_jogo"] = pd.to_datetime(
+                        df["data_jogo"],
+                        errors="coerce",
+                        dayfirst=True,
+                    )
                     df["data_jogo"] = df["data_jogo"].dt.strftime("%Y-%m-%d")
 
                 dfs.append(df)
@@ -169,12 +175,12 @@ def calibrar_rho_por_liga(df):
     return rho_calibrado
 
 
-def calcular_brier_historico(df, n_amostras=1000):
+def calcular_brier_historico(df, n_amostras=1000, random_state=42):
     from poisson import calcular_probabilidades
     from xg_understat import calcular_media_gols_com_xg
 
     print(f"\n=== BRIER SCORE HISTORICO (amostra: {n_amostras} jogos) ===")
-    amostra = df.sample(min(n_amostras, len(df)), random_state=42)
+    amostra = df.sample(min(n_amostras, len(df)), random_state=random_state)
 
     brier_scores = []
     sem_xg = 0
@@ -210,20 +216,40 @@ def calcular_brier_historico(df, n_amostras=1000):
 
     if not brier_scores:
         print("Nenhum dado processado.")
-        return None
+        return {
+            "brier_score": None,
+            "jogos_processados": 0,
+            "sem_xg": 0,
+            "sem_xg_pct": 0.0,
+            "classificacao": "sem_dados",
+            "amostra_solicitada": int(n_amostras),
+            "seed": random_state,
+        }
 
     brier = sum(brier_scores) / len(brier_scores)
+    sem_xg_pct = (sem_xg / len(brier_scores) * 100)
     print(f"Jogos processados: {len(brier_scores)}")
-    print(f"Sem dados xG (usou medias): {sem_xg} ({sem_xg / len(brier_scores) * 100:.0f}%)")
+    print(f"Sem dados xG (usou medias): {sem_xg} ({sem_xg_pct:.0f}%)")
     print(f"Brier Score: {brier:.4f}", end="  ->  ")
     if brier < 0.20:
         print("EXCELENTE")
+        classificacao = "excelente"
     elif brier < 0.25:
         print("BOM")
+        classificacao = "bom"
     else:
         print("MODELO PRECISA DE AJUSTE")
+        classificacao = "ajuste"
 
-    return brier
+    return {
+        "brier_score": round(float(brier), 4),
+        "jogos_processados": len(brier_scores),
+        "sem_xg": sem_xg,
+        "sem_xg_pct": round(float(sem_xg_pct), 2),
+        "classificacao": classificacao,
+        "amostra_solicitada": int(n_amostras),
+        "seed": random_state,
+    }
 
 
 def _odd_valida(valor):
@@ -252,6 +278,7 @@ def calcular_win_rate_historico(df):
         "1x2_fora": {"total": 0, "wins": 0, "lucro": 0.0, "ev_soma": 0.0},
     }
     ev_min = 0.06
+    amostra_minima = 30
 
     for _, row in df.iterrows():
         try:
@@ -300,16 +327,26 @@ def calcular_win_rate_historico(df):
         except Exception:
             continue
 
-    print(f"\n{'Mercado':<12} {'Sinais':>8} {'Win Rate':>10} {'ROI':>8} {'Lucro':>10}")
+    print(f"\n{'Mercado':<12} {'Sinais':>8} {'Win Rate':>10} {'ROI':>8} {'Lucro':>10} {'Qualidade':>11}")
     print("-" * 52)
+    resumo = {}
     for mercado, r in mercados.items():
-        if r["total"] == 0:
-            continue
-        wr = r["wins"] / r["total"] * 100
-        roi = r["lucro"] / r["total"] * 100
-        print(f"{mercado:<12} {r['total']:>8} {wr:>9.1f}% {roi:>+7.2f}% {r['lucro']:>+10.2f}u")
+        total = r["total"]
+        wr = (r["wins"] / total * 100) if total > 0 else 0.0
+        roi = (r["lucro"] / total * 100) if total > 0 else 0.0
+        qualidade = "baixa_amostra" if 0 < total < amostra_minima else ("sem_sinal" if total == 0 else "ok")
+        print(f"{mercado:<12} {total:>8} {wr:>9.1f}% {roi:>+7.2f}% {r['lucro']:>+10.2f}u {qualidade:>11}")
+        resumo[mercado] = {
+            "total": total,
+            "wins": r["wins"],
+            "lucro": round(float(r["lucro"]), 4),
+            "ev_soma": round(float(r["ev_soma"]), 4),
+            "win_rate_pct": round(float(wr), 2),
+            "roi_pct": round(float(roi), 2),
+            "qualidade": qualidade,
+        }
 
-    return mercados
+    return resumo
 
 
 def popular_banco_historico(df, n_max=2000):
@@ -443,10 +480,10 @@ def rodar_calibracao_completa():
     print("   vai usar calcular_confianca_calibrada() automaticamente")
     print("3. Este script nao altera poisson.py automaticamente")
     print("   (apenas mostra os valores calibrados para aplicacao manual)")
-    if brier:
-        if brier < 0.20:
+    if brier and brier.get("brier_score") is not None:
+        if brier["brier_score"] < 0.20:
             print("4. Brier Score EXCELENTE - modelo bem calibrado")
-        elif brier < 0.25:
+        elif brier["brier_score"] < 0.25:
             print("4. Brier Score BOM - monitorar com dados reais")
         else:
             print("4. Brier Score ALTO - revisar xG de entrada do modelo")
