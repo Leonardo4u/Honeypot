@@ -7,9 +7,9 @@
 
 ### Calibration Pipeline
 
-- [ ] **CAL-01**: Operator can run one command to execute end-to-end historical calibration flow.
-- [ ] **CAL-02**: Model reports calibrated `rho` by league with baseline-vs-calibrated delta and sample size.
-- [ ] **CAL-03**: Historical dataset loading is cache-aware and does not redownload existing CSV files.
+- [x] **CAL-01**: Operator can run one command to execute end-to-end historical calibration flow.
+- [x] **CAL-02**: Model reports calibrated `rho` by league with baseline-vs-calibrated delta and sample size.
+- [x] **CAL-03**: Historical dataset loading is cache-aware and does not redownload existing CSV files.
 
 ### Historical Evaluation
 
@@ -43,9 +43,9 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CAL-01 | Phase 7 | Pending |
-| CAL-02 | Phase 7 | Pending |
-| CAL-03 | Phase 7 | Pending |
+| CAL-01 | Phase 7 | Complete |
+| CAL-02 | Phase 7 | Complete |
+| CAL-03 | Phase 7 | Complete |
 | EVAL-01 | Phase 8 | Pending |
 | EVAL-02 | Phase 8 | Pending |
 | EVAL-03 | Phase 8 | Pending |
@@ -60,4 +60,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after v1.1 definition*
+*Last updated: 2026-03-24 after phase 07 execution*

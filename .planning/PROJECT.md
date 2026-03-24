@@ -19,10 +19,10 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Data ingestion resilience and provider-health observability were hardened with retry categorization and validation/fallback controls (validated in Phases 1 and 6 reconciliation).
 - ✓ Operational resilience baseline (idempotent scheduler windows, startup preflight, structured diagnostics) is verified and stable (validated in Phase 3).
 - ✓ Deterministic model/gate tests, DB integration tests, and dry-run no-send runtime checks are established and verified (validated in Phases 4 and 5).
+- ✓ Historical calibration baseline is operational with cache-aware ingestion and league-level rho reporting (validated in Phase 7: Historical Calibration Baseline).
 
 ### Active
 
-- [ ] Execute calibration pipeline with historical data cache and league-level rho output.
 - [ ] Add historical diagnostics (Brier score, win-rate, ROI) as repeatable operator checks.
 - [ ] Populate historical calibration data in SQLite with idempotent safeguards.
 
@@ -43,6 +43,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
 - Milestone v1.1 is now active with calibration/backtesting scope.
 - Existing runtime safety baseline remains the quality floor for all new changes.
+- Phase 7 is complete and verified; focus now moves to diagnostic quality evaluation (Phase 8).
 
 ## Current Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
 
@@ -93,4 +94,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after v1.1 milestone initialization*
+*Last updated: 2026-03-24 after phase 07 completion*

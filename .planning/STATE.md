@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: Calibracao Estatistica e Backtesting Operacional
-status: requirements and roadmap defined
-last_updated: "2026-03-24T18:20:00.000Z"
+milestone_name: milestone
+status: Phase 7 complete, ready for phase 8 planning
+last_updated: "2026-03-24T20:45:00.000Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 0
+  completed_plans: 2
 ---
 
 # STATE
@@ -16,16 +16,16 @@ progress:
 ## Status
 
 - Milestone: v1.1 - Calibracao Estatistica e Backtesting Operacional
-- Current phase: Not started (ready for planning)
-- Current command: /gsd-plan-phase 7
-- Overall progress: v1.1 bootstrapped with research, requirements, and roadmap
+- Current phase: 8 (Diagnostic Quality Evaluation) - not started
+- Current command: /gsd-plan-phase 8
+- Overall progress: Phase 7 executed and verified; v1.1 continues with phase 8
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Historical calibration and diagnostics baseline
+**Current focus:** Phase 8 — Diagnostic Quality Evaluation
 
 ## Artifacts
 
@@ -49,10 +49,11 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - 2026-03-24: Phase 6 requirements and metadata reconciliation executed with 1/1 plan and evidence-chain metadata updates.
 - 2026-03-24: v1.0 milestone audit passed and milestone was archived.
 - 2026-03-24: v1.1 initialized with research-first flow, new REQUIREMENTS.md, and phases 7-9 in ROADMAP.md.
+- 2026-03-24: Phase 7 executed (07-01 and 07-02), verification passed, and CAL requirements marked complete.
 
 ## Next Step
 
-Run `/gsd-plan-phase 7` to create executable plans for the first v1.1 phase.
+Run `/gsd-plan-phase 8` to create executable plans for the next v1.1 phase.
 
 ---
-*Last updated: 2026-03-24 after v1.1 milestone initialization*
+*Last updated: 2026-03-24 after phase 07 execution*

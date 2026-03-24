@@ -15,7 +15,8 @@ Milestone v1.1 expands model quality operations through calibration and historic
 - Integer phases (7, 8, 9): Planned milestone work
 - Decimal phases (7.1, 8.1): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 7: Historical Calibration Baseline** - Build deterministic ingestion and rho calibration workflow.
+- [x] **Phase 7: Historical Calibration Baseline** - Build deterministic ingestion and rho calibration workflow.
+ (completed 2026-03-24)
 - [ ] **Phase 8: Diagnostic Quality Evaluation** - Add reproducible Brier and market-level evaluation outputs.
 - [ ] **Phase 9: Historical Persistence and Operator Safety** - Harden historical backfill behavior and usage flow.
 
@@ -32,8 +33,8 @@ Milestone v1.1 expands model quality operations through calibration and historic
 **Plans**: 2 plans
 
 Plans:
-- [ ] 07-01-PLAN.md: Historical ingestion/caching pipeline and normalized dataset loading.
-- [ ] 07-02-PLAN.md: League-level rho calibration output and operator-facing calibration summary.
+- [x] 07-01-PLAN.md: Historical ingestion/caching pipeline and normalized dataset loading.
+- [x] 07-02-PLAN.md: League-level rho calibration output and operator-facing calibration summary.
 
 ### Phase 8: Diagnostic Quality Evaluation
 **Goal**: Quantify model historical quality with stable and interpretable diagnostics.
@@ -66,9 +67,9 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 7. Historical Calibration Baseline | 0/2 | Not Started | — |
+| 7. Historical Calibration Baseline | 2/2 | Complete    | 2026-03-24 |
 | 8. Diagnostic Quality Evaluation | 0/2 | Not Started | — |
 | 9. Historical Persistence and Operator Safety | 0/1 | Not Started | — |
 
 ---
-*Last updated: 2026-03-24 after v1.1 roadmap creation*
+*Last updated: 2026-03-24 after phase 07 execution*
