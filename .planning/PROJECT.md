@@ -23,8 +23,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ### Active
 
-- [ ] Add historical diagnostics (Brier score, win-rate, ROI) as repeatable operator checks.
-- [ ] Populate historical calibration data in SQLite with idempotent safeguards.
+- [ ] Define v1.2 scope and requirement baseline.
 
 ### Out of Scope
 
@@ -41,23 +40,23 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 ## Current State
 
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
-- Milestone v1.1 is now active with calibration/backtesting scope.
+- Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- Phase 7 is complete and verified; focus now moves to diagnostic quality evaluation (Phase 8).
+- No active milestone is in execution.
 
-## Current Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
+## Last Shipped Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
 
-**Goal:** Improve model calibration confidence with reproducible historical evaluation and safe persistence of calibration-oriented history.
+**Goal achieved:** Improve model calibration confidence with reproducible historical evaluation and safe persistence of calibration-oriented history.
 
-**Target features:**
+**Delivered features:**
 - End-to-end calibration script for historical ingestion and rho-by-league output.
 - Historical quality metrics (Brier and market-level win-rate/ROI) for operator feedback.
 - Safe historical backfill in `sinais` with duplicate guard and source tagging.
 
 ## Next Milestone Goals
 
-- Deliver v1.1 requirements mapped to executable phases 7-9.
-- Keep reliability-first approach while extending model calibration quality checks.
+- Define v1.2 goals and requirements before planning phases.
+- Keep reliability-first approach while extending model quality checks.
 - Preserve current runtime safety guarantees while introducing incremental improvements only.
 
 ## Constraints
@@ -74,7 +73,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 | Keep script-oriented architecture for now | Fast iteration and existing operational familiarity | ✓ Confirmed in v1.0 |
 | Prioritize reliability and validation before adding new product surfaces | Better signal trustworthiness gives highest immediate value | ✓ Confirmed in v1.0 |
 | Use phased hardening approach (data reliability -> model gates -> ops quality) | Reduces risk and keeps changes reviewable | ✓ Confirmed in v1.0 |
-| Prioritize calibration quality before market expansion in v1.1 | Better confidence calibration raises signal trust without adding product surface area | — Pending |
+| Prioritize calibration quality before market expansion in v1.1 | Better confidence calibration raises signal trust without adding product surface area | ✓ Confirmed in v1.1 |
 
 ## Evolution
 
@@ -94,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after phase 07 completion*
+*Last updated: 2026-03-24 after v1.1 archive*
