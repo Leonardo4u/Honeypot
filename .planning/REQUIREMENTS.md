@@ -7,10 +7,10 @@
 
 ### Data Reliability
 
-- [ ] **DATA-01**: Odds collection retries transient failures with bounded backoff and clear error classification.
-- [ ] **DATA-02**: Result verification tolerates partial API failure without blocking the whole cycle.
-- [ ] **DATA-03**: xG/form inputs are validated before model execution, with safe fallbacks when missing.
-- [ ] **DATA-04**: Daily run includes a data-health summary for key providers.
+- [x] **DATA-01**: Odds collection retries transient failures with bounded backoff and clear error classification.
+- [x] **DATA-02**: Result verification tolerates partial API failure without blocking the whole cycle.
+- [x] **DATA-03**: xG/form inputs are validated before model execution, with safe fallbacks when missing.
+- [x] **DATA-04**: Daily run includes a data-health summary for key providers.
 
 ### Signal Quality
 
@@ -52,10 +52,10 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 6 | Pending |
-| DATA-02 | Phase 6 | Pending |
-| DATA-03 | Phase 6 | Pending |
-| DATA-04 | Phase 6 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
 | QUAL-01 | Phase 2 | Complete |
 | QUAL-02 | Phase 2 | Complete |
 | QUAL-03 | Phase 2 | Complete |
@@ -75,4 +75,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 after phase 06 reconciliation*
