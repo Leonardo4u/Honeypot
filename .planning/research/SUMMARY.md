@@ -1,24 +1,28 @@
-# Research Summary
+# v1.1 Research Summary
 
-**Date:** 2026-03-24
-**Scope:** Brownfield initialization based on mapped architecture and stack
+## Scope
+Milestone v1.1 focuses on model calibration and historical backtesting operations.
 
-## Key Findings
+## Stack Additions
+- Add or standardize `pandas` and `requests` for robust historical data ingestion.
+- Reuse existing `numpy`, `scipy`, `sqlite3`, and project model modules.
 
-- Runtime is scheduler-centric and script-oriented, with critical orchestration in `scheduler.py`.
-- Reliability risk concentrates in external data dependencies (`data/coletar_odds.py`, `data/verificar_resultados.py`, `data/xg_understat.py`).
-- Signal quality controls exist but are distributed across model and scheduler constants.
-- Persistence is SQLite-based and suitable for current single-operator workflow.
+## Feature Table Stakes
+- League-level rho calibration.
+- Historical Brier score and market win-rate/ROI diagnostics.
+- Idempotent historical backfill into `sinais` with source tagging.
 
-## Practical Priorities
+## Key Architecture Direction
+- Keep script-first architecture.
+- Introduce calibration flow as an operational script integrated with existing model/data modules.
+- Preserve existing scheduler/runtime behavior; v1.1 is additive and low-risk.
 
-1. Harden API/retry/fallback behavior before expanding features.
-2. Centralize and audit quality thresholds and gate outcomes.
-3. Add safety-first operational checks and deterministic tests.
+## Watch Out For
+- Team-name mapping drift between sources.
+- Sparse samples per league leading to noisy calibration.
+- Duplicate backfill records and odds-quality inconsistencies.
 
-## Recommended Initial Focus
-
-Phase 1 should prioritize ingestion resilience and visibility so downstream scoring can rely on stable inputs.
-
----
-*Generated during new-project initialization*
+## Recommended Milestone Shape
+- Phase 7: Historical data and calibration baseline.
+- Phase 8: Diagnostics quality (Brier/win-rate/ROI confidence).
+- Phase 9: Historical persistence hardening and operator workflow.
