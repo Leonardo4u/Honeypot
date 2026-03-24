@@ -14,8 +14,8 @@
 
 ### Signal Quality
 
-- [ ] **QUAL-01**: Triple gate logic emits explicit reject reasons for every blocked signal.
-- [ ] **QUAL-02**: Confidence and edge thresholds are centralized and versioned for auditability.
+- [x] **QUAL-01**: Triple gate logic emits explicit reject reasons for every blocked signal.
+- [x] **QUAL-02**: Confidence and edge thresholds are centralized and versioned for auditability.
 - [ ] **QUAL-03**: Stake sizing always enforces bankroll safety caps, even under malformed inputs.
 - [ ] **QUAL-04**: Post-result CLV/Brier metrics are consistently linked to signal IDs without orphan records.
 
@@ -56,8 +56,8 @@
 | DATA-02 | Phase 1 | Pending |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Pending |
-| QUAL-01 | Phase 2 | Pending |
-| QUAL-02 | Phase 2 | Pending |
+| QUAL-01 | Phase 2 | Complete |
+| QUAL-02 | Phase 2 | Complete |
 | QUAL-03 | Phase 2 | Pending |
 | QUAL-04 | Phase 2 | Pending |
 | OPS-01 | Phase 3 | Pending |
