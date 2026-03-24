@@ -15,11 +15,11 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Daily scheduled signal generation and result verification loops are running from `scheduler.py`.
 - ✓ Telegram delivery and command-based bot interactions are available via `scheduler.py` and `bot/telegram_bot.py`.
 - ✓ Persistent storage and historical tracking are implemented with SQLite in `data/database.py`.
+- ✓ Signal-quality controls were hardened with centralized thresholds, structured reject reasons, and safer stake/linkage handling (validated in Phase 2: Signal Quality Controls).
 
 ### Active
 
 - [ ] Increase reliability of external data ingestion (odds/results/xG) with better retries, fallbacks, and observability.
-- [ ] Improve signal quality controls to reduce noisy picks and improve consistency of edge decisions.
 - [ ] Strengthen operational safety (idempotency, failure isolation, and monitoring) for long-running scheduler execution.
 - [ ] Formalize validation and test coverage for critical business logic.
 
