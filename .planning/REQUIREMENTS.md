@@ -28,9 +28,9 @@
 
 ### Testing and Verification
 
-- [ ] **TEST-01**: Core model math and gate decisions have automated tests with deterministic fixtures.
-- [ ] **TEST-02**: Database write paths for signals/results are covered by integration-style tests.
-- [ ] **TEST-03**: A smoke command validates end-to-end dry-run behavior without sending Telegram messages.
+- [x] **TEST-01**: Core model math and gate decisions have automated tests with deterministic fixtures.
+- [x] **TEST-02**: Database write paths for signals/results are covered by integration-style tests.
+- [x] **TEST-03**: A smoke command validates end-to-end dry-run behavior without sending Telegram messages.
 
 ## v2 Requirements
 
@@ -64,9 +64,9 @@
 | OPS-02 | Phase 3 | Complete |
 | OPS-03 | Phase 3 | Complete |
 | OPS-04 | Phase 3 | Complete |
-| TEST-01 | Phase 5 | Pending |
-| TEST-02 | Phase 5 | Pending |
-| TEST-03 | Phase 5 | Pending |
+| TEST-01 | Phase 5 | Complete |
+| TEST-02 | Phase 5 | Complete |
+| TEST-03 | Phase 5 | Complete |
 
 **Coverage:**
 - v1 requirements: 15 total
