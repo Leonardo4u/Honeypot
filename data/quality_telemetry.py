@@ -102,6 +102,7 @@ def _calcular_segmento(conn, data_inicio, data_fim, segmento_tipo, segmento_valo
         "win_rate": win_rate,
         "roi_pct": roi_pct,
         "brier_medio": brier_medio,
+        # Placeholder until fallback telemetry is persisted per settled signal in sinais/brier tables.
         "fallback_rate": 0.0,
     }
 
@@ -248,6 +249,8 @@ def avaliar_drift_historico(
         return None
 
     janela_recente = historico[-int(min_persistencia) :]
+    fallback_series = [float(item.get("fallback_rate") or 0.0) for item in janela_recente]
+    has_fallback_telemetry = any(v > 0 for v in fallback_series)
 
     checks = {
         "brier_medio": all(
@@ -258,10 +261,7 @@ def avaliar_drift_historico(
             item.get("win_rate") is not None and float(item.get("win_rate")) <= float(win_rate_limite)
             for item in janela_recente
         ),
-        "fallback_rate": all(
-            float(item.get("fallback_rate") or 0.0) >= float(fallback_limite)
-            for item in janela_recente
-        ),
+        "fallback_rate": has_fallback_telemetry and all(v >= float(fallback_limite) for v in fallback_series),
     }
 
     metrica = None

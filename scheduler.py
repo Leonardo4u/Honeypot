@@ -298,9 +298,40 @@ def enviar_alerta_drift_historico(alerta):
         f"Valor atual: {alerta.get('valor_atual')}"
     )
 
+    def _log_task_exception(task):
+        try:
+            exc = task.exception()
+        except Exception as cb_err:
+            log_event(
+                "runtime",
+                "drift",
+                "telegram",
+                "warning",
+                "drift_alert_send_failed",
+                {"erro": str(cb_err)},
+            )
+            return
+
+        if exc:
+            log_event(
+                "runtime",
+                "drift",
+                "telegram",
+                "warning",
+                "drift_alert_send_failed",
+                {"erro": str(exc)},
+            )
+
     try:
         bot = Bot(token=TOKEN)
-        asyncio.run(bot.send_message(chat_id=CANAL_VIP, text=msg))
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(bot.send_message(chat_id=CANAL_VIP, text=msg))
+            return
+
+        task = loop.create_task(bot.send_message(chat_id=CANAL_VIP, text=msg))
+        task.add_done_callback(_log_task_exception)
     except Exception as e:
         log_event("runtime", "drift", "telegram", "warning", "drift_alert_send_failed", {"erro": str(e)})
 
@@ -949,7 +980,25 @@ async def verificar_resultados_automatico():
     resultado_registrado = False
 
     for sinal in pendentes:
-        sinal_id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api, liga = sinal
+        if len(sinal) < 7:
+            log_event(
+                "runtime",
+                "settlement",
+                "pending_row",
+                "warning",
+                "pending_row_shape_invalid",
+                {"row_len": len(sinal)},
+            )
+            continue
+
+        sinal_id = sinal[0]
+        jogo = sinal[1]
+        mercado = sinal[2]
+        odd = sinal[3]
+        horario = sinal[4]
+        fixture_id_api = sinal[5]
+        fixture_data_api = sinal[6]
+        liga = sinal[7] if len(sinal) >= 8 else None
         try:
             times = jogo.split(" vs ")
             if len(times) != 2:

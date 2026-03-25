@@ -125,6 +125,58 @@ class _ConnectionStub:
 
 
 class TestSchedulerSettlementIntegrity(unittest.TestCase):
+    def test_pending_sem_coluna_liga_nao_quebra_fluxo(self):
+        pending = [
+            (
+                12,
+                "Arsenal vs Chelsea",
+                "1x2_casa",
+                1.92,
+                "2026-03-20T17:30:00Z",
+                None,
+                None,
+            )
+        ]
+
+        fake_verificar = types.ModuleType("verificar_resultados")
+        calls = []
+
+        def _buscar_resultado_jogo(*args, **kwargs):
+            calls.append(kwargs)
+            return {
+                "status": "nao_iniciado",
+                "fixture_id_api": None,
+                "fixture_data_api": None,
+            }
+
+        fake_verificar.buscar_resultado_jogo = _buscar_resultado_jogo
+        fake_verificar.avaliar_mercado = lambda *args, **kwargs: None
+
+        fake_db = types.ModuleType("database")
+        fake_db.atualizar_fixture_referencia = lambda *args, **kwargs: None
+        fake_db.atualizar_resultado = lambda *args, **kwargs: None
+
+        fake_exportar_excel = types.ModuleType("exportar_excel")
+        fake_exportar_excel.gerar_excel = lambda *args, **kwargs: None
+
+        first_conn = _ConnectionStub(pending_rows=pending)
+
+        with patch.dict(
+            sys.modules,
+            {
+                "verificar_resultados": fake_verificar,
+                "database": fake_db,
+                "exportar_excel": fake_exportar_excel,
+            },
+            clear=False,
+        ):
+            with patch("scheduler.sqlite3.connect", side_effect=[first_conn]), patch(
+                "scheduler.atualizar_banca", return_value={"banca_atual": 100.0}
+            ), patch("scheduler.atualizar_brier", return_value=0.2):
+                asyncio.run(scheduler.verificar_resultados_automatico())
+
+        self.assertEqual(calls[0]["liga"], None)
+
     def test_pending_cross_day_persiste_fixture_sem_finalizar(self):
         pending = [
             (

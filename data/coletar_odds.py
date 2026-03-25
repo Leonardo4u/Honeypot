@@ -96,10 +96,10 @@ def extrair_melhor_odd(jogo):
     melhor_fora = 0
     melhor_over = 0
     melhor_under = 0
-    sharp_casa = 0
-    sharp_fora = 0
-    sharp_over = 0
-    sharp_under = 0
+    melhor_casa_sharp = False
+    melhor_fora_sharp = False
+    melhor_over_sharp = False
+    melhor_under_sharp = False
 
     for bookmaker in jogo.get("bookmakers", []):
         bookmaker_key = bookmaker.get("key", "")
@@ -108,30 +108,30 @@ def extrair_melhor_odd(jogo):
             if market["key"] == "h2h":
                 for o in market["outcomes"]:
                     if o["name"] == jogo["home_team"]:
-                        melhor_casa = max(melhor_casa, o["price"])
-                        if is_sharp:
-                            sharp_casa = max(sharp_casa, o["price"])
+                        if o["price"] > melhor_casa:
+                            melhor_casa = o["price"]
+                            melhor_casa_sharp = is_sharp
                     elif o["name"] == jogo["away_team"]:
-                        melhor_fora = max(melhor_fora, o["price"])
-                        if is_sharp:
-                            sharp_fora = max(sharp_fora, o["price"])
+                        if o["price"] > melhor_fora:
+                            melhor_fora = o["price"]
+                            melhor_fora_sharp = is_sharp
 
             elif market["key"] == "totals":
                 for o in market["outcomes"]:
                     if o["name"] == "Over":
-                        melhor_over = max(melhor_over, o["price"])
-                        if is_sharp:
-                            sharp_over = max(sharp_over, o["price"])
+                        if o["price"] > melhor_over:
+                            melhor_over = o["price"]
+                            melhor_over_sharp = is_sharp
                     elif o["name"] == "Under":
-                        melhor_under = max(melhor_under, o["price"])
-                        if is_sharp:
-                            sharp_under = max(sharp_under, o["price"])
+                        if o["price"] > melhor_under:
+                            melhor_under = o["price"]
+                            melhor_under_sharp = is_sharp
 
     source_quality = {
-        "1x2_casa": "sharp" if sharp_casa > 0 and sharp_fora > 0 else "fallback",
-        "1x2_fora": "sharp" if sharp_fora > 0 and sharp_casa > 0 else "fallback",
-        "over_2.5": "sharp" if sharp_over > 0 and sharp_under > 0 else "fallback",
-        "under_2.5": "sharp" if sharp_under > 0 and sharp_over > 0 else "fallback",
+        "1x2_casa": "sharp" if melhor_casa_sharp and melhor_fora_sharp else "fallback",
+        "1x2_fora": "sharp" if melhor_fora_sharp and melhor_casa_sharp else "fallback",
+        "over_2.5": "sharp" if melhor_over_sharp and melhor_under_sharp else "fallback",
+        "under_2.5": "sharp" if melhor_under_sharp and melhor_over_sharp else "fallback",
     }
 
     return {

@@ -308,6 +308,63 @@ class TestSchedulerWeeklyTelemetryIntegration(unittest.TestCase):
 
         mock_send.assert_called_once_with(alerta)
 
+    def test_enviar_alerta_drift_historico_usa_asyncio_run_sem_loop_ativo(self):
+        alerta = {
+            "metrica": "brier_medio",
+            "segmento_tipo": "global",
+            "segmento_valor": "all",
+            "periodo_inicio": "2026-03-11",
+            "periodo_fim": "2026-03-25",
+            "min_persistencia": 3,
+            "valor_atual": 0.29,
+        }
+
+        with patch("scheduler.TOKEN", "token"), patch("scheduler.CANAL_VIP", "canal"), patch(
+            "scheduler.Bot"
+        ) as bot_cls, patch("scheduler.asyncio.get_running_loop", side_effect=RuntimeError), patch(
+            "scheduler.asyncio.run"
+        ) as async_run:
+            scheduler.enviar_alerta_drift_historico(alerta)
+
+        bot_cls.assert_called_once_with(token="token")
+        async_run.assert_called_once()
+
+    def test_enviar_alerta_drift_historico_cria_task_com_loop_ativo(self):
+        alerta = {
+            "metrica": "brier_medio",
+            "segmento_tipo": "global",
+            "segmento_valor": "all",
+            "periodo_inicio": "2026-03-11",
+            "periodo_fim": "2026-03-25",
+            "min_persistencia": 3,
+            "valor_atual": 0.29,
+        }
+
+        class _Task:
+            def add_done_callback(self, _cb):
+                return None
+
+        class _Loop:
+            def __init__(self):
+                self.called = False
+
+            def create_task(self, _coro):
+                self.called = True
+                return _Task()
+
+        loop = _Loop()
+
+        with patch("scheduler.TOKEN", "token"), patch("scheduler.CANAL_VIP", "canal"), patch(
+            "scheduler.Bot"
+        ) as bot_cls, patch("scheduler.asyncio.get_running_loop", return_value=loop), patch(
+            "scheduler.asyncio.run"
+        ) as async_run:
+            scheduler.enviar_alerta_drift_historico(alerta)
+
+        bot_cls.assert_called_once_with(token="token")
+        self.assertTrue(loop.called)
+        async_run.assert_not_called()
+
 
 if __name__ == "__main__":
     unittest.main()
