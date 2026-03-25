@@ -2,12 +2,12 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Calibration Freshness and Portfolio Risk Controls
-status: Phase 17 Completed
-last_updated: "2026-03-25T23:25:00.000Z"
+status: Phase 18 Planned
+last_updated: "2026-03-25T23:55:00.000Z"
 progress:
   total_phases: 5
   completed_phases: 4
-  total_plans: 8
+  total_plans: 10
   completed_plans: 8
 ---
 
@@ -16,8 +16,8 @@ progress:
 ## Status
 
 - Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
-- Current phase: phase 17 completed (plans 01 and 02 executed)
-- Current command: /gsd-plan-phase 18
+- Current phase: phase 18 planned (plans 01 and 02 created)
+- Current command: /gsd-execute-phase 18
 - Overall progress: phases 14-17 complete; phase 18 pending
 
 ## Project Reference
@@ -25,7 +25,7 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Phase 18 planning — operational telemetry and drift safeguards
+**Current focus:** Phase 18 execution — operational telemetry and drift safeguards
 
 ## Artifacts
 
@@ -79,10 +79,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-24: Phase 16 executed (16-01 and 16-02), gate robustness and steam noise controls delivered with source-aware no-vig/divergence, per-match cap, and minimal drift/fallback telemetry; baseline tests passed.
 - 2026-03-24: Phase 17 planned with two executable plans for correlation-aware ranking penalty/cap parameterization and Kelly stake reduction by same-match exposure.
 - 2026-03-25: Phase 17 executed (17-01 and 17-02), ranking correlation penalty and same-match Kelly reducer integrated with scheduler propagation; baseline tests passed.
+- 2026-03-25: Phase 18 planned with two executable plans for weekly quality telemetry persistence, configurable settlement windows, and rolling drift alerting.
 
 ## Next Step
 
-Run `/gsd-plan-phase 18` to create executable plans for telemetry and drift safeguards.
+Run `/gsd-execute-phase 18` to implement telemetry persistence and drift safeguards.
 
 ---
-*Last updated: 2026-03-25 after phase 17 execution*
+*Last updated: 2026-03-25 after phase 18 planning*
