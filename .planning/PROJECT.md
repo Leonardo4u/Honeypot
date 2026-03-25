@@ -26,13 +26,13 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Runtime calibration now auto-applies league rho/home-advantage and over/under uses Dixon-Coles consistency with dedicated regressions (validated in Phase 14: Calibration Automation and League Home Advantage).
 - ✓ xG now uses recency-weighted decay, confidence sem_sinal uses bounded proxy fallback, and SOS caps adapt to source quality (validated in Phase 15: Recency-Weighted xG and Confidence Fallbacks).
 - ✓ Gate robustness now includes persistent standings cache, source-aware no-vig/divergence baseline checks, steam maturity window, per-match ranking cap, and minimal drift/fallback telemetry alerts (validated in Phase 16: Gate Robustness and Steam Noise Filtering).
+- ✓ Portfolio concentration control now includes correlation-aware ranking penalty and same-match Kelly stake reducer with runtime propagation from scheduler (validated in Phase 17: Correlation-Aware Portfolio Controls).
 
 ### Active
 
-- [ ] Auto-apply league rho and home-advantage calibration outputs in runtime Poisson.
-- [ ] Improve recency and confidence quality with temporal xG weighting and better fallback proxies.
-- [ ] Harden gate/ranking logic against market noise, steam noise, and same-match exposure concentration.
-- [ ] Add weekly quality telemetry and drift alerting to protect bankroll performance.
+- [ ] Add weekly quality telemetry with segmented historical trend persistence for Brier/win-rate quality signals.
+- [ ] Make settlement lookup windows configurable by competition profile to reduce unresolved pendentes.
+- [ ] Expand drift safeguards with durable thresholded alerts over longer rolling horizons.
 
 ### Out of Scope
 
@@ -59,12 +59,9 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 **Goal:** Improve signal quality consistency by making calibration outputs operational, reducing stale priors, and controlling portfolio correlation risk.
 
 **Target features:**
-- Apply Dixon-Coles rho calibration automatically per league and season output.
-- Add temporal xG decay and league-aware home-advantage modeling in Poisson inputs.
-- Improve confidence fallback behavior for low-sample leagues/markets.
-- Harden gates with source-aware no-vig, pre-context divergence baseline, and persistent standings cache.
-- Limit correlated exposure in ranking and Kelly sizing for same-match signals.
-- Add automated weekly quality telemetry and drift alerts.
+- Add automated weekly quality telemetry and segmented history retention for trend diagnosis.
+- Configure settlement lookup windows by competition profile (including European competitions).
+- Expand drift alerting for longer-horizon degradation detection and operator notification.
 
 ## Last Shipped Milestone: v1.2 Win Rate Integrity and Runtime Quality
 
@@ -128,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after phase 15 completion*
+*Last updated: 2026-03-25 after phase 17 completion*

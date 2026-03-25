@@ -22,6 +22,16 @@ TIER_MULTIPLICADOR = {
     "elite":   1.2
 }
 
+
+def fator_reducao_correlacao_mesmo_jogo(sinais_mesmo_jogo_abertos):
+    if sinais_mesmo_jogo_abertos <= 0:
+        return 1.0
+    if sinais_mesmo_jogo_abertos == 1:
+        return 0.80
+    if sinais_mesmo_jogo_abertos == 2:
+        return 0.65
+    return 0.50
+
 def criar_tabela_banca():
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -87,7 +97,15 @@ def atualizar_banca(lucro_unidades):
 
     return estado
 
-def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, sinais_liga_hoje=0):
+def calcular_kelly(
+    prob_modelo,
+    odd,
+    edge_score,
+    sinais_abertos=0,
+    liga=None,
+    sinais_liga_hoje=0,
+    sinais_mesmo_jogo_abertos=0,
+):
     """
     Calcula stake via Kelly fracionado com todas as regras de segurança.
     Retorna dict com stake em % e em reais.
@@ -117,13 +135,18 @@ def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, si
     except (TypeError, ValueError):
         return {"aprovado": False, "motivo": "invalid_sinais_liga_hoje"}
 
+    try:
+        sinais_mesmo_jogo_abertos = int(sinais_mesmo_jogo_abertos)
+    except (TypeError, ValueError):
+        return {"aprovado": False, "motivo": "invalid_sinais_mesmo_jogo"}
+
     if not math.isfinite(prob_modelo) or prob_modelo < 0 or prob_modelo > 1:
         return {"aprovado": False, "motivo": "invalid_prob_modelo_range"}
     if not math.isfinite(odd) or odd <= 1:
         return {"aprovado": False, "motivo": "invalid_odd_range"}
     if not math.isfinite(edge_score):
         return {"aprovado": False, "motivo": "invalid_edge_score_range"}
-    if sinais_abertos < 0 or sinais_liga_hoje < 0:
+    if sinais_abertos < 0 or sinais_liga_hoje < 0 or sinais_mesmo_jogo_abertos < 0:
         return {"aprovado": False, "motivo": "invalid_signal_counts"}
 
     estado = carregar_estado_banca()
@@ -149,6 +172,9 @@ def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, si
     if sinais_abertos >= 3:
         kelly_ajustado *= 0.80
         print(f"  Redução 20%: {sinais_abertos} apostas abertas")
+
+    fator_correlacao = fator_reducao_correlacao_mesmo_jogo(sinais_mesmo_jogo_abertos)
+    kelly_ajustado *= fator_correlacao
 
     if sinais_liga_hoje >= 2:
         return {"aprovado": False, "motivo": f"Limite de 2 apostas da mesma liga atingido"}
@@ -182,7 +208,8 @@ def calcular_kelly(prob_modelo, odd, edge_score, sinais_abertos=0, liga=None, si
         "kelly_final_pct": round(kelly_ajustado * 100, 2),
         "valor_reais": valor_reais,
         "banca_atual": banca,
-        "multiplicador": multiplicador
+        "multiplicador": multiplicador,
+        "fator_correlacao_mesmo_jogo": fator_correlacao,
     }
 
 def calcular_exposicao_atual():
@@ -216,6 +243,21 @@ def contar_sinais_liga_hoje(liga):
         SELECT COUNT(*) FROM sinais
         WHERE liga = ? AND data = ? AND status != 'descartado'
     ''', (liga, str(date.today())))
+    count = c.fetchone()[0]
+    conn.close()
+    return count
+
+
+def contar_sinais_mesmo_jogo_abertos(jogo):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        SELECT COUNT(*) FROM sinais
+        WHERE jogo = ? AND data = ? AND status = 'pendente'
+    ''',
+        (jogo, str(date.today())),
+    )
     count = c.fetchone()[0]
     conn.close()
     return count

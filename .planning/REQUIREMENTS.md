@@ -27,8 +27,8 @@
 
 ### Portfolio Correlation Risk
 
-- [ ] **RISK-01**: Candidate ranking must enforce per-match market cap to avoid multiple highly correlated picks from the same fixture.
-- [ ] **RISK-02**: Kelly sizing must apply additional stake reduction when open signals are same-match correlated.
+- [x] **RISK-01**: Candidate ranking must enforce per-match market cap to avoid multiple highly correlated picks from the same fixture.
+- [x] **RISK-02**: Kelly sizing must apply additional stake reduction when open signals are same-match correlated.
 
 ### Operational Quality Telemetry
 
@@ -65,8 +65,8 @@
 | GATE-02 | Phase 16 | Completed |
 | GATE-03 | Phase 16 | Completed |
 | STEAM-01 | Phase 16 | Completed |
-| RISK-01 | Phase 17 | Pending |
-| RISK-02 | Phase 17 | Pending |
+| RISK-01 | Phase 17 | Completed |
+| RISK-02 | Phase 17 | Completed |
 | OBS-01 | Phase 18 | Pending |
 | SETTLE-01 | Phase 18 | Pending |
 | OBS-02 | Phase 18 | Pending |
@@ -78,4 +78,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after phase 15 execution completion*
+*Last updated: 2026-03-25 after phase 17 execution completion*

@@ -125,13 +125,23 @@ class _ConnStub:
 
 
 class TestSchedulerQualityPriorRanking(unittest.TestCase):
-    def _run_cycle(self, jogos, prior_contexto_por_jogo_mercado, gate_payload, mocked_log_event=None, gate_side_effect=None):
+    def _run_cycle(
+        self,
+        jogos,
+        prior_contexto_por_jogo_mercado,
+        gate_payload,
+        mocked_log_event=None,
+        gate_side_effect=None,
+        kelly_side_effect=None,
+        sinais_mesmo_jogo_abertos=0,
+    ):
         def _fake_analisar(dados_analise, log_dc=False):
             return {
                 "decisao": "APOSTAR",
                 "edge_score": 80,
                 "ev": 0.1,
                 "prob_modelo": 0.62,
+                "prob_modelo_base": 0.58,
                 "odd": dados_analise["odd"],
                 "liga": dados_analise["liga"],
                 "jogo": dados_analise["jogo"],
@@ -145,6 +155,13 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
         gate_patch = patch("scheduler.aplicar_triple_gate", return_value=gate_payload)
         if gate_side_effect is not None:
             gate_patch = patch("scheduler.aplicar_triple_gate", side_effect=gate_side_effect)
+
+        kelly_patch = patch(
+            "scheduler.calcular_kelly",
+            return_value={"aprovado": True, "tier": "padrao", "kelly_final_pct": 1.0, "valor_reais": 10.0},
+        )
+        if kelly_side_effect is not None:
+            kelly_patch = patch("scheduler.calcular_kelly", side_effect=kelly_side_effect)
 
         patches = [
             patch.object(scheduler, "LIGAS", ["soccer_epl"]),
@@ -160,10 +177,8 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
             gate_patch,
             patch("scheduler.contar_sinais_abertos", return_value=0),
             patch("scheduler.contar_sinais_liga_hoje", return_value=0),
-            patch(
-                "scheduler.calcular_kelly",
-                return_value={"aprovado": True, "tier": "padrao", "kelly_final_pct": 1.0, "valor_reais": 10.0},
-            ),
+            patch("scheduler.contar_sinais_mesmo_jogo_abertos", return_value=sinais_mesmo_jogo_abertos),
+            kelly_patch,
             patch("scheduler.formatar_sinal_kelly", return_value="sinal"),
         ]
         if mocked_log_event is not None:
@@ -415,6 +430,67 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
         self.assertTrue(alerta)
         self.assertEqual(alerta["metrica"], "fallback_rate")
         self.assertGreaterEqual(alerta["valor"], 0.35)
+
+    def test_penalizacao_correlacao_escalonada_rebaixa_mesmo_jogo(self):
+        candidatos = [
+            {"jogo": {"jogo": "A vs B"}, "score_prior": 90, "score": 90, "confianca": 80},
+            {"jogo": {"jogo": "A vs B"}, "score_prior": 89, "score": 89, "confianca": 80},
+            {"jogo": {"jogo": "C vs D"}, "score_prior": 88.5, "score": 88.5, "confianca": 80},
+        ]
+
+        ordenados = scheduler.aplicar_penalizacao_correlacao_ranking(candidatos, penalty_step=2.0)
+        self.assertEqual(ordenados[0]["jogo"]["jogo"], "A vs B")
+        self.assertEqual(ordenados[1]["jogo"]["jogo"], "C vs D")
+
+    def test_penalty_e_cap_parametrizados_mudam_distribuicao(self):
+        candidatos = [
+            {"jogo": {"jogo": "A vs B"}, "score_prior": 90, "score": 90, "confianca": 80},
+            {"jogo": {"jogo": "A vs B"}, "score_prior": 89, "score": 89, "confianca": 80},
+            {"jogo": {"jogo": "A vs B"}, "score_prior": 88, "score": 88, "confianca": 80},
+            {"jogo": {"jogo": "C vs D"}, "score_prior": 87.9, "score": 87.9, "confianca": 80},
+        ]
+
+        ordenados = scheduler.aplicar_penalizacao_correlacao_ranking(candidatos, penalty_step=3.0)
+        selecionados = scheduler.aplicar_cap_por_jogo(ordenados, max_por_jogo=1)
+
+        self.assertEqual(len([x for x in selecionados if x["jogo"]["jogo"] == "A vs B"]), 1)
+        self.assertEqual(len(selecionados), 2)
+
+    def test_scheduler_propaga_contexto_correlacao_para_kelly(self):
+        jogos = [
+            {
+                "home_team": "TeamCorr",
+                "away_team": "TeamE",
+                "jogo": "TeamCorr vs TeamE",
+                "liga": "Premier League",
+                "horario": "2026-03-25T20:00:00Z",
+                "odds": {"casa": 1.9, "fora": 3.1, "over_2.5": 1.92, "under_2.5": 1.96},
+                "source_quality": {"1x2_casa": "sharp", "1x2_fora": "sharp", "over_2.5": "sharp", "under_2.5": "sharp"},
+            }
+        ]
+        prior = {
+            ("TeamCorr vs TeamE", "1x2_casa"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 2.0},
+            ("TeamCorr vs TeamE", "1x2_fora"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 1.5},
+            ("TeamCorr vs TeamE", "over_2.5"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 1.0},
+            ("TeamCorr vs TeamE", "under_2.5"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 0.5},
+        }
+
+        calls = []
+
+        def _kelly_capture(**kwargs):
+            calls.append(kwargs)
+            return {"aprovado": True, "tier": "padrao", "kelly_final_pct": 1.0, "valor_reais": 10.0}
+
+        self._run_cycle(
+            jogos,
+            prior,
+            {"aprovado": True, "penalizacao_score": 0},
+            kelly_side_effect=_kelly_capture,
+            sinais_mesmo_jogo_abertos=2,
+        )
+
+        self.assertTrue(calls)
+        self.assertTrue(all(call.get("sinais_mesmo_jogo_abertos") == 2 for call in calls))
 
 
 if __name__ == "__main__":
