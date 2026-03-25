@@ -28,6 +28,16 @@ HEADERS = {
 STATUS_FINALIZADO = {"FT", "AET", "PEN"}
 STATUS_ANDAMENTO = {"1H", "HT", "2H", "ET", "BT", "P", "LIVE"}
 
+SETTLEMENT_JANELA_PADRAO_DIAS = 2
+SETTLEMENT_JANELA_POR_COMPETICAO = {
+    "UEFA Champions League": 4,
+    "UEFA Europa League": 4,
+    "soccer_uefa_champs_league": 4,
+    "soccer_uefa_europa_league": 4,
+    "Copa do Brasil": 3,
+    "copa_do_brasil": 3,
+}
+
 
 def _normalizar_nome_time(nome):
     txt = unicodedata.normalize("NFKD", str(nome or ""))
@@ -179,7 +189,15 @@ def _buscar_fixture_por_janela(time_casa, time_fora, data_base, horario_ref=None
     candidatos.sort(key=lambda c: (-c["name_score"], c["diff_min"], c["fixture_id"]))
     return candidatos[0]["fixture"]
 
-def buscar_resultado_jogo(time_casa, time_fora, data=None, horario=None, fixture_id=None):
+
+def obter_janela_settlement_dias(liga=None):
+    if not liga:
+        return SETTLEMENT_JANELA_PADRAO_DIAS
+
+    chave = str(liga).strip()
+    return int(SETTLEMENT_JANELA_POR_COMPETICAO.get(chave, SETTLEMENT_JANELA_PADRAO_DIAS))
+
+def buscar_resultado_jogo(time_casa, time_fora, data=None, horario=None, fixture_id=None, liga=None):
     """
     Busca o resultado real de um jogo na API-Football.
     Retorna o placar final ou None se não encontrado.
@@ -200,6 +218,8 @@ def buscar_resultado_jogo(time_casa, time_fora, data=None, horario=None, fixture
     if data_base is None:
         data_base = date.today()
 
+    janela_dias = obter_janela_settlement_dias(liga=liga)
+
     try:
         fixture = _buscar_fixture_por_id(fixture_id)
         match_strategy = None
@@ -211,7 +231,7 @@ def buscar_resultado_jogo(time_casa, time_fora, data=None, horario=None, fixture
                 time_fora=time_fora,
                 data_base=data_base,
                 horario_ref=horario,
-                janela_dias=2,
+                janela_dias=janela_dias,
             )
             if fixture:
                 match_strategy = "date_window"

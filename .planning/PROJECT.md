@@ -27,12 +27,11 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ xG now uses recency-weighted decay, confidence sem_sinal uses bounded proxy fallback, and SOS caps adapt to source quality (validated in Phase 15: Recency-Weighted xG and Confidence Fallbacks).
 - ✓ Gate robustness now includes persistent standings cache, source-aware no-vig/divergence baseline checks, steam maturity window, per-match ranking cap, and minimal drift/fallback telemetry alerts (validated in Phase 16: Gate Robustness and Steam Noise Filtering).
 - ✓ Portfolio concentration control now includes correlation-aware ranking penalty and same-match Kelly stake reducer with runtime propagation from scheduler (validated in Phase 17: Correlation-Aware Portfolio Controls).
+- ✓ Operational telemetry now includes weekly persisted quality trends, competition-aware settlement windows, and rolling drift alerts with Telegram escalation (validated in Phase 18: Operational Telemetry and Drift Safeguards).
 
 ### Active
 
-- [ ] Add weekly quality telemetry with segmented historical trend persistence for Brier/win-rate quality signals.
-- [ ] Make settlement lookup windows configurable by competition profile to reduce unresolved pendentes.
-- [ ] Expand drift safeguards with durable thresholded alerts over longer rolling horizons.
+- [ ] Evaluate v1.3 milestone closure and identify the next highest-impact backlog slice.
 
 ### Out of Scope
 
@@ -59,9 +58,8 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 **Goal:** Improve signal quality consistency by making calibration outputs operational, reducing stale priors, and controlling portfolio correlation risk.
 
 **Target features:**
-- Add automated weekly quality telemetry and segmented history retention for trend diagnosis.
-- Configure settlement lookup windows by competition profile (including European competitions).
-- Expand drift alerting for longer-horizon degradation detection and operator notification.
+- Consolidate v1.3 evidence chain and close milestone with verification artifacts.
+- Define next milestone priorities using telemetry/settlement/drift learnings from production cycles.
 
 ## Last Shipped Milestone: v1.2 Win Rate Integrity and Runtime Quality
 
@@ -125,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after phase 17 completion*
+*Last updated: 2026-03-25 after phase 18 completion*

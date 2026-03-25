@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Calibration Freshness and Portfolio Risk Controls
-status: Phase 18 Planned
-last_updated: "2026-03-25T23:55:00.000Z"
+status: Phase 18 Completed
+last_updated: "2026-03-25T23:59:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 10
-  completed_plans: 8
+  completed_plans: 10
 ---
 
 # STATE
@@ -16,16 +16,16 @@ progress:
 ## Status
 
 - Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
-- Current phase: phase 18 planned (plans 01 and 02 created)
-- Current command: /gsd-execute-phase 18
-- Overall progress: phases 14-17 complete; phase 18 pending
+- Current phase: phase 18 completed (plans 01 and 02 executed)
+- Current command: /gsd-complete-milestone v1.3
+- Overall progress: phases 14-18 complete
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Phase 18 execution — operational telemetry and drift safeguards
+**Current focus:** Milestone v1.3 closure and post-milestone prioritization
 
 ## Artifacts
 
@@ -80,10 +80,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-24: Phase 17 planned with two executable plans for correlation-aware ranking penalty/cap parameterization and Kelly stake reduction by same-match exposure.
 - 2026-03-25: Phase 17 executed (17-01 and 17-02), ranking correlation penalty and same-match Kelly reducer integrated with scheduler propagation; baseline tests passed.
 - 2026-03-25: Phase 18 planned with two executable plans for weekly quality telemetry persistence, configurable settlement windows, and rolling drift alerting.
+- 2026-03-25: Phase 18 executed (18-01 and 18-02), weekly telemetry persistence, competition-profile settlement windows, and rolling drift alerting delivered; baseline tests passed.
 
 ## Next Step
 
-Run `/gsd-execute-phase 18` to implement telemetry persistence and drift safeguards.
+Run `/gsd-complete-milestone v1.3` to finalize milestone archive and transition state.
 
 ---
-*Last updated: 2026-03-25 after phase 18 planning*
+*Last updated: 2026-03-25 after phase 18 execution*

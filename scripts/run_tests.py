@@ -17,6 +17,7 @@ TEST_MODULES = [
     "tests.test_scheduler_settlement_integrity",
     "tests.test_confidence_quality_prior",
     "tests.test_scheduler_quality_prior_ranking",
+    "tests.test_quality_telemetry_weekly",
     "tests.test_database_integration",
 ]
 

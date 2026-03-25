@@ -135,6 +135,7 @@ class TestSchedulerSettlementIntegrity(unittest.TestCase):
                 "2026-03-20T17:30:00Z",
                 None,
                 None,
+                "UEFA Champions League",
             )
         ]
 
@@ -187,6 +188,7 @@ class TestSchedulerSettlementIntegrity(unittest.TestCase):
 
         self.assertEqual(calls[0]["horario"], "2026-03-20T17:30:00Z")
         self.assertIsNone(calls[0]["fixture_id"])
+        self.assertEqual(calls[0]["liga"], "UEFA Champions League")
         self.assertEqual(fixture_updates, [(10, "555", "2026-03-20")])
         self.assertEqual(resultado_updates, [])
 
@@ -200,6 +202,7 @@ class TestSchedulerSettlementIntegrity(unittest.TestCase):
                 "2026-03-20T17:30:00Z",
                 "777",
                 "2026-03-20",
+                "Premier League",
             )
         ]
 
@@ -261,6 +264,7 @@ class TestSchedulerSettlementIntegrity(unittest.TestCase):
 
         self.assertEqual(calls[0]["fixture_id"], "777")
         self.assertEqual(calls[0]["data"], "2026-03-20")
+        self.assertEqual(calls[0]["liga"], "Premier League")
         self.assertEqual(fixture_updates, [(11, "777", "2026-03-20")])
         self.assertEqual(resultado_updates[0][0], 11)
         self.assertEqual(resultado_updates[0][1], "verde")
