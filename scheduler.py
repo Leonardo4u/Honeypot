@@ -2,6 +2,7 @@ import asyncio
 import sys
 import os
 import math
+import re
 import schedule
 import time
 import sqlite3
@@ -46,6 +47,12 @@ from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snaps
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
 from quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
+try:
+    from signal_policy_v2 import EVMinimoPolicy, SteamGatePolicy, gate_ev_steam
+except Exception:
+    EVMinimoPolicy = None
+    SteamGatePolicy = None
+    gate_ev_steam = None
 from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
 from module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
 from pipeline_integrador import BettingPipeline
@@ -60,8 +67,53 @@ CANAL_FREE = os.getenv("CANAL_FREE")
 LOG_LEVEL = os.getenv("EDGE_LOG_LEVEL", "normal").strip().lower()
 OPERATOR_ID = os.getenv("EDGE_OPERATOR", "system")
 EDGE_VERSION = os.getenv("EDGE_VERSION", "dev")
+MINIMAL_RUNTIME_OUTPUT = os.getenv("EDGE_MINIMAL_OUTPUT", "1").strip().lower() in ("1", "true", "yes", "on")
+SHOW_STARTUP_BANNER = os.getenv("EDGE_SHOW_STARTUP_BANNER", "1").strip().lower() in ("1", "true", "yes", "on")
+FORCE_ANSI_COLOR = os.getenv("EDGE_FORCE_ANSI_COLOR", "0").strip().lower() in ("1", "true", "yes", "on")
+IDLE_ASCII_ANIM = os.getenv("EDGE_IDLE_ASCII_ANIM", "0").strip().lower() in ("1", "true", "yes", "on")
+IDLE_ASCII_FRAME_MS = int(os.getenv("EDGE_IDLE_ASCII_FRAME_MS", "120"))
+IDLE_ASCII_MAX_W = int(os.getenv("EDGE_IDLE_ASCII_MAX_W", "52"))
+IDLE_ASCII_MAX_H = int(os.getenv("EDGE_IDLE_ASCII_MAX_H", "18"))
 
-MAX_SINAIS_DIA = 10
+
+def _enable_windows_ansi():
+    if os.name != "nt":
+        return True
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+        if handle == 0:
+            return False
+        mode = ctypes.c_uint32()
+        if kernel32.GetConsoleMode(handle, ctypes.byref(mode)) == 0:
+            return False
+        ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004
+        new_mode = mode.value | ENABLE_VIRTUAL_TERMINAL_PROCESSING
+        if kernel32.SetConsoleMode(handle, new_mode) == 0:
+            return False
+        return True
+    except Exception:
+        return False
+
+
+_ANSI_ENABLED = FORCE_ANSI_COLOR or (sys.stdout.isatty() and _enable_windows_ansi())
+MAGENTA = "\x1b[95m" if _ANSI_ENABLED else ""
+ANSI_RESET = "\x1b[0m" if _ANSI_ENABLED else ""
+
+_IDLE_ASCII_FRAMES = None
+
+JOB_LABELS = {
+    "analise": "analise de sinais",
+    "janela_expandida": "monitoramento da janela expandida",
+    "verificacao": "verificacao de resultados",
+    "resumo": "resumo diario",
+    "clv": "monitoramento CLV",
+    "steam": "monitoramento steam",
+}
+
+MAX_SINAIS_DIA = int(os.getenv("EDGE_MAX_SINAIS_DIA", "10"))
 MAX_MERCADOS_POR_JOGO = 2
 CORRELACAO_PENALTY_STEP = 2.0
 DRIFT_MIN_FALLBACK_LIMIAR = 0.35
@@ -83,6 +135,8 @@ ADVANCED_PIPELINE_MC_SIMS = int(os.getenv("EDGE_ADVANCED_PIPELINE_MC_SIMS", "200
 PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
+POLICY_V2_ENABLED = os.getenv("EDGE_POLICY_V2_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+POLICY_V2_SHADOW_MODE = os.getenv("EDGE_POLICY_V2_SHADOW", "1").strip().lower() in ("1", "true", "yes", "on")
 
 EXECUCAO_CICLO = {
     "job_nome": None,
@@ -98,6 +152,8 @@ EXECUCAO_STATS = {
 
 ADVANCED_PIPELINE = None
 ADVANCED_SHARP = SharpMoneyDetector()
+EV_POLICY_V2 = EVMinimoPolicy(execucao_automatizada=True) if EVMinimoPolicy is not None else None
+STEAM_POLICY_V2 = SteamGatePolicy() if SteamGatePolicy is not None else None
 if ADVANCED_PIPELINE_ENABLED:
     try:
         ADVANCED_PIPELINE = BettingPipeline(
@@ -145,6 +201,30 @@ LIGA_KEY_MAP = {
 
 
 def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=None):
+    if MINIMAL_RUNTIME_OUTPUT:
+        if categoria == "scheduler" and etapa == "job_guard" and status == "start":
+            label = JOB_LABELS.get(entidade, entidade)
+            print(f"{label}...")
+            return
+
+        if categoria == "scheduler" and etapa == "job_guard" and status == "end":
+            label = JOB_LABELS.get(entidade, entidade)
+            print(f"{label} -> OK")
+            return
+
+        if categoria == "scheduler" and etapa == "cycle_totals":
+            enviados = 0
+            if isinstance(detalhes, dict):
+                enviados = int(detalhes.get("enviados", 0) or 0)
+            print(f"enviado {enviados} sinais")
+            return
+
+        if status in ("failed", "critical"):
+            print("-> FAIL")
+            return
+
+        return
+
     ts = datetime.now().strftime("%H:%M:%S")
     header = f"[{ts}] {categoria}/{etapa} {entidade} -> {status}"
 
@@ -171,6 +251,160 @@ def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=Non
         return
 
     print(header)
+
+
+def _compactar_frame_ascii(frame, max_w, max_h):
+    linhas = frame.splitlines()
+    if not linhas:
+        return ""
+
+    while linhas and not linhas[0].strip():
+        linhas.pop(0)
+    while linhas and not linhas[-1].strip():
+        linhas.pop()
+    if not linhas:
+        return ""
+
+    min_col = None
+    max_col = -1
+    for linha in linhas:
+        for idx, ch in enumerate(linha):
+            if ch != " ":
+                if min_col is None or idx < min_col:
+                    min_col = idx
+                if idx > max_col:
+                    max_col = idx
+
+    if min_col is None:
+        return ""
+
+    largura_real = (max_col - min_col) + 1
+    altura_real = len(linhas)
+    step_h = max(1, math.ceil(altura_real / max(1, max_h)))
+    step_w = max(1, math.ceil(largura_real / max(1, max_w)))
+
+    saida = []
+    for linha in linhas[::step_h]:
+        recorte = linha[min_col:max_col + 1]
+        reduzida = recorte[::step_w].rstrip()
+        if reduzida:
+            saida.append(reduzida)
+
+    if not saida:
+        return ""
+
+    return "\n".join(saida[:max_h])
+
+
+def _normalizar_frames_idle(frames, max_w, max_h):
+    if not frames:
+        return []
+
+    parsed = [f.splitlines() for f in frames if f.strip()]
+    if not parsed:
+        return []
+
+    altura = min(max(len(linhas) for linhas in parsed), max(1, max_h))
+    largura = min(
+        max((len(linha) for linhas in parsed for linha in linhas), default=0),
+        max(1, max_w),
+    )
+    if largura <= 0:
+        return []
+
+    normalizados = []
+    for linhas in parsed:
+        saida = []
+        for linha in linhas[:altura]:
+            recorte = linha[:largura]
+            saida.append(recorte.ljust(largura))
+        while len(saida) < altura:
+            saida.append(" " * largura)
+        normalizados.append("\n".join(saida))
+
+    return normalizados
+
+
+def _carregar_frames_idle():
+    global _IDLE_ASCII_FRAMES
+    if _IDLE_ASCII_FRAMES is not None:
+        return _IDLE_ASCII_FRAMES
+
+    path = os.path.join(BASE_DIR, "ascii_frames_all.txt")
+    if not os.path.isfile(path):
+        _IDLE_ASCII_FRAMES = []
+        return _IDLE_ASCII_FRAMES
+
+    try:
+        conteudo = ""
+        with open(path, "r", encoding="utf-8") as f:
+            conteudo = f.read()
+
+        partes = re.split(r"^===== FRAME \d+ =====\s*$", conteudo, flags=re.MULTILINE)
+        frames_brutos = [p for p in partes if p.strip()]
+        frames = []
+        for bruto in frames_brutos:
+            compacto = _compactar_frame_ascii(bruto, IDLE_ASCII_MAX_W, IDLE_ASCII_MAX_H)
+            if compacto:
+                frames.append(compacto)
+
+        _IDLE_ASCII_FRAMES = _normalizar_frames_idle(frames, IDLE_ASCII_MAX_W, IDLE_ASCII_MAX_H)
+        return _IDLE_ASCII_FRAMES
+    except Exception:
+        _IDLE_ASCII_FRAMES = []
+        return _IDLE_ASCII_FRAMES
+
+
+def _esperar_ocioso_com_animacao(segundos):
+    if segundos <= 0:
+        return
+
+    if not IDLE_ASCII_ANIM:
+        time.sleep(segundos)
+        return
+
+    if not _ANSI_ENABLED:
+        time.sleep(segundos)
+        return
+
+    frames = _carregar_frames_idle()
+    if not frames:
+        time.sleep(segundos)
+        return
+
+    atraso = max(0.05, IDLE_ASCII_FRAME_MS / 1000.0)
+    fim = time.time() + segundos
+    idx = 0
+    linhas_prev = 0
+
+    while True:
+        restante = fim - time.time()
+        if restante <= 0:
+            break
+
+        frame = frames[idx % len(frames)]
+        linhas = frame.splitlines()
+        if not linhas:
+            linhas = [""]
+        linhas_frame = len(linhas)
+
+        if linhas_prev:
+            sys.stdout.write(f"\x1b[{linhas_prev}F")
+
+        for linha in linhas:
+            sys.stdout.write("\x1b[2K" + MAGENTA + linha + ANSI_RESET + "\n")
+        sys.stdout.flush()
+
+        linhas_prev = linhas_frame
+        idx += 1
+        time.sleep(min(atraso, restante))
+
+    if linhas_prev:
+        sys.stdout.write(f"\x1b[{linhas_prev}F")
+        for _ in range(linhas_prev):
+            sys.stdout.write("\x1b[2K\n")
+        sys.stdout.write(f"\x1b[{linhas_prev}F")
+        sys.stdout.flush()
 
 
 def resetar_execucao_ciclo(job_nome):
@@ -292,6 +526,25 @@ def validar_entrada_analise(jogo, odd):
 
 def listar_mercados_runtime():
     return list(MARKET_RUNTIME_CONFIG)
+
+
+def mapear_mercado_policy_v2(mercado):
+    mapping = {
+        "1x2_casa": "home_win",
+        "1x2_fora": "away_win",
+        "over_2.5": "over_2.5",
+        "under_2.5": "under_2.5",
+    }
+    return mapping.get(mercado, mercado)
+
+
+def minutos_ate_jogo(horario):
+    try:
+        kickoff = datetime.strptime(horario, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+        delta = (kickoff - datetime.now(timezone.utc)).total_seconds() / 60.0
+        return max(0.0, delta)
+    except Exception:
+        return 180.0
 
 
 def aplicar_cap_por_jogo(candidatos, max_por_jogo=MAX_MERCADOS_POR_JOGO):
@@ -525,6 +778,20 @@ def emitir_alerta_operacional(alerta):
     async def _send_alert():
         await Bot(token=TOKEN).send_message(chat_id=CANAL_VIP, text=texto)
 
+    def _log_alert_task_exception(task):
+        try:
+            if task.cancelled():
+                return
+            exc = task.exception()
+        except asyncio.CancelledError:
+            return
+        except Exception as cb_err:
+            log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(cb_err)})
+            return
+
+        if exc:
+            log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(exc)})
+
     try:
         try:
             loop = asyncio.get_running_loop()
@@ -533,7 +800,7 @@ def emitir_alerta_operacional(alerta):
             return
 
         task = loop.create_task(_send_alert())
-        task.add_done_callback(lambda t: t.exception())
+        task.add_done_callback(_log_alert_task_exception)
     except Exception as e:
         log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(e)})
 
@@ -743,7 +1010,8 @@ async def processar_jogos(dry_run=False):
     if not dry_run:
         bot = Bot(token=TOKEN)
     agora = datetime.now().strftime("%H:%M")
-    print(f"\n[{agora}] Iniciando análise automática...")
+    if not MINIMAL_RUNTIME_OUTPUT:
+        print(f"\n[{agora}] Iniciando análise automática...")
 
     if KILL_SWITCH and not dry_run:
         registrar_auditoria_acao(
@@ -772,8 +1040,10 @@ async def processar_jogos(dry_run=False):
             return
 
     sinais_hoje = len(buscar_sinais_hoje())
-    if sinais_hoje >= MAX_SINAIS_DIA:
-        print(f"Limite diário atingido: {sinais_hoje}/{MAX_SINAIS_DIA}")
+    limite_diario_ativo = MAX_SINAIS_DIA > 0
+    if limite_diario_ativo and sinais_hoje >= MAX_SINAIS_DIA:
+        if not MINIMAL_RUNTIME_OUTPUT:
+            print(f"Limite diário atingido: {sinais_hoje}/{MAX_SINAIS_DIA}")
         return
 
     conn_check = sqlite3.connect("data/edge_protocol.db")
@@ -894,7 +1164,8 @@ async def processar_jogos(dry_run=False):
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
                         provider_health["invalid_input"] += 1
-                        print(f"Skip entrada {motivo_entrada}: {jogo.get('jogo', 'desconhecido')} | {mercado}")
+                        if not MINIMAL_RUNTIME_OUTPUT:
+                            print(f"Skip entrada {motivo_entrada}: {jogo.get('jogo', 'desconhecido')} | {mercado}")
                         continue
 
                     chave = f"{jogo['jogo']}|{mercado}"
@@ -959,6 +1230,7 @@ async def processar_jogos(dry_run=False):
                         "no_vig_source_quality": source_quality,
                         "prob_modelo_base": analise.get("prob_modelo_base", analise.get("prob_modelo", None)),
                         "prob_modelo": analise.get("prob_modelo", None),
+                        "max_sinais_dia": MAX_SINAIS_DIA,
                         "liga": jogo["liga"],
                         "time_casa": home,
                         "time_fora": away,
@@ -983,6 +1255,50 @@ async def processar_jogos(dry_run=False):
                             },
                         )
                         continue
+
+                    policy_v2_result = None
+                    if POLICY_V2_ENABLED and gate_ev_steam is not None and EV_POLICY_V2 is not None and STEAM_POLICY_V2 is not None:
+                        mercado_policy = mapear_mercado_policy_v2(mercado)
+                        odd_abertura = (steam_data or {}).get("odd_abertura", odd)
+                        odd_atual = (steam_data or {}).get("odd_atual", odd)
+                        book_ref = "pinnacle" if (dados_odds or {}).get("odd_pinnacle") else "default"
+                        minutos_jogo = minutos_ate_jogo(jogo.get("horario"))
+                        try:
+                            policy_v2_result = gate_ev_steam(
+                                mercado=mercado_policy,
+                                ev_calculado=float(analise.get("ev", 0.0)),
+                                odd_abertura=float(odd_abertura),
+                                odd_atual=float(odd_atual),
+                                book=book_ref,
+                                minutos_ate_jogo=float(minutos_jogo),
+                                ev_policy=EV_POLICY_V2,
+                                steam_policy=STEAM_POLICY_V2,
+                            )
+                        except Exception as exc:
+                            log_event(
+                                "runtime",
+                                "policy_v2",
+                                f"{jogo['jogo']}|{mercado}",
+                                "warning",
+                                "policy_v2_eval_failed",
+                                {"erro": str(exc)},
+                            )
+                            policy_v2_result = None
+
+                    if policy_v2_result is not None and not policy_v2_result.aprovado:
+                        log_event(
+                            "runtime",
+                            "policy_v2",
+                            f"{jogo['jogo']}|{mercado}",
+                            "reject" if not POLICY_V2_SHADOW_MODE else "shadow_reject",
+                            "policy_v2_gate_reject",
+                            {
+                                "motivo": policy_v2_result.motivo_final,
+                                "shadow_mode": POLICY_V2_SHADOW_MODE,
+                            },
+                        )
+                        if not POLICY_V2_SHADOW_MODE:
+                            continue
 
                     penalizacao = filtro.get("penalizacao_score", 0)
                     pipeline_bonus = 0
@@ -1037,18 +1353,30 @@ async def processar_jogos(dry_run=False):
                             "amostra_prior": contexto_confianca.get("amostra_prior", 0),
                             "prior_ranking": contexto_confianca.get("prior_ranking", 0.0),
                             "ajuste_prior": round(ajuste_prior, 4),
+                            "policy_v2": {
+                                "aplicado": policy_v2_result is not None,
+                                "aprovado": (policy_v2_result.aprovado if policy_v2_result is not None else None),
+                                "shadow_mode": POLICY_V2_SHADOW_MODE,
+                            },
                             "liga_key": liga_key,
                             "dados_odds": dados_odds
                         })
 
             except Exception as e:
                 provider_health["connection_error"] += 1
-                print(f"Erro ao processar {jogo['jogo']}: {e}")
+                if MINIMAL_RUNTIME_OUTPUT:
+                    print("-> FAIL")
+                else:
+                    print(f"Erro ao processar {jogo['jogo']}: {e}")
 
     candidatos = aplicar_penalizacao_correlacao_ranking(candidatos)
     candidatos = aplicar_cap_por_jogo(candidatos)
-    vagas_restantes = MAX_SINAIS_DIA - sinais_hoje
-    selecionados = candidatos[:vagas_restantes]
+    if limite_diario_ativo:
+        vagas_restantes = max(0, MAX_SINAIS_DIA - sinais_hoje)
+        selecionados = candidatos[:vagas_restantes]
+    else:
+        vagas_restantes = len(candidatos)
+        selecionados = candidatos
     selecionados, suprimidos_canary = aplicar_canary_operacional(
         selecionados,
         ratio=CANARY_RATIO,
@@ -1069,8 +1397,9 @@ async def processar_jogos(dry_run=False):
             },
         )
 
-    print(f"Candidatos encontrados: {len(candidatos)}")
-    print(f"Sinais a enviar: {len(selecionados)}")
+    if not MINIMAL_RUNTIME_OUTPUT:
+        print(f"Candidatos encontrados: {len(candidatos)}")
+        print(f"Sinais a enviar: {len(selecionados)}")
 
     sinais_enviados = 0
     primeiro_sinal = sinais_hoje == 0
@@ -1094,27 +1423,32 @@ async def processar_jogos(dry_run=False):
         )
 
         if not isinstance(kelly, dict):
-            print(f"Kelly inválido: {jogo['jogo']} — resposta não é dict")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Kelly inválido: {jogo['jogo']} — resposta não é dict")
             continue
 
         if not kelly.get("aprovado"):
-            print(f"Kelly bloqueou: {jogo['jogo']} — {kelly.get('motivo', 'motivo_indefinido')}")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Kelly bloqueou: {jogo['jogo']} — {kelly.get('motivo', 'motivo_indefinido')}")
             continue
 
         required_fields = ["tier", "kelly_final_pct", "valor_reais"]
         if any(field not in kelly for field in required_fields):
-            print(f"Kelly inválido: {jogo['jogo']} — payload incompleto")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Kelly inválido: {jogo['jogo']} — payload incompleto")
             continue
 
         try:
             kelly_final_pct = float(kelly["kelly_final_pct"])
             valor_reais = float(kelly["valor_reais"])
         except (TypeError, ValueError):
-            print(f"Kelly inválido: {jogo['jogo']} — valores não numéricos")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Kelly inválido: {jogo['jogo']} — valores não numéricos")
             continue
 
         if not math.isfinite(kelly_final_pct) or not math.isfinite(valor_reais) or kelly_final_pct < 0 or valor_reais < 0:
-            print(f"Kelly inválido: {jogo['jogo']} — stake fora da faixa segura")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Kelly inválido: {jogo['jogo']} — stake fora da faixa segura")
             continue
 
         stake_reais = valor_reais
@@ -1128,7 +1462,8 @@ async def processar_jogos(dry_run=False):
 
         if dry_run:
             sinais_enviados += 1
-            print(f"[dry-run] Simulado sinal: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']}")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"[dry-run] Simulado sinal: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']}")
             continue
 
         msg_vip = await bot.send_message(chat_id=CANAL_VIP, text=msg)
@@ -1138,7 +1473,8 @@ async def processar_jogos(dry_run=False):
         if primeiro_sinal and sinais_enviados == 0:
             msg_free = await bot.send_message(chat_id=CANAL_FREE, text=msg)
             message_id_free = msg_free.message_id
-            print(f"Enviado FREE: {jogo['jogo']} | {item['mercado']}")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Enviado FREE: {jogo['jogo']} | {item['mercado']}")
 
         try:
             sinal_id = inserir_sinal(
@@ -1162,7 +1498,8 @@ async def processar_jogos(dry_run=False):
             registrar_aposta_clv(sinal_id, analise["jogo"], analise["mercado"],
                                   analise["odd"], analise.get("prob_modelo", 0.5))
         except Exception as e:
-            print(f"Erro CLV: {e}")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Erro CLV: {e}")
 
         # Steam evento
         if item.get("dados_odds") and analise.get("steam_bonus", 0) > 0:
@@ -1202,26 +1539,29 @@ async def processar_jogos(dry_run=False):
                 }
             })
         except Exception as e:
-            print(f"Erro update Excel (sinal): {e}")
+            if not MINIMAL_RUNTIME_OUTPUT:
+                print(f"Erro update Excel (sinal): {e}")
 
         sinais_enviados += 1
         steam_info = f" | Steam:+{analise['steam_bonus']}pts" if analise.get("steam_bonus", 0) > 0 else ""
-        print(f"Sinal #{sinal_id}: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']} | Kelly:{kelly['kelly_final_pct']}%=R${stake_reais:.2f}{steam_info}")
+        if not MINIMAL_RUNTIME_OUTPUT:
+            print(f"Sinal #{sinal_id}: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']} | Kelly:{kelly['kelly_final_pct']}%=R${stake_reais:.2f}{steam_info}")
 
-    print(f"[{agora}] Concluído. {sinais_enviados} sinais enviados.")
-    print(
-        "Health summary: "
-        f"ok={provider_health['ok']} "
-        f"timeout={provider_health['timeout']} "
-        f"http_error={provider_health['http_error']} "
-        f"connection_error={provider_health['connection_error']} "
-        f"empty_payload={provider_health['empty_payload']} "
-        f"unknown_error={provider_health['unknown_error']} "
-        f"invalid_input={provider_health['invalid_input']} "
-        f"fallback_used={provider_health['fallback_used']} "
-        f"missing_odd_oponente={provider_health.get('missing_odd_oponente', 0)} "
-        f"source_quality_low={provider_health.get('source_quality_low', 0)}"
-    )
+    if not MINIMAL_RUNTIME_OUTPUT:
+        print(f"[{agora}] Concluído. {sinais_enviados} sinais enviados.")
+        print(
+            "Health summary: "
+            f"ok={provider_health['ok']} "
+            f"timeout={provider_health['timeout']} "
+            f"http_error={provider_health['http_error']} "
+            f"connection_error={provider_health['connection_error']} "
+            f"empty_payload={provider_health['empty_payload']} "
+            f"unknown_error={provider_health['unknown_error']} "
+            f"invalid_input={provider_health['invalid_input']} "
+            f"fallback_used={provider_health['fallback_used']} "
+            f"missing_odd_oponente={provider_health.get('missing_odd_oponente', 0)} "
+            f"source_quality_low={provider_health.get('source_quality_low', 0)}"
+        )
     drift_alert = avaliar_alerta_drift_minimo(provider_health, total_avaliacoes_mercado)
     if drift_alert:
         log_event(
@@ -1301,7 +1641,8 @@ async def monitorar_janela_expandida():
         jogo = row[0]
         marcar_notificado(jogo)
 
-    print(f"Janela expandida: {jogos_novos} jogos monitorados silenciosamente")
+    if not MINIMAL_RUNTIME_OUTPUT:
+        print(f"Janela expandida: {jogos_novos} jogos monitorados silenciosamente")
 
 async def monitorar_steam_sinais_ativos():
     bot = Bot(token=TOKEN)
@@ -1704,24 +2045,39 @@ def iniciar_scheduler():
     garantir_schema_minimo()
     executar_preflight()
     garantir_tabela_execucoes()
-    print("=== SCHEDULER EDGE PROTOCOL ATIVO ===")
-    print(f"Score mínimo: {MIN_EDGE_SCORE}/100")
-    print(f"Confiança mínima: {MIN_CONFIANCA}/100")
-    print(f"Kelly fracionado: 1/4 com teto 3%")
-    print(f"SOS: ativo")
-    print(f"Janela expandida: 72h clássicos / 48h copa / 12h liga")
-    print(f"Excel: atualização automática ativa")
-    print("\nHorários programados:")
-    print("  09:00 — Análise da manhã")
-    print("  16:00 — Análise da tarde")
-    print("  A cada 2h — Monitoramento janela expandida (silencioso)")
-    print("  A cada 5min — CLV fechamento")
-    print("  A cada 30min — Steam monitoring")
-    print("  A cada 30min (17h-23h) — Verificação de resultados")
-    print("  23:30 — Resumo diário + Excel full refresh")
-    print("  Segunda 06:00 — Atualização de stats + xG")
-    print("  Segunda 06:30 — Backtest janela móvel + promoção")
-    print("\nAguardando próximo horário...\n")
+    if SHOW_STARTUP_BANNER:
+        print(
+            MAGENTA
+            + """
+                                                                          
+  ▄▄▄▄▄▄▄                      ▄▄▄▄▄▄                                 ▄▄ 
+ █▀██▀▀▀     █▄               █▀██▀▀▀█▄           █▄                   ██
+   ██        ██    ▄▄           ██▄▄▄█▀▄         ▄██▄                  ██
+   ████   ▄████ ▄████ ▄█▀█▄     ██▀▀▀  ████▄▄███▄ ██ ▄███▄ ▄███▀ ▄███▄ ██
+   ██     ██ ██ ██ ██ ██▄█▀   ▄ ██     ██   ██ ██ ██ ██ ██ ██    ██ ██ ██
+   ▀█████▄█▀███▄▀████▄▀█▄▄▄   ▀██▀    ▄█▀  ▄▀███▀▄██▄▀███▀▄▀███▄▄▀███▀▄██
+                   ██                                                    
+                 ▀▀▀                                                     
+"""
+                        + ANSI_RESET
+        )
+        print(f"Score mínimo: {MIN_EDGE_SCORE}/100")
+        print(f"Confiança mínima: {MIN_CONFIANCA}/100")
+        print(f"Kelly fracionado: 1/4 com teto 3%")
+        print(f"SOS: ativo")
+        print(f"Janela expandida: 72h clássicos / 48h copa / 12h liga")
+        print(f"Excel: atualização automática ativa")
+        print("\nHorários programados:")
+        print("  09:00 — Análise da manhã")
+        print("  16:00 — Análise da tarde")
+        print("  A cada 2h — Monitoramento janela expandida (silencioso)")
+        print("  A cada 5min — CLV fechamento")
+        print("  A cada 30min — Steam monitoring")
+        print("  A cada 30min (17h-23h) — Verificação de resultados")
+        print("  23:30 — Resumo diário + Excel full refresh")
+        print("  Segunda 06:00 — Atualização de stats + xG")
+        print("  Segunda 06:30 — Backtest janela móvel + promoção")
+        print("")
 
     schedule.every().day.at("09:00").do(rodar_analise)
     schedule.every().day.at("16:00").do(rodar_analise)
@@ -1747,7 +2103,7 @@ def iniciar_scheduler():
 
     while True:
         schedule.run_pending()
-        time.sleep(60)
+        _esperar_ocioso_com_animacao(60)
 
 
 def executar_dry_run_once():
@@ -1768,4 +2124,5 @@ if __name__ == "__main__":
         iniciar_scheduler()
     except KeyboardInterrupt:
         log_event("runtime", "shutdown", "scheduler", "stopped", "keyboard_interrupt")
-        print("\nScheduler encerrado pelo operador.")
+        if not MINIMAL_RUNTIME_OUTPUT:
+            print("\nScheduler encerrado pelo operador.")

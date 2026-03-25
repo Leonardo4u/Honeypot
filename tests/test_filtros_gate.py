@@ -143,6 +143,39 @@ class TestFiltrosGate(unittest.TestCase):
         self.assertTrue(resultado["aprovado"])
         self.assertEqual(resultado["reason_code"], REJECT_CODE_PASSED)
 
+    def test_gate4_respeita_max_sinais_customizado(self):
+        resultado = aplicar_triple_gate(
+            {
+                "ev": 0.08,
+                "odd": 1.90,
+                "mercado": "over_2.5",
+                "escalacao_confirmada": True,
+                "variacao_odd": 0.0,
+                "max_sinais_dia": 5,
+            },
+            sinais_hoje=5,
+        )
+
+        self.assertFalse(resultado["aprovado"])
+        self.assertEqual(resultado["bloqueado_em"], "Gate 4")
+        self.assertEqual(resultado["reason_code"], REJECT_REASON_CODES["gate4_daily_limit"])
+
+    def test_gate4_permite_sem_limite_quando_max_sinais_zero(self):
+        resultado = aplicar_triple_gate(
+            {
+                "ev": 0.08,
+                "odd": 1.90,
+                "mercado": "over_2.5",
+                "escalacao_confirmada": True,
+                "variacao_odd": 0.0,
+                "max_sinais_dia": 0,
+            },
+            sinais_hoje=999,
+        )
+
+        self.assertTrue(resultado["aprovado"])
+        self.assertEqual(resultado["reason_code"], REJECT_CODE_PASSED)
+
 
 class TestStandingsCachePersistencia(unittest.TestCase):
     def setUp(self):

@@ -1,6 +1,7 @@
 import sys
 import types
 import unittest
+import asyncio
 from unittest.mock import patch
 
 if "schedule" not in sys.modules:
@@ -159,6 +160,61 @@ class TestSchedulerGuardrails(unittest.TestCase):
         codigos = {a["codigo"] for a in alertas}
         self.assertIn("slo_cycle_availability_breach", codigos)
         self.assertIn("slo_fallback_rate_breach", codigos)
+
+    def test_emitir_alerta_operacional_ignora_cancelled_error_no_callback(self):
+        class _FakeTask:
+            def __init__(self):
+                self._done_callback = None
+
+            def add_done_callback(self, cb):
+                self._done_callback = cb
+                cb(self)
+
+            def cancelled(self):
+                return False
+
+            def exception(self):
+                raise asyncio.CancelledError()
+
+        class _FakeLoop:
+            def create_task(self, _coro):
+                return _FakeTask()
+
+        alerta = {"severidade": "critical", "codigo": "x", "playbook": "PB-01", "detalhes": {"k": "v"}}
+
+        with patch.object(scheduler, "TOKEN", "token"), patch.object(scheduler, "CANAL_VIP", "123"), patch(
+            "scheduler.registrar_alerta_operacional"
+        ), patch("scheduler.log_event") as log_mock, patch("scheduler.asyncio.get_running_loop", return_value=_FakeLoop()):
+            scheduler.emitir_alerta_operacional(alerta)
+
+        # Should log the SLO event, but not crash on callback cancelled task.
+        self.assertGreaterEqual(log_mock.call_count, 1)
+
+    def test_emitir_alerta_operacional_loga_falha_callback(self):
+        class _FakeTask:
+            def add_done_callback(self, cb):
+                cb(self)
+
+            def cancelled(self):
+                return False
+
+            def exception(self):
+                raise RuntimeError("cb failure")
+
+        class _FakeLoop:
+            def create_task(self, _coro):
+                return _FakeTask()
+
+        alerta = {"severidade": "critical", "codigo": "x", "playbook": "PB-01", "detalhes": {"k": "v"}}
+
+        with patch.object(scheduler, "TOKEN", "token"), patch.object(scheduler, "CANAL_VIP", "123"), patch(
+            "scheduler.registrar_alerta_operacional"
+        ), patch("scheduler.log_event") as log_mock, patch("scheduler.asyncio.get_running_loop", return_value=_FakeLoop()):
+            scheduler.emitir_alerta_operacional(alerta)
+
+        self.assertTrue(
+            any(call.args[4] == "alert_send_failed" for call in log_mock.mock_calls if len(call.args) >= 5)
+        )
 
 
 if __name__ == "__main__":

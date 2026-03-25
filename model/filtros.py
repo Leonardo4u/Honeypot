@@ -195,6 +195,8 @@ def gate3_odd_estavel(variacao_odd_percentual):
     return True, "OK", None
 
 def gate4_limite_diario(sinais_hoje, max_sinais=10):
+    if max_sinais is None or max_sinais <= 0:
+        return True, "OK", None
     if sinais_hoje >= max_sinais:
         return False, f"Limite diário atingido: {sinais_hoje}/{max_sinais}", REJECT_CODE_DAILY_LIMIT
     return True, "OK", None
@@ -341,7 +343,7 @@ def aplicar_triple_gate(dados_sinal, sinais_hoje=0):
     if not ok:
         return {"aprovado": False, **build_reject(reason_code, msg, "Gate 3", resultados)}
 
-    ok, msg, reason_code = gate4_limite_diario(sinais_hoje)
+    ok, msg, reason_code = gate4_limite_diario(sinais_hoje, dados_sinal.get("max_sinais_dia", 10))
     resultados["gate4"] = {"passou": ok, "msg": msg, "reason_code": reason_code}
     if not ok:
         return {"aprovado": False, **build_reject(reason_code, msg, "Gate 4", resultados)}
