@@ -389,6 +389,73 @@ def calcular_confianca_calibrada(time_casa, time_fora):
     return conf
 
 
+def buscar_metricas_qualidade_liga_mercado(liga, mercado, fonte_preferencial="historico"):
+    """
+    Retorna agregados historicos para prior de qualidade por liga+mercado.
+    Prioriza fonte historica quando disponivel; caso contrario, usa qualquer fonte.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    def _query(fonte=None):
+        if fonte:
+            c.execute(
+                '''
+                SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                    SUM(COALESCE(lucro_unidades, 0)) as lucro_total
+                FROM sinais
+                WHERE status = 'finalizado'
+                  AND liga = ?
+                  AND mercado = ?
+                  AND fonte = ?
+                ''',
+                (liga, mercado, fonte),
+            )
+        else:
+            c.execute(
+                '''
+                SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                    SUM(COALESCE(lucro_unidades, 0)) as lucro_total
+                FROM sinais
+                WHERE status = 'finalizado'
+                  AND liga = ?
+                  AND mercado = ?
+                ''',
+                (liga, mercado),
+            )
+        row = c.fetchone() or (0, 0, 0)
+        total = int(row[0] or 0)
+        vitorias = int(row[1] or 0)
+        lucro_total = float(row[2] or 0.0)
+        return total, vitorias, lucro_total
+
+    total, vitorias, lucro_total = _query(fonte_preferencial)
+    fonte_usada = fonte_preferencial if total > 0 else "todas"
+
+    if total == 0:
+        total, vitorias, lucro_total = _query()
+
+    conn.close()
+
+    win_rate = (vitorias / total) if total > 0 else 0.0
+    roi_pct = ((lucro_total / total) * 100.0) if total > 0 else 0.0
+
+    return {
+        "liga": liga,
+        "mercado": mercado,
+        "total": total,
+        "vitorias": vitorias,
+        "win_rate": round(win_rate, 4),
+        "roi_pct": round(roi_pct, 4),
+        "lucro_total": round(lucro_total, 4),
+        "fonte": fonte_usada,
+    }
+
+
 def resumo_calibracao(n_minimo=50):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

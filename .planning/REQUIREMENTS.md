@@ -18,8 +18,8 @@
 
 ### Confidence and Selection Quality
 
-- [ ] **WR-05**: Confidence calculation must reduce selection bias from self-selected bet history and use explicit quality priors.
-- [ ] **WR-06**: Runtime ranking/filtering must include historical market+league quality prior (minimum sample + quality state).
+- [x] **WR-05**: Confidence calculation must reduce selection bias from self-selected bet history and use explicit quality priors.
+- [x] **WR-06**: Runtime ranking/filtering must include historical market+league quality prior (minimum sample + quality state).
 
 ### Market Probability and Coverage
 
@@ -55,8 +55,8 @@
 | WR-02 | Phase 10 | Completed |
 | WR-03 | Phase 11 | Completed |
 | WR-04 | Phase 11 | Completed |
-| WR-05 | Phase 12 | Planned |
-| WR-06 | Phase 12 | Planned |
+| WR-05 | Phase 12 | Completed |
+| WR-06 | Phase 12 | Completed |
 | WR-07 | Phase 13 | Planned |
 | WR-08 | Phase 13 | Planned |
 | WR-09 | Phase 10 | Completed |
@@ -69,4 +69,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after phase 11 execution completion*
+*Last updated: 2026-03-25 after phase 12 execution completion*

@@ -129,7 +129,10 @@ class TestSchedulerDryRun(unittest.TestCase):
             asyncio.run(scheduler.processar_jogos(dry_run=True))
 
         chamadas = [c.args for c in mocked_log.call_args_list]
-        self.assertTrue(any(args[0] == "scheduler" and args[1] == "cycle_totals" for args in chamadas))
+        cycle_calls = [args for args in chamadas if args[0] == "scheduler" and args[1] == "cycle_totals"]
+        self.assertTrue(cycle_calls)
+        detalhes = cycle_calls[-1][5]
+        self.assertIn("prior_context_counts", detalhes)
 
 
 if __name__ == "__main__":
