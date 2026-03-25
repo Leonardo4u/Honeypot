@@ -1,31 +1,31 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.2
+milestone: v1.3
 milestone_name: milestone
-status: v1.2 milestone complete
-last_updated: "2026-03-25T01:18:29.282Z"
+status: v1.3 requirements and roadmap drafted
+last_updated: "2026-03-24T23:30:00.000Z"
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 9
-  completed_plans: 9
+  total_phases: 5
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # STATE
 
 ## Status
 
-- Milestone: v1.2 - Win Rate Integrity and Runtime Quality
-- Current phase: phase 13 completed (plans 01, 02, and 03 done)
-- Current command: milestone archived
-- Overall progress: v1.2 archived with roadmap and requirements snapshots
+- Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
+- Current phase: Not started (requirements and roadmap defined)
+- Current command: /gsd-plan-phase 14
+- Overall progress: v1.3 initialized with phases 14-18
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Define v1.3 requirements and roadmap
+**Current focus:** Execute phase 14 planning and implementation
 
 ## Artifacts
 
@@ -36,6 +36,7 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - Roadmap archive: .planning/milestones/v1.2-ROADMAP.md
 - Requirements archive: .planning/milestones/v1.1-REQUIREMENTS.md
 - Requirements archive: .planning/milestones/v1.2-REQUIREMENTS.md
+- Current requirements: .planning/REQUIREMENTS.md
 - Codebase map: .planning/codebase/
 - Research context: .planning/research/SUMMARY.md
 
@@ -71,10 +72,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-25: Phase 13 plan 02 executed and summary created (runtime market coverage expansion with guardrails).
 - 2026-03-25: Phase 13 plan 03 executed and summary created (pinned dependencies and canonical one-command baseline tests).
 - 2026-03-25: v1.2 milestone archived with roadmap/requirements snapshots and milestone register update.
+- 2026-03-24: v1.3 initialized from operator backlog with 15 improvements mapped into phases 14-18.
 
 ## Next Step
 
-Run `/gsd-new-milestone` to start v1.3 definition.
+Run `/gsd-plan-phase 14` to start implementation.
 
 ---
-*Last updated: 2026-03-25 after v1.2 milestone archival*
+*Last updated: 2026-03-24 after v1.3 initialization*

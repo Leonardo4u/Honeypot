@@ -5,14 +5,88 @@
 - [x] v1.0 Reliability and Signal Quality Hardening (shipped 2026-03-24) -> see `.planning/milestones/v1.0-ROADMAP.md`
 - [x] v1.1 Calibracao Estatistica e Backtesting Operacional (shipped 2026-03-24) -> see `.planning/milestones/v1.1-ROADMAP.md`
 - [x] v1.2 Win Rate Integrity and Runtime Quality (shipped 2026-03-25) -> see `.planning/milestones/v1.2-ROADMAP.md`
+- [ ] v1.3 Calibration Freshness and Portfolio Risk Controls (active)
 
 ## Active Milestone
 
-No active milestone.
+v1.3 Calibration Freshness and Portfolio Risk Controls
+
+## Phases
+
+- [ ] **Phase 14: Calibration Automation and League Home Advantage** - Operationalize rho/home-advantage calibration and align O/U with Dixon-Coles behavior.
+- [ ] **Phase 15: Recency-Weighted xG and Confidence Fallbacks** - Improve freshness sensitivity and reduce over-cautious confidence for low-sample contexts.
+- [ ] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates against noisy inputs.
+- [ ] **Phase 17: Correlation-Aware Portfolio Controls** - Limit same-match concentration in ranking and Kelly sizing.
+- [ ] **Phase 18: Operational Telemetry and Drift Safeguards** - Automate weekly backtesting metrics, configurable settlement windows, and drift alerts.
+
+## Phase Details
+
+### Phase 14: Calibration Automation and League Home Advantage
+**Goal**: Keep Poisson/DC calibration parameters current and league-aware without manual steps.
+**Depends on**: Phase 13
+**Requirements**: [CAL-01, CAL-02, CAL-03]
+**Plans:** 2 plans
+Plans:
+- [ ] 14-01-PLAN.md - Automatizar persistencia e consumo de calibracao por liga com home-advantage configuravel.
+- [ ] 14-02-PLAN.md - Aplicar consistencia Dixon-Coles no mercado over/under com regressao dedicada.
+**Success Criteria**:
+	1. Rho per liga is loaded automatically after calibration output updates.
+	2. Home-advantage factor is league-specific and applied in lambda_casa.
+	3. Over/under calculation uses consistent Dixon-Coles low-score correction behavior.
+
+### Phase 15: Recency-Weighted xG and Confidence Fallbacks
+**Goal**: Improve recency capture and avoid confidence collapse in low-sample contexts.
+**Depends on**: Phase 14
+**Requirements**: [XGF-01, CONF-01, MODEL-01]
+**Plans:** 0 plans
+**Success Criteria**:
+	1. xG aggregation uses exponential decay weighting over historical matches.
+	2. Confidence fallback uses proxy signals when prior state is sem_sinal.
+	3. SOS cap is conservative when data source quality is weaker than xG.
+
+### Phase 16: Gate Robustness and Steam Noise Filtering
+**Goal**: Reduce false positives from market/gate data quality and short-window steam noise.
+**Depends on**: Phase 15
+**Requirements**: [GATE-01, GATE-02, GATE-03, STEAM-01]
+**Plans:** 0 plans
+**Success Criteria**:
+	1. Gate 5 standings cache survives scheduler restarts with persistent TTL behavior.
+	2. No-vig normalization only runs for approved market source quality.
+	3. Divergence gate compares base Poisson probability vs market, not post-context adjusted probability.
+	4. Steam bonus requires minimum market-open elapsed time.
+
+### Phase 17: Correlation-Aware Portfolio Controls
+**Goal**: Reduce intraday exposure clustering from highly correlated same-match signals.
+**Depends on**: Phase 16
+**Requirements**: [RISK-01, RISK-02]
+**Plans:** 0 plans
+**Success Criteria**:
+	1. Ranking enforces per-match market cap after score sorting.
+	2. Kelly stake is reduced more aggressively when open signals are same-match correlated.
+
+### Phase 18: Operational Telemetry and Drift Safeguards
+**Goal**: Detect and react to quality degradation earlier with lightweight recurring diagnostics.
+**Depends on**: Phase 17
+**Requirements**: [OBS-01, SETTLE-01, OBS-02]
+**Plans:** 0 plans
+**Success Criteria**:
+	1. Weekly automation records Brier and win-rate trends from real sinais data.
+	2. Settlement lookup window is configurable by league/competition profile.
+	3. Telegram alerts trigger when quality metrics exceed drift thresholds.
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 14. Calibration Automation and League Home Advantage | 0/2 | Planned | - |
+| 15. Recency-Weighted xG and Confidence Fallbacks | 0/0 | Not started | - |
+| 16. Gate Robustness and Steam Noise Filtering | 0/0 | Not started | - |
+| 17. Correlation-Aware Portfolio Controls | 0/0 | Not started | - |
+| 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
 
 ## Next Step
 
-Run `/gsd-new-milestone` to define the next requirement cycle.
+Run `/gsd-plan-phase 14` to create executable plans for the first v1.3 slice.
 
 ---
-*Last updated: 2026-03-25 after v1.2 milestone completion*
+*Last updated: 2026-03-24 after v1.3 roadmap initialization*
