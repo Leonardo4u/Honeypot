@@ -68,6 +68,11 @@ Plans:
 **Goal**: Improve market comparison fidelity and reproducible iteration speed.
 **Depends on**: Phase 12
 **Requirements**: [WR-07, WR-08, WR-10]
+**Plans:** 3 plans
+Plans:
+- [ ] 13-01-PLAN.md - No-vig model-vs-market divergence in Gate 1 with regression tests.
+- [ ] 13-02-PLAN.md - Runtime market coverage expansion with guardrails and deterministic ranking checks.
+- [ ] 13-03-PLAN.md - Pinned dependencies and one-command reproducible test baseline.
 **Success Criteria**:
 	1. Divergence checks use no-vig market probabilities.
 	2. Runtime supports additional market paths under hit-rate guardrails.
@@ -80,7 +85,7 @@ Plans:
 | 10. Runtime Gate Integrity and Provider Health | 2/2 | Completed | 2026-03-24 |
 | 11. Settlement Label Integrity | 2/2 | Completed | 2026-03-24 |
 | 12. Confidence De-bias and Quality Prior | 2/2 | Completed | 2026-03-25 |
-| 13. No-vig Comparison, Market Coverage, and Test Baseline | 0/0 | Planned | - |
+| 13. No-vig Comparison, Market Coverage, and Test Baseline | 0/3 | Planned | - |
 
 ## Next Step
 
