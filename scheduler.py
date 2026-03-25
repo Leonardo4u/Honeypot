@@ -17,11 +17,16 @@ from filtros import aplicar_triple_gate
 from database import (
     DB_PATH,
     buscar_sinais_hoje,
+    calcular_exposicao_pendente_unidades,
+    calcular_perda_diaria_unidades,
     finalizar_execucao_job,
     garantir_schema_minimo,
     garantir_tabela_execucoes,
+    obter_slo_disponibilidade_ciclo,
     iniciar_execucao_job,
     inserir_sinal,
+    registrar_alerta_operacional,
+    registrar_auditoria_acao,
     validar_schema_minimo,
 )
 from coletar_odds import (
@@ -50,6 +55,8 @@ TOKEN = os.getenv("BOT_TOKEN")
 CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
 LOG_LEVEL = os.getenv("EDGE_LOG_LEVEL", "normal").strip().lower()
+OPERATOR_ID = os.getenv("EDGE_OPERATOR", "system")
+EDGE_VERSION = os.getenv("EDGE_VERSION", "dev")
 
 MAX_SINAIS_DIA = 10
 MAX_MERCADOS_POR_JOGO = 2
@@ -57,6 +64,18 @@ CORRELACAO_PENALTY_STEP = 2.0
 DRIFT_MIN_FALLBACK_LIMIAR = 0.35
 DRIFT_HISTORICO_MIN_PERSISTENCIA = 3
 DRIFT_HISTORICO_JANELA = 4
+KILL_SWITCH = os.getenv("EDGE_KILL_SWITCH", "0").strip().lower() in ("1", "true", "yes", "on")
+MAX_DAILY_LOSS_UNITS = float(os.getenv("EDGE_MAX_DAILY_LOSS_UNITS", "8.0"))
+MAX_EXPOSURE_WINDOW_UNITS = float(os.getenv("EDGE_MAX_EXPOSURE_WINDOW_UNITS", "12.0"))
+EXPOSURE_WINDOW_HOURS = int(os.getenv("EDGE_EXPOSURE_WINDOW_HOURS", "6"))
+PROVIDER_ERROR_RATE_MAX = float(os.getenv("EDGE_PROVIDER_ERROR_RATE_MAX", "0.55"))
+SLO_CYCLE_AVAILABILITY_MIN = float(os.getenv("SLO_CYCLE_AVAILABILITY_MIN", "0.95"))
+SLO_FALLBACK_RATE_MAX = float(os.getenv("SLO_FALLBACK_RATE_MAX", "0.35"))
+SLO_CYCLE_LATENCY_MAX_SECONDS = float(os.getenv("SLO_CYCLE_LATENCY_MAX_SECONDS", "120"))
+SLO_DRIFT_MAX_BRIER = float(os.getenv("SLO_DRIFT_MAX_BRIER", "0.25"))
+CANARY_RATIO = float(os.getenv("EDGE_CANARY_RATIO", "1.0"))
+CANARY_MODE_ENABLED = os.getenv("EDGE_CANARY_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
 
@@ -64,6 +83,12 @@ EXECUCAO_CICLO = {
     "job_nome": None,
     "status": "ok",
     "reason_codes": [],
+}
+
+EXECUCAO_STATS = {
+    "duracao_segundos": 0.0,
+    "provider_health": {},
+    "total_avaliacoes_mercado": 0,
 }
 
 LIGAS = [
@@ -131,6 +156,9 @@ def resetar_execucao_ciclo(job_nome):
     EXECUCAO_CICLO["job_nome"] = job_nome
     EXECUCAO_CICLO["status"] = "ok"
     EXECUCAO_CICLO["reason_codes"] = []
+    EXECUCAO_STATS["duracao_segundos"] = 0.0
+    EXECUCAO_STATS["provider_health"] = {}
+    EXECUCAO_STATS["total_avaliacoes_mercado"] = 0
 
 
 def marcar_ciclo_degradado(reason_code, detalhes=None):
@@ -182,12 +210,14 @@ def executar_job_guardado(job_nome, bucket_minutes, executor, force_once=False):
 
     resetar_execucao_ciclo(job_nome)
     log_event("scheduler", "job_guard", job_nome, "start", None, {"janela_chave": janela_chave})
+    inicio_execucao = time.perf_counter()
 
     try:
         executor()
     except Exception as e:
         marcar_ciclo_falha("job_exception", {"erro": str(e), "janela_chave": janela_chave})
     finally:
+        EXECUCAO_STATS["duracao_segundos"] = round(time.perf_counter() - inicio_execucao, 4)
         status_final = EXECUCAO_CICLO["status"]
         reason_code_final = EXECUCAO_CICLO["reason_codes"][0] if EXECUCAO_CICLO["reason_codes"] else None
         finalizar_execucao_job(
@@ -195,7 +225,22 @@ def executar_job_guardado(job_nome, bucket_minutes, executor, force_once=False):
             janela_chave,
             status_final,
             reason_code=reason_code_final,
-            detalhes_json={"reason_codes": EXECUCAO_CICLO["reason_codes"]},
+            detalhes_json={
+                "reason_codes": EXECUCAO_CICLO["reason_codes"],
+                "duracao_segundos": EXECUCAO_STATS["duracao_segundos"],
+                "provider_health": EXECUCAO_STATS.get("provider_health", {}),
+                "total_avaliacoes_mercado": EXECUCAO_STATS.get("total_avaliacoes_mercado", 0),
+            },
+        )
+        registrar_auditoria_acao(
+            actor=OPERATOR_ID,
+            acao=f"job:{job_nome}",
+            efeito=status_final,
+            detalhes={
+                "janela_chave": janela_chave,
+                "reason_code": reason_code_final,
+                "duracao_segundos": EXECUCAO_STATS["duracao_segundos"],
+            },
         )
         log_event(
             "scheduler",
@@ -292,6 +337,184 @@ def avaliar_alerta_drift_minimo(provider_health, total_avaliacoes, limiar=DRIFT_
             "limiar": limiar,
         }
     return None
+
+
+def calcular_provider_error_rate(provider_health):
+    total = sum(
+        int(provider_health.get(k, 0))
+        for k in ("ok", "timeout", "http_error", "connection_error", "empty_payload", "unknown_error")
+    )
+    if total <= 0:
+        return 0.0
+    erros = (
+        int(provider_health.get("timeout", 0))
+        + int(provider_health.get("http_error", 0))
+        + int(provider_health.get("connection_error", 0))
+        + int(provider_health.get("unknown_error", 0))
+    )
+    return round(erros / float(total), 4)
+
+
+def aplicar_canary_operacional(selecionados, ratio=1.0, enabled=False):
+    if not enabled:
+        return selecionados, []
+
+    ratio_num = max(0.0, min(1.0, float(ratio or 0.0)))
+    if ratio_num >= 1.0:
+        return selecionados, []
+
+    permitidos = int(math.ceil(len(selecionados) * ratio_num))
+    permitidos = max(0, min(len(selecionados), permitidos))
+    return selecionados[:permitidos], selecionados[permitidos:]
+
+
+def avaliar_guardrails_hard_limits():
+    perda_diaria = calcular_perda_diaria_unidades()
+    exposicao_pendente = calcular_exposicao_pendente_unidades(janela_horas=EXPOSURE_WINDOW_HOURS)
+
+    if perda_diaria <= -abs(MAX_DAILY_LOSS_UNITS):
+        return {
+            "bloquear": True,
+            "codigo": "hard_daily_loss_limit",
+            "detalhes": {
+                "perda_diaria_unidades": round(perda_diaria, 4),
+                "limite_unidades": round(-abs(MAX_DAILY_LOSS_UNITS), 4),
+            },
+        }
+
+    if exposicao_pendente >= abs(MAX_EXPOSURE_WINDOW_UNITS):
+        return {
+            "bloquear": True,
+            "codigo": "hard_exposure_window_limit",
+            "detalhes": {
+                "exposicao_pendente_unidades": round(exposicao_pendente, 4),
+                "limite_unidades": round(abs(MAX_EXPOSURE_WINDOW_UNITS), 4),
+                "janela_horas": EXPOSURE_WINDOW_HOURS,
+            },
+        }
+
+    return {
+        "bloquear": False,
+        "codigo": None,
+        "detalhes": {
+            "perda_diaria_unidades": round(perda_diaria, 4),
+            "exposicao_pendente_unidades": round(exposicao_pendente, 4),
+            "janela_horas": EXPOSURE_WINDOW_HOURS,
+        },
+    }
+
+
+def avaliar_slo_alertas(provider_health, total_avaliacoes_mercado, ciclo_duracao_segundos, drift_alerta=None):
+    alertas = []
+    disponibilidade = obter_slo_disponibilidade_ciclo(dias=7)
+    disponibilidade_val = disponibilidade.get("disponibilidade", 1.0)
+    if disponibilidade_val < SLO_CYCLE_AVAILABILITY_MIN:
+        alertas.append(
+            {
+                "severidade": "critical",
+                "codigo": "slo_cycle_availability_breach",
+                "playbook": "PB-01",
+                "detalhes": {
+                    "valor": disponibilidade_val,
+                    "limite": SLO_CYCLE_AVAILABILITY_MIN,
+                    "janela_dias": 7,
+                },
+            }
+        )
+
+    fallback_rate = 0.0
+    if total_avaliacoes_mercado > 0:
+        fallback_rate = round(provider_health.get("fallback_used", 0) / float(total_avaliacoes_mercado), 4)
+    if fallback_rate > SLO_FALLBACK_RATE_MAX:
+        severidade = "critical" if fallback_rate >= (SLO_FALLBACK_RATE_MAX * 1.25) else "warning"
+        alertas.append(
+            {
+                "severidade": severidade,
+                "codigo": "slo_fallback_rate_breach",
+                "playbook": "PB-02",
+                "detalhes": {
+                    "valor": fallback_rate,
+                    "limite": SLO_FALLBACK_RATE_MAX,
+                },
+            }
+        )
+
+    if ciclo_duracao_segundos > SLO_CYCLE_LATENCY_MAX_SECONDS:
+        severidade = "critical" if ciclo_duracao_segundos >= (SLO_CYCLE_LATENCY_MAX_SECONDS * 1.5) else "warning"
+        alertas.append(
+            {
+                "severidade": severidade,
+                "codigo": "slo_cycle_latency_breach",
+                "playbook": "PB-03",
+                "detalhes": {
+                    "valor": round(ciclo_duracao_segundos, 3),
+                    "limite": SLO_CYCLE_LATENCY_MAX_SECONDS,
+                },
+            }
+        )
+
+    if drift_alerta and drift_alerta.get("metrica") == "brier_medio":
+        valor = float(drift_alerta.get("valor_atual") or 0.0)
+        if valor >= SLO_DRIFT_MAX_BRIER:
+            alertas.append(
+                {
+                    "severidade": "critical",
+                    "codigo": "slo_drift_brier_breach",
+                    "playbook": "PB-04",
+                    "detalhes": {
+                        "valor": valor,
+                        "limite": SLO_DRIFT_MAX_BRIER,
+                        "segmento": f"{drift_alerta.get('segmento_tipo')}={drift_alerta.get('segmento_valor')}",
+                    },
+                }
+            )
+
+    return alertas
+
+
+def emitir_alerta_operacional(alerta):
+    detalhes = dict(alerta.get("detalhes") or {})
+    detalhes["playbook_link"] = PLAYBOOK_LINK
+    registrar_alerta_operacional(
+        severidade=alerta.get("severidade", "warning"),
+        codigo=alerta.get("codigo", "unknown_alert"),
+        playbook_id=alerta.get("playbook"),
+        detalhes=detalhes,
+    )
+    log_event(
+        "runtime",
+        "slo",
+        alerta.get("codigo", "unknown"),
+        alerta.get("severidade", "warning"),
+        alerta.get("playbook"),
+        detalhes,
+    )
+
+    if not TOKEN or not CANAL_VIP:
+        return
+
+    texto = (
+        f"ALERTA OPERACIONAL [{alerta.get('severidade', 'warning').upper()}]\n"
+        f"Codigo: {alerta.get('codigo', 'unknown_alert')}\n"
+        f"Playbook: {alerta.get('playbook', 'n/a')}\n"
+        f"Link: {detalhes.get('playbook_link', PLAYBOOK_LINK)}\n"
+        f"Detalhes: {_json.dumps(detalhes, ensure_ascii=False)}"
+    )
+
+    async def _send_alert():
+        await Bot(token=TOKEN).send_message(chat_id=CANAL_VIP, text=texto)
+
+    try:
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            asyncio.run(_send_alert())
+            return
+
+        task = loop.create_task(_send_alert())
+        task.add_done_callback(lambda t: t.exception())
+    except Exception as e:
+        log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(e)})
 
 
 def enviar_alerta_drift_historico(alerta):
@@ -494,11 +717,38 @@ def formatar_sinal_kelly(analise, kelly):
     return msg
 
 async def processar_jogos(dry_run=False):
+    ciclo_inicio = time.perf_counter()
     bot = None
     if not dry_run:
         bot = Bot(token=TOKEN)
     agora = datetime.now().strftime("%H:%M")
     print(f"\n[{agora}] Iniciando análise automática...")
+
+    if KILL_SWITCH and not dry_run:
+        registrar_auditoria_acao(
+            actor=OPERATOR_ID,
+            acao="send_signals",
+            efeito="blocked_kill_switch",
+            detalhes={"edge_kill_switch": True, "version": EDGE_VERSION},
+        )
+        registrar_alerta_operacional(
+            severidade="critical",
+            codigo="kill_switch_active",
+            playbook_id="PB-00",
+            detalhes={"playbook_link": PLAYBOOK_LINK, "version": EDGE_VERSION},
+        )
+        log_event("runtime", "guardrail", "kill_switch", "critical", "kill_switch_active", {"version": EDGE_VERSION})
+        return
+
+    if not dry_run:
+        hard_limits = avaliar_guardrails_hard_limits()
+        if hard_limits.get("bloquear"):
+            codigo = hard_limits.get("codigo")
+            detalhes = hard_limits.get("detalhes", {})
+            registrar_auditoria_acao(actor=OPERATOR_ID, acao="send_signals", efeito=f"blocked_{codigo}", detalhes=detalhes)
+            registrar_alerta_operacional(severidade="critical", codigo=codigo, playbook_id="PB-05", detalhes=detalhes)
+            log_event("runtime", "guardrail", "risk_limits", "critical", codigo, detalhes)
+            return
 
     sinais_hoje = len(buscar_sinais_hoje())
     if sinais_hoje >= MAX_SINAIS_DIA:
@@ -698,6 +948,25 @@ async def processar_jogos(dry_run=False):
     candidatos = aplicar_cap_por_jogo(candidatos)
     vagas_restantes = MAX_SINAIS_DIA - sinais_hoje
     selecionados = candidatos[:vagas_restantes]
+    selecionados, suprimidos_canary = aplicar_canary_operacional(
+        selecionados,
+        ratio=CANARY_RATIO,
+        enabled=(CANARY_MODE_ENABLED and not dry_run),
+    )
+
+    if suprimidos_canary:
+        log_event(
+            "runtime",
+            "canary",
+            "selection",
+            "warning",
+            "canary_ratio_applied",
+            {
+                "ratio": CANARY_RATIO,
+                "selecionados": len(selecionados),
+                "suprimidos": len(suprimidos_canary),
+            },
+        )
 
     print(f"Candidatos encontrados: {len(candidatos)}")
     print(f"Sinais a enviar: {len(selecionados)}")
@@ -824,6 +1093,7 @@ async def processar_jogos(dry_run=False):
                     "steam": analise.get("steam_bonus", 0),
                     "kelly_pct": kelly["kelly_final_pct"],
                     "unidades": stake_unidades,
+                    "version": EDGE_VERSION,
                     "resultado": None,
                     "retorno": None,
                     "banca_apos": None,
@@ -861,6 +1131,43 @@ async def processar_jogos(dry_run=False):
             "drift_min_threshold_exceeded",
             drift_alert,
         )
+
+    provider_error_rate = calcular_provider_error_rate(provider_health)
+    if (not dry_run) and provider_error_rate >= PROVIDER_ERROR_RATE_MAX:
+        marcar_ciclo_degradado(
+            "provider_error_rate_high",
+            {
+                "provider_error_rate": provider_error_rate,
+                "limiar": PROVIDER_ERROR_RATE_MAX,
+            },
+        )
+        emitir_alerta_operacional(
+            {
+                "severidade": "critical",
+                "codigo": "provider_error_rate_high",
+                "playbook": "PB-02",
+                "detalhes": {
+                    "provider_error_rate": provider_error_rate,
+                    "limiar": PROVIDER_ERROR_RATE_MAX,
+                },
+            }
+        )
+
+    EXECUCAO_STATS["provider_health"] = dict(provider_health)
+    EXECUCAO_STATS["total_avaliacoes_mercado"] = int(total_avaliacoes_mercado)
+
+    ciclo_duracao = round(time.perf_counter() - ciclo_inicio, 4)
+    EXECUCAO_STATS["duracao_segundos"] = ciclo_duracao
+
+    if not dry_run:
+        for alerta in avaliar_slo_alertas(
+            provider_health=provider_health,
+            total_avaliacoes_mercado=total_avaliacoes_mercado,
+            ciclo_duracao_segundos=ciclo_duracao,
+            drift_alerta=drift_alert,
+        ):
+            emitir_alerta_operacional(alerta)
+
     log_event(
         "scheduler",
         "cycle_totals",
@@ -1256,6 +1563,41 @@ def atualizar_stats_semanalmente():
 
     print("Stats atualizadas.")
 
+
+def rodar_backtest_recorrente():
+    script = os.path.join(BASE_DIR, "scripts", "backtest_moving_window.py")
+    panel_script = os.path.join(BASE_DIR, "scripts", "slo_panel.py")
+    if not os.path.isfile(script):
+        log_event("runtime", "backtest", "moving_window", "warning", "backtest_script_missing", {"script": script})
+        return
+
+    try:
+        out = subprocess.run(["python", script], cwd=BASE_DIR, capture_output=True, text=True, timeout=120)
+        status = "ok" if out.returncode == 0 else "degraded"
+        if out.returncode != 0:
+            marcar_ciclo_degradado("backtest_window_failed", {"rc": out.returncode, "stdout": out.stdout[-400:]})
+        registrar_auditoria_acao(
+            actor=OPERATOR_ID,
+            acao="backtest_moving_window",
+            efeito=status,
+            detalhes={"returncode": out.returncode, "version": EDGE_VERSION},
+        )
+        log_event(
+            "runtime",
+            "backtest",
+            "moving_window",
+            status,
+            None,
+            {
+                "returncode": out.returncode,
+                "stdout_tail": out.stdout[-200:] if out.stdout else "",
+            },
+        )
+        if os.path.isfile(panel_script):
+            subprocess.run(["python", panel_script], cwd=BASE_DIR, timeout=60)
+    except Exception as e:
+        marcar_ciclo_degradado("backtest_window_exception", {"erro": str(e)})
+
 def iniciar_scheduler():
     log_event("startup", "boot", "scheduler", "start")
     garantir_schema_minimo()
@@ -1277,6 +1619,7 @@ def iniciar_scheduler():
     print("  A cada 30min (17h-23h) — Verificação de resultados")
     print("  23:30 — Resumo diário + Excel full refresh")
     print("  Segunda 06:00 — Atualização de stats + xG")
+    print("  Segunda 06:30 — Backtest janela móvel + promoção")
     print("\nAguardando próximo horário...\n")
 
     schedule.every().day.at("09:00").do(rodar_analise)
@@ -1294,6 +1637,7 @@ def iniciar_scheduler():
                 schedule.every().day.at(horario).do(rodar_verificacao)
 
     schedule.every().monday.at("06:00").do(atualizar_stats_semanalmente)
+    schedule.every().monday.at("06:30").do(rodar_backtest_recorrente)
 
     log_event("startup", "boot", "scheduler", "ready")
 

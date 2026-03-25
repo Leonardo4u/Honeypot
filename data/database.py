@@ -1,7 +1,7 @@
 import sqlite3
 import os
 import json
-from datetime import datetime
+from datetime import datetime, UTC
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")
 
@@ -57,9 +57,30 @@ def criar_banco():
             UNIQUE(job_nome, janela_chave)
         )
     ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS operation_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            actor TEXT NOT NULL,
+            acao TEXT NOT NULL,
+            efeito TEXT NOT NULL,
+            detalhes_json TEXT
+        )
+    ''')
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS operation_alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            severidade TEXT NOT NULL,
+            codigo TEXT NOT NULL,
+            playbook_id TEXT,
+            detalhes_json TEXT
+        )
+    ''')
     conn.commit()
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
+    garantir_tabelas_operacionais()
     conn.close()
     print("Banco de dados criado com sucesso.")
 
@@ -77,6 +98,7 @@ def garantir_colunas_sinais():
         "fonte": "TEXT DEFAULT 'bot'",
         "fixture_id_api": "TEXT",
         "fixture_data_api": "TEXT",
+        "app_version": "TEXT DEFAULT 'dev'",
     }
 
     for coluna, tipo in colunas_requeridas.items():
@@ -135,12 +157,44 @@ def garantir_tabela_execucoes():
     conn.close()
 
 
+def garantir_tabelas_operacionais():
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS operation_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            actor TEXT NOT NULL,
+            acao TEXT NOT NULL,
+            efeito TEXT NOT NULL,
+            detalhes_json TEXT
+        )
+        '''
+    )
+    c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS operation_alerts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            severidade TEXT NOT NULL,
+            codigo TEXT NOT NULL,
+            playbook_id TEXT,
+            detalhes_json TEXT
+        )
+        '''
+    )
+    conn.commit()
+    conn.close()
+
+
 def garantir_schema_minimo():
     if not os.path.exists(DB_PATH):
         criar_banco()
         return
 
     garantir_tabela_execucoes()
+    garantir_tabelas_operacionais()
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
 
@@ -276,9 +330,9 @@ def inserir_sinal(liga, jogo, mercado, odd, ev, score, stake, message_id_vip=Non
     c = conn.cursor()
     from datetime import date
     c.execute('''
-        INSERT INTO sinais (data, liga, jogo, mercado, odd, ev_estimado, edge_score, stake_unidades, message_id_vip, message_id_free, horario)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (str(date.today()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario))
+        INSERT INTO sinais (data, liga, jogo, mercado, odd, ev_estimado, edge_score, stake_unidades, message_id_vip, message_id_free, horario, app_version)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ''', (str(date.today()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario, os.getenv("EDGE_VERSION", "dev")))
     conn.commit()
     sinal_id = c.lastrowid
     conn.close()
@@ -326,6 +380,112 @@ def buscar_sinais_hoje():
     rows = c.fetchall()
     conn.close()
     return rows
+
+
+def calcular_perda_diaria_unidades(data_ref=None):
+    data_alvo = data_ref or datetime.now().strftime("%Y-%m-%d")
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        SELECT SUM(CASE WHEN lucro_unidades < 0 THEN lucro_unidades ELSE 0 END)
+        FROM sinais
+        WHERE data = ?
+          AND status = 'finalizado'
+        ''',
+        (data_alvo,),
+    )
+    row = c.fetchone()
+    conn.close()
+    return float(row[0] or 0.0)
+
+
+def calcular_exposicao_pendente_unidades(janela_horas=6):
+    agora = datetime.utcnow()
+    limite = agora.timestamp() + max(1, int(janela_horas)) * 3600
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        SELECT horario, stake_unidades
+        FROM sinais
+        WHERE status = 'pendente'
+          AND horario IS NOT NULL
+          AND stake_unidades IS NOT NULL
+        '''
+    )
+    rows = c.fetchall()
+    conn.close()
+
+    total = 0.0
+    for horario, stake in rows:
+        try:
+            ts = datetime.strptime(horario, "%Y-%m-%dT%H:%M:%SZ").timestamp()
+            if agora.timestamp() <= ts <= limite:
+                total += float(stake or 0.0)
+        except Exception:
+            continue
+    return round(total, 4)
+
+
+def registrar_auditoria_acao(actor, acao, efeito, detalhes=None):
+    garantir_tabelas_operacionais()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    detalhes_json = None
+    if detalhes is not None:
+        detalhes_json = json.dumps(detalhes, ensure_ascii=False)
+    c.execute(
+        '''
+        INSERT INTO operation_audit (ocorrido_em, actor, acao, efeito, detalhes_json)
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        (datetime.now(UTC).isoformat(), actor, acao, efeito, detalhes_json),
+    )
+    conn.commit()
+    conn.close()
+
+
+def registrar_alerta_operacional(severidade, codigo, playbook_id=None, detalhes=None):
+    garantir_tabelas_operacionais()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    detalhes_json = None
+    if detalhes is not None:
+        detalhes_json = json.dumps(detalhes, ensure_ascii=False)
+    c.execute(
+        '''
+        INSERT INTO operation_alerts (ocorrido_em, severidade, codigo, playbook_id, detalhes_json)
+        VALUES (?, ?, ?, ?, ?)
+        ''',
+        (datetime.now(UTC).isoformat(), severidade, codigo, playbook_id, detalhes_json),
+    )
+    conn.commit()
+    conn.close()
+
+
+def obter_slo_disponibilidade_ciclo(dias=7):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        SELECT COUNT(*) AS total,
+               SUM(CASE WHEN status IN ('ok', 'degraded') THEN 1 ELSE 0 END) AS saudaveis
+        FROM job_execucoes
+        WHERE started_at >= datetime('now', ?)
+        ''',
+        (f'-{int(max(1, dias))} day',),
+    )
+    total, saudaveis = c.fetchone() or (0, 0)
+    conn.close()
+    total = int(total or 0)
+    saudaveis = int(saudaveis or 0)
+    disponibilidade = (saudaveis / total) if total > 0 else 1.0
+    return {
+        "total": total,
+        "saudaveis": saudaveis,
+        "disponibilidade": round(disponibilidade, 4),
+    }
 
 def resumo_mensal():
     conn = sqlite3.connect(DB_PATH)

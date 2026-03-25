@@ -1,13 +1,12 @@
-name: CI
+name: Weekly Backtest
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
+  schedule:
+    - cron: "30 9 * * 1"
+  workflow_dispatch:
 
 jobs:
-  test-and-hygiene:
+  backtest:
     runs-on: ubuntu-latest
     timeout-minutes: 15
 
@@ -25,14 +24,11 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run canonical tests
-        run: python scripts/run_tests.py
+      - name: Run moving-window backtest
+        run: python scripts/backtest_moving_window.py
 
-      - name: Verify repository hygiene
-        run: python scripts/check_repo_hygiene.py
-
-      - name: Smoke test
-        run: python scripts/smoke_test.py
-
-      - name: Promotion gate
+      - name: Evaluate promotion gate
         run: python scripts/check_promotion_gate.py
+
+      - name: Build SLO panel snapshot
+        run: python scripts/slo_panel.py

@@ -110,6 +110,23 @@ API_FOOTBALL_KEY=sua_chave_api_football
 
 # Opcional: verbosidade de log no scheduler: normal | debug
 EDGE_LOG_LEVEL=normal
+
+# Guardrails operacionais
+EDGE_KILL_SWITCH=0
+EDGE_MAX_DAILY_LOSS_UNITS=8
+EDGE_MAX_EXPOSURE_WINDOW_UNITS=12
+EDGE_EXPOSURE_WINDOW_HOURS=6
+
+# Canary e versao operacional
+EDGE_CANARY_ENABLED=0
+EDGE_CANARY_RATIO=1.0
+EDGE_VERSION=dev
+
+# SLOs
+SLO_CYCLE_AVAILABILITY_MIN=0.95
+SLO_FALLBACK_RATE_MAX=0.35
+SLO_CYCLE_LATENCY_MAX_SECONDS=120
+SLO_DRIFT_MAX_BRIER=0.25
 ```
 
 ### Variáveis usadas no projeto
@@ -118,6 +135,11 @@ EDGE_LOG_LEVEL=normal
 - `ODDS_API_KEY`: coleta de odds e fluxos relacionados
 - `API_FOOTBALL_KEY`: atualização de stats/settlement auxiliar
 - `EDGE_LOG_LEVEL`: modo de log (`normal` compacta rotina; `debug` mostra detalhes completos)
+- `EDGE_KILL_SWITCH`: bloqueia envio de sinais imediatamente
+- `EDGE_MAX_DAILY_LOSS_UNITS`: trava hard por perda diária
+- `EDGE_MAX_EXPOSURE_WINDOW_UNITS`: trava hard por exposição de pendentes
+- `EDGE_CANARY_ENABLED` + `EDGE_CANARY_RATIO`: libera fração controlada de sinais
+- `EDGE_VERSION`: versão operacional para auditoria/backtest
 
 ---
 
@@ -171,6 +193,29 @@ python scripts/check_repo_hygiene.py
 
 Esse check bloqueia artefatos gerados no git (como `__pycache__`, `.pyc`, `.db` e `logs/*.xlsx`).
 
+### Bootstrap de ambiente (1 comando)
+
+```bash
+python scripts/bootstrap.py
+```
+
+Esse comando instala dependências, inicializa tabelas e executa sanity+smoke checks.
+
+### Backtest recorrente e promoção
+
+```bash
+python scripts/backtest_moving_window.py
+python scripts/check_promotion_gate.py
+```
+
+### Painel SLO semanal/mensal
+
+```bash
+python scripts/slo_panel.py
+```
+
+Saída em `logs/slo_panel_latest.json`.
+
 A suíte canônica cobre módulos críticos de gates, scheduler, settlement, qualidade de dados, telemetria e integração de banco.
 
 ---
@@ -182,6 +227,20 @@ O projeto executa pipeline no GitHub Actions em push/PR para:
 - instalar dependências,
 - rodar suíte canônica (`python scripts/run_tests.py`),
 - validar higiene de versionamento (`python scripts/check_repo_hygiene.py`).
+- executar smoke test (`python scripts/smoke_test.py`),
+- validar gate de promoção (`python scripts/check_promotion_gate.py`).
+
+Workflow semanal adicional:
+- `Weekly Backtest` roda janela móvel + painel SLO + gate de promoção.
+
+---
+
+## 📚 Runbooks e segurança
+
+- Operação diária/semanal: [docs/runbooks/daily-weekly.md](docs/runbooks/daily-weekly.md)
+- Emergência/playbooks: [docs/runbooks/emergency.md](docs/runbooks/emergency.md)
+- Política de segredos: [docs/security/secrets-policy.md](docs/security/secrets-policy.md)
+- Checklist de incidentes: [docs/security/incident-checklist.md](docs/security/incident-checklist.md)
 
 ---
 
