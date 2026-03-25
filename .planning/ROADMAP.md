@@ -69,7 +69,10 @@ Plans:
 **Goal**: Reduce intraday exposure clustering from highly correlated same-match signals with stronger stake-level controls.
 **Depends on**: Phase 16
 **Requirements**: [RISK-01, RISK-02]
-**Plans:** 0 plans
+**Plans:** 2 plans
+Plans:
+- [ ] 17-01-PLAN.md - Aplicar penalizacao escalonada de correlacao no ranking e parametrizar cap/gradiente por jogo.
+- [ ] 17-02-PLAN.md - Estender Kelly com redutor por sinais do mesmo jogo e integrar contexto no scheduler.
 **Success Criteria**:
 	1. Kelly stake is reduced more aggressively when open signals are same-match correlated.
 	2. Correlation-aware ranking penalty scales with concentration severity across open signals.
@@ -91,12 +94,12 @@ Plans:
 | 14. Calibration Automation and League Home Advantage | 2/2 | Completed | 2026-03-24 |
 | 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
 | 16. Gate Robustness and Steam Noise Filtering | 2/2 | Completed | 2026-03-24 |
-| 17. Correlation-Aware Portfolio Controls | 0/0 | Not started | - |
+| 17. Correlation-Aware Portfolio Controls | 0/2 | Planned | - |
 | 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
 
 ## Next Step
 
-Run `/gsd-plan-phase 17` to define executable plans for advanced correlation-aware portfolio controls.
+Run `/gsd-execute-phase 17` to implement advanced correlation-aware portfolio controls.
 
 ---
-*Last updated: 2026-03-24 after phase 16 execution completion*
+*Last updated: 2026-03-24 after phase 17 planning*
