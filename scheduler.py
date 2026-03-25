@@ -49,6 +49,7 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
+LOG_LEVEL = os.getenv("EDGE_LOG_LEVEL", "normal").strip().lower()
 
 MAX_SINAIS_DIA = 10
 MAX_MERCADOS_POR_JOGO = 2
@@ -101,16 +102,26 @@ def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=Non
     ts = datetime.now().strftime("%H:%M:%S")
     header = f"[{ts}] {categoria}/{etapa} {entidade} -> {status}"
 
-    extra = []
     if reason_code:
-        extra.append(f"reason={reason_code}")
+        header += f" | reason={reason_code}"
+
+    if LOG_LEVEL == "normal" and isinstance(detalhes, dict) and not reason_code:
+        resumo = {}
+        for k in ("enviados", "candidatos", "status_final", "janela_chave"):
+            if k in detalhes:
+                resumo[k] = detalhes[k]
+
+        if resumo:
+            resumo_txt = _json.dumps(resumo, ensure_ascii=False, separators=(",", ":"))
+            print(f"{header} | resumo={resumo_txt}")
+            return
+
+        print(header)
+        return
 
     if detalhes:
         detalhes_txt = _json.dumps(detalhes, ensure_ascii=False, separators=(",", ":"))
-        extra.append(f"detalhes={detalhes_txt}")
-
-    if extra:
-        print(f"{header} | {' | '.join(extra)}")
+        print(f"{header} | detalhes={detalhes_txt}")
         return
 
     print(header)
