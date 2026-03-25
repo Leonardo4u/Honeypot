@@ -53,8 +53,8 @@ Plans:
 **Requirements**: [GATE-01, GATE-02, GATE-03, STEAM-01]
 **Plans:** 2 plans
 Plans:
-- [ ] 16-01-PLAN.md - Persistir cache de standings com TTL e exigir janela minima para bonus de steam.
-- [ ] 16-02-PLAN.md - Aplicar no-vig source-aware, divergencia pre-contexto, cap por jogo e telemetria minima de fallback/drift.
+- [x] 16-01-PLAN.md - Persistir cache de standings com TTL e exigir janela minima para bonus de steam.
+- [x] 16-02-PLAN.md - Aplicar no-vig source-aware, divergencia pre-contexto, cap por jogo e telemetria minima de fallback/drift.
 **Success Criteria**:
 	1. Gate 5 standings cache survives scheduler restarts with persistent TTL behavior.
 	2. No-vig normalization only runs for approved market source quality.
@@ -90,13 +90,13 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Calibration Automation and League Home Advantage | 2/2 | Completed | 2026-03-24 |
 | 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
-| 16. Gate Robustness and Steam Noise Filtering | 0/2 | Planned | - |
+| 16. Gate Robustness and Steam Noise Filtering | 2/2 | Completed | 2026-03-24 |
 | 17. Correlation-Aware Portfolio Controls | 0/0 | Not started | - |
 | 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
 
 ## Next Step
 
-Run `/gsd-execute-phase 16` to execute gate robustness, source-quality safeguards, and immediate risk controls.
+Run `/gsd-plan-phase 17` to define executable plans for advanced correlation-aware portfolio controls.
 
 ---
-*Last updated: 2026-03-24 after phase 16 planning*
+*Last updated: 2026-03-24 after phase 16 execution completion*

@@ -10,6 +10,7 @@ load_dotenv()
 DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")
 API_KEY = os.getenv("ODDS_API_KEY")
 BASE_URL = "https://api.the-odds-api.com/v4"
+MIN_HORAS_MERCADO_ABERTO_STEAM = 0.5
 
 def criar_tabelas_steam():
     conn = sqlite3.connect(DB_PATH)
@@ -234,6 +235,7 @@ def calcular_steam(jogo, mercado, dados_atuais):
     steam_confirmado = (
         abs(magnitude) >= 3 and
         consenso >= 60 and
+        horas_desde_abertura >= MIN_HORAS_MERCADO_ABERTO_STEAM and
         horas_desde_abertura <= 4
     )
 

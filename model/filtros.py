@@ -1,5 +1,6 @@
 import os
 import sqlite3
+import json
 from datetime import datetime
 
 from signal_policy import (
@@ -29,6 +30,58 @@ LIGA_ID_MAP = {
 
 _cache_standings = {}
 _cache_ts = {}
+_cache_persistido_carregado = False
+
+STANDINGS_CACHE_TTL_SECONDS = 21600
+STANDINGS_CACHE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "standings_cache.json")
+
+
+def _carregar_cache_standings_persistido():
+    global _cache_persistido_carregado
+    if _cache_persistido_carregado:
+        return
+
+    _cache_persistido_carregado = True
+    try:
+        if not os.path.isfile(STANDINGS_CACHE_PATH):
+            return
+
+        with open(STANDINGS_CACHE_PATH, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        for key, item in payload.items():
+            standings = item.get("standings")
+            ts_iso = item.get("ts")
+            if not isinstance(standings, dict) or not ts_iso:
+                continue
+            try:
+                _cache_standings[key] = standings
+                _cache_ts[key] = datetime.fromisoformat(ts_iso)
+            except Exception:
+                continue
+    except Exception:
+        # Cache persistence should never block runtime gates.
+        return
+
+
+def _salvar_cache_standings_persistido():
+    try:
+        os.makedirs(os.path.dirname(STANDINGS_CACHE_PATH), exist_ok=True)
+        payload = {}
+        for key, standings in _cache_standings.items():
+            ts = _cache_ts.get(key)
+            if not isinstance(standings, dict) or not isinstance(ts, datetime):
+                continue
+            payload[key] = {
+                "ts": ts.isoformat(),
+                "standings": standings,
+            }
+
+        with open(STANDINGS_CACHE_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False)
+    except Exception:
+        # Non-critical persistence path.
+        return
 
 
 def buscar_n_resultados():
@@ -73,7 +126,15 @@ def calcular_probabilidade_no_vig(odd_principal, odd_oponente):
     return prob_a / soma
 
 
-def gate1_ev_e_odd(ev, odd, mercado="", prob_modelo=None, odd_oponente_mercado=None):
+def gate1_ev_e_odd(
+    ev,
+    odd,
+    mercado="",
+    prob_modelo=None,
+    odd_oponente_mercado=None,
+    prob_modelo_base=None,
+    no_vig_source_quality=None,
+):
     ev_minimo = {
         "1x2_casa": 0.06,
         "1x2_fora": 0.06,
@@ -109,13 +170,15 @@ def gate1_ev_e_odd(ev, odd, mercado="", prob_modelo=None, odd_oponente_mercado=N
             pass
         return False, f"EV {ev*100:.1f}% acima do teto ({teto*100:.0f}%) — histórico: {n} apostas", REJECT_REASON_CODES["gate1_ev"]
 
-    if prob_modelo and odd > 0:
+    prob_referencia = prob_modelo_base if prob_modelo_base is not None else prob_modelo
+    if prob_referencia and odd > 0:
         prob_mercado = 1 / odd
-        prob_no_vig = calcular_probabilidade_no_vig(odd, odd_oponente_mercado)
-        if prob_no_vig is not None:
-            prob_mercado = prob_no_vig
+        if no_vig_source_quality == "sharp":
+            prob_no_vig = calcular_probabilidade_no_vig(odd, odd_oponente_mercado)
+            if prob_no_vig is not None:
+                prob_mercado = prob_no_vig
 
-        divergencia = prob_modelo - prob_mercado
+        divergencia = prob_referencia - prob_mercado
         if divergencia > 0.20:
             return False, f"Divergência modelo-mercado: {divergencia*100:.1f}pp (máx 20pp)", REJECT_REASON_CODES["gate1_ev"]
 
@@ -140,13 +203,15 @@ def gate4_limite_diario(sinais_hoje, max_sinais=10):
 def buscar_standings(liga_id, temporada=None):
     import requests
 
+    _carregar_cache_standings_persistido()
+
     if temporada is None:
         temporada = datetime.now().year
     key = f"{liga_id}_{temporada}"
     agora = datetime.now()
 
-    if key in _cache_standings:
-        if (agora - _cache_ts[key]).total_seconds() < 21600:
+    if key in _cache_standings and key in _cache_ts:
+        if (agora - _cache_ts[key]).total_seconds() < STANDINGS_CACHE_TTL_SECONDS:
             return _cache_standings[key]
 
     api_key = os.getenv("API_FOOTBALL_KEY")
@@ -182,6 +247,7 @@ def buscar_standings(liga_id, temporada=None):
 
         _cache_standings[key] = standings
         _cache_ts[key] = agora
+        _salvar_cache_standings_persistido()
         return standings
     except Exception:
         return None
@@ -258,6 +324,8 @@ def aplicar_triple_gate(dados_sinal, sinais_hoje=0):
         dados_sinal.get("mercado", ""),
         dados_sinal.get("prob_modelo", None),
         dados_sinal.get("odd_oponente_mercado", None),
+        dados_sinal.get("prob_modelo_base", None),
+        dados_sinal.get("no_vig_source_quality", None),
     )
     resultados["gate1"] = {"passou": ok, "msg": msg, "reason_code": reason_code}
     if not ok:
