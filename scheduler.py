@@ -27,6 +27,7 @@ from database import (
     inserir_sinal,
     registrar_alerta_operacional,
     registrar_auditoria_acao,
+    registrar_diagnostico_modelo,
     validar_schema_minimo,
 )
 from coletar_odds import (
@@ -46,6 +47,8 @@ from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_m
 from quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
 from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
+from module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
+from pipeline_integrador import BettingPipeline
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -75,6 +78,8 @@ SLO_CYCLE_LATENCY_MAX_SECONDS = float(os.getenv("SLO_CYCLE_LATENCY_MAX_SECONDS",
 SLO_DRIFT_MAX_BRIER = float(os.getenv("SLO_DRIFT_MAX_BRIER", "0.25"))
 CANARY_RATIO = float(os.getenv("EDGE_CANARY_RATIO", "1.0"))
 CANARY_MODE_ENABLED = os.getenv("EDGE_CANARY_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+ADVANCED_PIPELINE_ENABLED = os.getenv("EDGE_ADVANCED_PIPELINE_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+ADVANCED_PIPELINE_MC_SIMS = int(os.getenv("EDGE_ADVANCED_PIPELINE_MC_SIMS", "2000"))
 PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
@@ -90,6 +95,14 @@ EXECUCAO_STATS = {
     "provider_health": {},
     "total_avaliacoes_mercado": 0,
 }
+
+ADVANCED_PIPELINE = None
+ADVANCED_SHARP = SharpMoneyDetector()
+if ADVANCED_PIPELINE_ENABLED:
+    try:
+        ADVANCED_PIPELINE = BettingPipeline(mc_simulations=ADVANCED_PIPELINE_MC_SIMS)
+    except Exception:
+        ADVANCED_PIPELINE = None
 
 LIGAS = [
     "soccer_epl",
@@ -800,6 +813,32 @@ async def processar_jogos(dry_run=False):
                 media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
                 ajuste_casa, ajuste_fora = calcular_ajuste_forma(home, away)
 
+                advanced_match_analysis = None
+                if ADVANCED_PIPELINE_ENABLED and ADVANCED_PIPELINE is not None:
+                    try:
+                        market_odds = {
+                            "home": float(jogo.get("odds", {}).get("casa", 0) or 0),
+                            "away": float(jogo.get("odds", {}).get("fora", 0) or 0),
+                            "over_2.5": float(jogo.get("odds", {}).get("over_2.5", 0) or 0),
+                            "under_2.5": float(jogo.get("odds", {}).get("under_2.5", 0) or 0),
+                        }
+                        market_odds = {k: v for k, v in market_odds.items() if v > 1.01}
+                        if market_odds:
+                            advanced_match_analysis = ADVANCED_PIPELINE.analyze_match(
+                                match_id=f"{jogo.get('jogo','')}|{jogo.get('horario','')}",
+                                home_team=home,
+                                away_team=away,
+                                division=jogo.get("liga", "Premier League"),
+                                country="England",
+                                market_odds=market_odds,
+                            )
+                            media_casa = float(advanced_match_analysis.get("lambda_home", media_casa))
+                            media_fora = float(advanced_match_analysis.get("lambda_away", media_fora))
+                            fonte_dados = f"{fonte_dados}+HBM_HA_ELO"
+                    except Exception as e:
+                        log_event("runtime", "advanced", jogo.get("jogo", "unknown"), "warning", "advanced_pipeline_failed", {"erro": str(e)})
+                        advanced_match_analysis = None
+
                 primeiro_mercado = True
                 for market_cfg in listar_mercados_runtime():
                     mercado = market_cfg["mercado"]
@@ -823,6 +862,27 @@ async def processar_jogos(dry_run=False):
                     odd = jogo["odds"].get(odd_key, 0)
                     odd_oponente_mercado = jogo["odds"].get(odd_oponente_key, 0)
                     source_quality = jogo.get("source_quality", {}).get(mercado, "fallback")
+
+                    sharp_score = 0.0
+                    try:
+                        abertura = buscar_snapshot_abertura(jogo["jogo"], mercado)
+                        snapshots = []
+                        if abertura:
+                            odd_open = abertura[0] or abertura[1]
+                            ts_open = datetime.fromisoformat(abertura[5]) if abertura[5] else datetime.now(timezone.utc)
+                            if odd_open:
+                                snapshots.append(OddsSnapshot(timestamp=ts_open, odd=float(odd_open), source="abertura"))
+                        snapshots.append(OddsSnapshot(timestamp=datetime.now(timezone.utc), odd=float(odd), source="atual"))
+                        line = MarketLine(
+                            match_id=f"{jogo.get('jogo','')}|{jogo.get('horario','')}",
+                            market=mercado,
+                            selection=mercado,
+                            snapshots=snapshots,
+                        )
+                        sharp = ADVANCED_SHARP.sharp_score(line=line, our_odd=float(odd), public_bet_pct=0.5)
+                        sharp_score = float(sharp.get("sharp_score", 0.0))
+                    except Exception:
+                        sharp_score = 0.0
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
                         provider_health["invalid_input"] += 1
@@ -917,11 +977,44 @@ async def processar_jogos(dry_run=False):
                         continue
 
                     penalizacao = filtro.get("penalizacao_score", 0)
-                    edge_score_final = min(100, analise["edge_score"] + steam_bonus + penalizacao)
+                    pipeline_bonus = 0
+                    if advanced_match_analysis:
+                        market_key_map = {
+                            "1x2_casa": "home",
+                            "1x2_fora": "away",
+                            "over_2.5": "over_2.5",
+                            "under_2.5": "under_2.5",
+                        }
+                        mk = market_key_map.get(mercado)
+                        if mk:
+                            for opp in advanced_match_analysis.get("opportunities", []):
+                                if getattr(opp, "market", None) == mk:
+                                    pipeline_bonus = max(0, min(6, int(getattr(opp, "edge", 0.0) * 100)))
+                                    break
+
+                    sharp_bonus = max(0, min(8, int(sharp_score * 10)))
+                    edge_score_final = min(100, analise["edge_score"] + steam_bonus + penalizacao + sharp_bonus + pipeline_bonus)
                     score_prior = edge_score_final + ajuste_prior
                     analise["edge_score"] = edge_score_final
                     analise["steam_bonus"] = steam_bonus
                     analise["fonte_dados"] = fonte_dados
+
+                    if ADVANCED_PIPELINE_ENABLED:
+                        registrar_diagnostico_modelo(
+                            match_id=f"{jogo.get('jogo','')}|{jogo.get('horario','')}",
+                            market=mercado,
+                            lambda_home=float(media_casa),
+                            lambda_away=float(media_fora),
+                            sharp_score=sharp_score,
+                            edge=float(analise.get("ev", 0.0)),
+                            shrinkage_home=float((advanced_match_analysis or {}).get("hbm_shrinkage_home", 0.0)),
+                            shrinkage_away=float((advanced_match_analysis or {}).get("hbm_shrinkage_away", 0.0)),
+                            detalhes={
+                                "source_quality": source_quality,
+                                "sharp_bonus": sharp_bonus,
+                                "pipeline_bonus": pipeline_bonus,
+                            },
+                        )
 
                     if filtro["aprovado"] and edge_score_final >= MIN_EDGE_SCORE and confianca >= MIN_CONFIANCA:
                         candidatos.append({

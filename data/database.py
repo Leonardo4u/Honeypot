@@ -184,6 +184,23 @@ def garantir_tabelas_operacionais():
         )
         '''
     )
+    c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS model_diagnostics (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            match_id TEXT,
+            market TEXT,
+            lambda_home REAL,
+            lambda_away REAL,
+            sharp_score REAL,
+            edge REAL,
+            shrinkage_home REAL,
+            shrinkage_away REAL,
+            detalhes_json TEXT
+        )
+        '''
+    )
     conn.commit()
     conn.close()
 
@@ -486,6 +503,53 @@ def obter_slo_disponibilidade_ciclo(dias=7):
         "saudaveis": saudaveis,
         "disponibilidade": round(disponibilidade, 4),
     }
+
+
+def registrar_diagnostico_modelo(
+    match_id,
+    market,
+    lambda_home,
+    lambda_away,
+    sharp_score,
+    edge,
+    shrinkage_home,
+    shrinkage_away,
+    detalhes=None,
+):
+    garantir_tabelas_operacionais()
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    detalhes_json = json.dumps(detalhes or {}, ensure_ascii=False)
+    c.execute(
+        '''
+        INSERT INTO model_diagnostics (
+            ocorrido_em,
+            match_id,
+            market,
+            lambda_home,
+            lambda_away,
+            sharp_score,
+            edge,
+            shrinkage_home,
+            shrinkage_away,
+            detalhes_json
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''',
+        (
+            datetime.now(UTC).isoformat(),
+            match_id,
+            market,
+            lambda_home,
+            lambda_away,
+            sharp_score,
+            edge,
+            shrinkage_home,
+            shrinkage_away,
+            detalhes_json,
+        ),
+    )
+    conn.commit()
+    conn.close()
 
 def resumo_mensal():
     conn = sqlite3.connect(DB_PATH)
