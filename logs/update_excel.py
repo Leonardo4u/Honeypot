@@ -22,6 +22,7 @@ from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 
 # ── CONFIG ────────────────────────────────────────────────────
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXCEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bot_apostas.xlsx")
 LOG_PATH   = "update_log.txt"
 
@@ -280,7 +281,7 @@ def main():
 
     if not os.path.exists(EXCEL_PATH):
         log(f"ERRO: arquivo {EXCEL_PATH} não encontrado. "
-            "Execute primeiro: python gerar_xlsx.py")
+            "Execute primeiro: python data/exportar_excel.py")
         sys.exit(1)
 
     log(f"Iniciando ação: {acao}")
@@ -308,9 +309,18 @@ def main():
 
         elif acao == "full_refresh":
             log("full_refresh: regenerando arquivo completo...")
-            wb.close()
-            os.system("python gerar_xlsx.py")
-            log("full_refresh concluído")
+            try:
+                import sys
+
+                wb.close()
+                sys.path.insert(0, BASE_DIR)
+                sys.path.insert(0, os.path.join(BASE_DIR, "data"))
+                from exportar_excel import gerar_excel
+
+                caminho = gerar_excel()
+                log(f"full_refresh concluído: {caminho}")
+            except Exception as e:
+                log(f"full_refresh ERRO: {e}")
             return
 
         else:

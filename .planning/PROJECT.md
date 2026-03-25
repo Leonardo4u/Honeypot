@@ -20,10 +20,18 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Operational resilience baseline (idempotent scheduler windows, startup preflight, structured diagnostics) is verified and stable (validated in Phase 3).
 - ✓ Deterministic model/gate tests, DB integration tests, and dry-run no-send runtime checks are established and verified (validated in Phases 4 and 5).
 - ✓ Historical calibration baseline is operational with cache-aware ingestion and league-level rho reporting (validated in Phase 7: Historical Calibration Baseline).
+- ✓ Settlement labeling is deterministic across pending days with fixture identity persistence and date-safe fallback resolution (validated in Phase 11: Settlement Label Integrity).
+- ✓ Confidence scoring is de-biased with sample-aware market+league quality prior and runtime observability (validated in Phase 12: Confidence De-bias and Quality Prior).
+- ✓ Market divergence uses no-vig comparison, runtime market coverage was expanded, and reproducible one-command test baseline is established (validated in Phase 13: No-vig Comparison, Market Coverage, and Test Baseline).
+- ✓ Runtime calibration now auto-applies league rho/home-advantage and over/under uses Dixon-Coles consistency with dedicated regressions (validated in Phase 14: Calibration Automation and League Home Advantage).
+- ✓ xG now uses recency-weighted decay, confidence sem_sinal uses bounded proxy fallback, and SOS caps adapt to source quality (validated in Phase 15: Recency-Weighted xG and Confidence Fallbacks).
+- ✓ Gate robustness now includes persistent standings cache, source-aware no-vig/divergence baseline checks, steam maturity window, per-match ranking cap, and minimal drift/fallback telemetry alerts (validated in Phase 16: Gate Robustness and Steam Noise Filtering).
+- ✓ Portfolio concentration control now includes correlation-aware ranking penalty and same-match Kelly stake reducer with runtime propagation from scheduler (validated in Phase 17: Correlation-Aware Portfolio Controls).
+- ✓ Operational telemetry now includes weekly persisted quality trends, competition-aware settlement windows, and rolling drift alerts with Telegram escalation (validated in Phase 18: Operational Telemetry and Drift Safeguards).
 
 ### Active
 
-- [ ] Define v1.2 scope and requirement baseline.
+- [ ] Evaluate v1.3 milestone closure and identify the next highest-impact backlog slice.
 
 ### Out of Scope
 
@@ -41,10 +49,31 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
 - Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
+- Milestone v1.2 (Win Rate Integrity and Runtime Quality) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- No active milestone is in execution.
+- Milestone v1.3 is active for model calibration and portfolio risk controls.
 
-## Last Shipped Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
+## Current Milestone: v1.3 Calibration Freshness and Portfolio Risk Controls
+
+**Goal:** Improve signal quality consistency by making calibration outputs operational, reducing stale priors, and controlling portfolio correlation risk.
+
+**Target features:**
+- Consolidate v1.3 evidence chain and close milestone with verification artifacts.
+- Define next milestone priorities using telemetry/settlement/drift learnings from production cycles.
+
+## Last Shipped Milestone: v1.2 Win Rate Integrity and Runtime Quality
+
+**Goal achieved:** Increase win-rate reliability with deterministic settlement, restored gate integrity, no-vig divergence checks, and prior-aware runtime selection.
+
+**Delivered features:**
+- Runtime gate payloads now consume real lineup/odd/daily-count context with explicit reject telemetry.
+- Provider health counters now classify timeout/http/connection/empty payload status paths consistently.
+- Settlement resolution is fixture-id-first with date-safe fallback for cross-day pending bets.
+- Confidence context includes market+league quality priors and deterministic prior-aware scheduler ranking.
+- Gate 1 compares model divergence against no-vig market probability when both market sides exist.
+- Reproducible test baseline established with pinned dependencies and canonical command `python scripts/run_tests.py`.
+
+## Previous Shipped Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
 
 **Goal achieved:** Improve model calibration confidence with reproducible historical evaluation and safe persistence of calibration-oriented history.
 
@@ -55,9 +84,9 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ## Next Milestone Goals
 
-- Define v1.2 goals and requirements before planning phases.
-- Keep reliability-first approach while extending model quality checks.
-- Preserve current runtime safety guarantees while introducing incremental improvements only.
+- Deliver phased implementation of calibration freshness, gate hardening, and portfolio-risk controls.
+- Keep v1.2 verification baseline as mandatory non-regression floor.
+- Add observability loops that detect degradation before bankroll impact compounds.
 
 ## Constraints
 
@@ -74,6 +103,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 | Prioritize reliability and validation before adding new product surfaces | Better signal trustworthiness gives highest immediate value | ✓ Confirmed in v1.0 |
 | Use phased hardening approach (data reliability -> model gates -> ops quality) | Reduces risk and keeps changes reviewable | ✓ Confirmed in v1.0 |
 | Prioritize calibration quality before market expansion in v1.1 | Better confidence calibration raises signal trust without adding product surface area | ✓ Confirmed in v1.1 |
+| Prioritize label integrity and effective gating in v1.2 | Win-rate improvement depends on clean feedback loop and strict pre-trade quality filters | ✓ Confirmed in v1.2 |
 
 ## Evolution
 
@@ -93,4 +123,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after v1.1 archive*
+*Last updated: 2026-03-25 after phase 18 completion*

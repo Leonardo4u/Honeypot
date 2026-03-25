@@ -24,16 +24,23 @@ from database import (
     inserir_sinal,
     validar_schema_minimo,
 )
-from coletar_odds import buscar_jogos_com_odds, formatar_jogos
+from coletar_odds import (
+    buscar_jogos_com_odds,
+    buscar_jogos_com_odds_com_status,
+    formatar_jogos,
+    atualizar_contadores_provider_health,
+)
 from atualizar_stats import carregar_medias, atualizar_todas_ligas
-from forma_recente import calcular_ajuste_forma, calcular_confianca_dados
+from forma_recente import calcular_ajuste_forma, calcular_confianca_contexto
 from xg_understat import calcular_media_gols_com_xg
 from sos_ajuste import calcular_xg_com_sos
 from clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_fechar, buscar_odd_fechamento_pinnacle, atualizar_clv
-from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
+from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, contar_sinais_mesmo_jogo_abertos, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
 from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
+from quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
+from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -44,6 +51,11 @@ CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
 
 MAX_SINAIS_DIA = 10
+MAX_MERCADOS_POR_JOGO = 2
+CORRELACAO_PENALTY_STEP = 2.0
+DRIFT_MIN_FALLBACK_LIMIAR = 0.35
+DRIFT_HISTORICO_MIN_PERSISTENCIA = 3
+DRIFT_HISTORICO_JANELA = 4
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
 
@@ -62,6 +74,13 @@ LIGAS = [
     "soccer_italy_serie_a",
     "soccer_germany_bundesliga",
     "soccer_france_ligue_one"
+]
+
+MARKET_RUNTIME_CONFIG = [
+    {"mercado": "1x2_casa", "odd_key": "casa", "odd_oponente_key": "fora"},
+    {"mercado": "1x2_fora", "odd_key": "fora", "odd_oponente_key": "casa"},
+    {"mercado": "over_2.5", "odd_key": "over_2.5", "odd_oponente_key": "under_2.5"},
+    {"mercado": "under_2.5", "odd_key": "under_2.5", "odd_oponente_key": "over_2.5"},
 ]
 
 LIGA_KEY_MAP = {
@@ -193,6 +212,98 @@ def validar_entrada_analise(jogo, odd):
 
     return True, "ok"
 
+
+def listar_mercados_runtime():
+    return list(MARKET_RUNTIME_CONFIG)
+
+
+def aplicar_cap_por_jogo(candidatos, max_por_jogo=MAX_MERCADOS_POR_JOGO):
+    selecionados = []
+    por_jogo = {}
+    for candidato in candidatos:
+        jogo = candidato.get("jogo", {}).get("jogo")
+        if not jogo:
+            continue
+        atual = por_jogo.get(jogo, 0)
+        if atual >= max_por_jogo:
+            continue
+        por_jogo[jogo] = atual + 1
+        selecionados.append(candidato)
+    return selecionados
+
+
+def aplicar_penalizacao_correlacao_ranking(candidatos, penalty_step=CORRELACAO_PENALTY_STEP):
+    ordenados_base = sorted(
+        candidatos,
+        key=lambda x: (
+            x.get("score_prior", x.get("score", 0)),
+            x.get("score", 0),
+            x.get("confianca", 0),
+        ),
+        reverse=True,
+    )
+
+    vistos_por_jogo = {}
+    ajustados = []
+    for candidato in ordenados_base:
+        jogo = candidato.get("jogo", {}).get("jogo")
+        contagem = vistos_por_jogo.get(jogo, 0)
+        penalizacao = contagem * float(penalty_step)
+        base = candidato.get("score_prior", candidato.get("score", 0))
+        candidato["penalizacao_correlacao_ranking"] = round(penalizacao, 4)
+        candidato["score_prior_ajustado"] = round(base - penalizacao, 4)
+        vistos_por_jogo[jogo] = contagem + 1
+        ajustados.append(candidato)
+
+    return sorted(
+        ajustados,
+        key=lambda x: (
+            x.get("score_prior_ajustado", x.get("score_prior", x.get("score", 0))),
+            x.get("score_prior", x.get("score", 0)),
+            x.get("score", 0),
+            x.get("confianca", 0),
+        ),
+        reverse=True,
+    )
+
+
+def avaliar_alerta_drift_minimo(provider_health, total_avaliacoes, limiar=DRIFT_MIN_FALLBACK_LIMIAR):
+    if total_avaliacoes <= 0:
+        return None
+
+    fallback_count = provider_health.get("fallback_used", 0)
+    taxa_fallback = fallback_count / float(total_avaliacoes)
+    if taxa_fallback >= limiar:
+        return {
+            "alerta": True,
+            "metrica": "fallback_rate",
+            "valor": round(taxa_fallback, 4),
+            "limiar": limiar,
+        }
+    return None
+
+
+def enviar_alerta_drift_historico(alerta):
+    if not alerta:
+        return
+    if not TOKEN or not CANAL_VIP:
+        return
+
+    msg = (
+        "ALERTA DRIFT (rolling)\n\n"
+        f"Metrica: {alerta.get('metrica')}\n"
+        f"Segmento: {alerta.get('segmento_tipo')}={alerta.get('segmento_valor')}\n"
+        f"Periodo: {alerta.get('periodo_inicio')} ate {alerta.get('periodo_fim')}\n"
+        f"Persistencia minima: {alerta.get('min_persistencia')} semanas\n"
+        f"Valor atual: {alerta.get('valor_atual')}"
+    )
+
+    try:
+        bot = Bot(token=TOKEN)
+        asyncio.run(bot.send_message(chat_id=CANAL_VIP, text=msg))
+    except Exception as e:
+        log_event("runtime", "drift", "telegram", "warning", "drift_alert_send_failed", {"erro": str(e)})
+
 def obter_media_gols(time_casa, time_fora, liga_key="soccer_epl"):
     xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
     return xg_casa, xg_fora, fonte
@@ -207,6 +318,17 @@ def atualizar_excel(payload_dict):
         )
     except Exception as e:
         print(f"Erro update Excel: {e}")
+
+
+def calcular_ajuste_prior_ranking(prior_ranking):
+    try:
+        prior_num = float(prior_ranking)
+    except (TypeError, ValueError):
+        prior_num = 0.0
+
+    # Keep prior influence bounded so it informs ordering without dominating edge score.
+    ajuste = prior_num * 0.75
+    return max(-6.0, min(6.0, ajuste))
 
 
 def executar_preflight():
@@ -285,7 +407,9 @@ def formatar_sinal_kelly(analise, kelly):
 
     mercados_legivel = {
         "1x2_casa": "Vitória do time da casa",
+        "1x2_fora": "Vitória do time visitante",
         "over_2.5":  "Mais de 2.5 gols na partida",
+        "under_2.5": "Menos de 2.5 gols na partida",
     }
     mercado_texto = mercados_legivel.get(analise["mercado"], analise["mercado"])
 
@@ -356,16 +480,21 @@ async def processar_jogos(dry_run=False):
         "http_error": 0,
         "connection_error": 0,
         "empty_payload": 0,
+        "unknown_error": 0,
         "invalid_input": 0,
         "fallback_used": 0,
     }
+    prior_context_counts = {
+        "ok": 0,
+        "baixa_amostra": 0,
+        "sem_sinal": 0,
+    }
+    total_avaliacoes_mercado = 0
 
     for liga_key in LIGAS:
-        dados_api = buscar_jogos_com_odds(liga_key)
-        if dados_api:
-            provider_health["ok"] += 1
-        else:
-            provider_health["empty_payload"] += 1
+        fetch_result = buscar_jogos_com_odds_com_status(liga_key)
+        atualizar_contadores_provider_health(provider_health, fetch_result.get("status"))
+        dados_api = fetch_result.get("data", [])
         jogos = formatar_jogos(dados_api)
 
         for jogo in jogos:
@@ -378,18 +507,30 @@ async def processar_jogos(dry_run=False):
                 away = jogo["away_team"]
                 media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
                 ajuste_casa, ajuste_fora = calcular_ajuste_forma(home, away)
-                confianca = calcular_confianca_dados(home, away)
 
-                if "xG" in fonte_dados:
-                    confianca = min(100, confianca + 10)
-                if "SOS" in fonte_dados:
-                    confianca = min(100, confianca + 5)
+                primeiro_mercado = True
+                for market_cfg in listar_mercados_runtime():
+                    mercado = market_cfg["mercado"]
+                    odd_key = market_cfg["odd_key"]
+                    odd_oponente_key = market_cfg["odd_oponente_key"]
+                    total_avaliacoes_mercado += 1
+                    contexto_confianca = calcular_confianca_contexto(home, away, jogo["liga"], mercado)
+                    confianca = int(contexto_confianca.get("confianca", 50))
 
-                for mercado, odd_key in [
-                    ("1x2_casa", "casa"),
-                    ("over_2.5", "over_2.5"),
-                ]:
+                    if "xG" in fonte_dados:
+                        confianca = min(100, confianca + 10)
+                    if "SOS" in fonte_dados:
+                        confianca = min(100, confianca + 5)
+
+                    qualidade_prior = contexto_confianca.get("qualidade_prior", "sem_sinal")
+                    if qualidade_prior not in prior_context_counts:
+                        qualidade_prior = "sem_sinal"
+                    prior_context_counts[qualidade_prior] += 1
+                    ajuste_prior = calcular_ajuste_prior_ranking(contexto_confianca.get("prior_ranking", 0.0))
+
                     odd = jogo["odds"].get(odd_key, 0)
+                    odd_oponente_mercado = jogo["odds"].get(odd_oponente_key, 0)
+                    source_quality = jogo.get("source_quality", {}).get(mercado, "fallback")
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
                         provider_health["invalid_input"] += 1
@@ -417,37 +558,78 @@ async def processar_jogos(dry_run=False):
                         "banca": 1000
                     }
 
-                    analise = analisar_jogo(dados_analise)
+                    analise = analisar_jogo(dados_analise, log_dc=primeiro_mercado)
+                    primeiro_mercado = False
 
                     if analise["decisao"] == "DESCARTAR":
                         continue
 
                     dados_odds = buscar_odds_todas_casas(liga_key, home, away, mercado)
+                    steam_data = None
                     steam_bonus = 0
                     if dados_odds:
                         abertura = buscar_snapshot_abertura(jogo["jogo"], mercado)
                         if not abertura:
                             salvar_snapshot(jogo["jogo"], mercado, dados_odds, "abertura")
                         else:
-                            steam = calcular_steam(jogo["jogo"], mercado, dados_odds)
-                            if steam:
-                                steam_bonus = calcular_bonus_edge_score(steam)
-
-                    edge_score_final = min(100, analise["edge_score"] + steam_bonus)
-                    analise["edge_score"] = edge_score_final
-                    analise["steam_bonus"] = steam_bonus
-                    analise["fonte_dados"] = fonte_dados
+                            steam_data = calcular_steam(jogo["jogo"], mercado, dados_odds)
+                            if steam_data:
+                                steam_bonus = calcular_bonus_edge_score(steam_data)
 
                     if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
                         provider_health["fallback_used"] += 1
 
+                    if odd_oponente_mercado <= 0:
+                        provider_health["missing_odd_oponente"] = provider_health.get("missing_odd_oponente", 0) + 1
+                        provider_health["fallback_used"] += 1
+                    elif source_quality != "sharp":
+                        provider_health["source_quality_low"] = provider_health.get("source_quality_low", 0) + 1
+
+                    escalacao_confirmada, origem_escalacao = inferir_escalacao_confirmada(jogo)
+                    variacao_odd_gate = calcular_variacao_odd_gate(steam_data)
+                    sinais_hoje_gate = calcular_sinais_hoje_gate(sinais_hoje, len(candidatos))
+
                     filtro = aplicar_triple_gate({
                         "ev": analise.get("ev", 0),
                         "odd": odd,
+                        "odd_oponente_mercado": odd_oponente_mercado,
                         "mercado": mercado,
-                        "escalacao_confirmada": True,
-                        "variacao_odd": 0.0
-                    }, sinais_hoje=0)
+                        "escalacao_confirmada": escalacao_confirmada,
+                        "variacao_odd": variacao_odd_gate,
+                        "no_vig_source_quality": source_quality,
+                        "prob_modelo_base": analise.get("prob_modelo_base", analise.get("prob_modelo", None)),
+                        "prob_modelo": analise.get("prob_modelo", None),
+                        "liga": jogo["liga"],
+                        "time_casa": home,
+                        "time_fora": away,
+                    }, sinais_hoje=sinais_hoje_gate)
+
+                    if not filtro.get("aprovado"):
+                        log_event(
+                            "runtime",
+                            "gate",
+                            f"{jogo['jogo']}|{mercado}",
+                            "reject",
+                            filtro.get("reason_code"),
+                            {
+                                "bloqueado_em": filtro.get("bloqueado_em"),
+                                "origem_escalacao": origem_escalacao,
+                                "sinais_hoje_gate": sinais_hoje_gate,
+                                "variacao_odd": variacao_odd_gate,
+                                "qualidade_prior": qualidade_prior,
+                                "amostra_prior": contexto_confianca.get("amostra_prior", 0),
+                                "prior_ranking": contexto_confianca.get("prior_ranking", 0.0),
+                                "ajuste_prior": round(ajuste_prior, 4),
+                            },
+                        )
+                        continue
+
+                    penalizacao = filtro.get("penalizacao_score", 0)
+                    edge_score_final = min(100, analise["edge_score"] + steam_bonus + penalizacao)
+                    score_prior = edge_score_final + ajuste_prior
+                    analise["edge_score"] = edge_score_final
+                    analise["steam_bonus"] = steam_bonus
+                    analise["fonte_dados"] = fonte_dados
 
                     if filtro["aprovado"] and edge_score_final >= MIN_EDGE_SCORE and confianca >= MIN_CONFIANCA:
                         candidatos.append({
@@ -455,8 +637,13 @@ async def processar_jogos(dry_run=False):
                             "jogo": jogo,
                             "mercado": mercado,
                             "score": edge_score_final,
+                            "score_prior": round(score_prior, 4),
                             "fonte": fonte_dados,
                             "confianca": confianca,
+                            "qualidade_prior": qualidade_prior,
+                            "amostra_prior": contexto_confianca.get("amostra_prior", 0),
+                            "prior_ranking": contexto_confianca.get("prior_ranking", 0.0),
+                            "ajuste_prior": round(ajuste_prior, 4),
                             "liga_key": liga_key,
                             "dados_odds": dados_odds
                         })
@@ -465,7 +652,8 @@ async def processar_jogos(dry_run=False):
                 provider_health["connection_error"] += 1
                 print(f"Erro ao processar {jogo['jogo']}: {e}")
 
-    candidatos.sort(key=lambda x: x["score"], reverse=True)
+    candidatos = aplicar_penalizacao_correlacao_ranking(candidatos)
+    candidatos = aplicar_cap_por_jogo(candidatos)
     vagas_restantes = MAX_SINAIS_DIA - sinais_hoje
     selecionados = candidatos[:vagas_restantes]
 
@@ -481,6 +669,7 @@ async def processar_jogos(dry_run=False):
 
         sinais_abertos = contar_sinais_abertos()
         sinais_liga = contar_sinais_liga_hoje(analise["liga"])
+        sinais_mesmo_jogo = contar_sinais_mesmo_jogo_abertos(analise["jogo"])
 
         kelly = calcular_kelly(
             prob_modelo=analise.get("prob_modelo", 0.55),
@@ -488,7 +677,8 @@ async def processar_jogos(dry_run=False):
             edge_score=analise["edge_score"],
             sinais_abertos=sinais_abertos,
             liga=analise["liga"],
-            sinais_liga_hoje=sinais_liga
+            sinais_liga_hoje=sinais_liga,
+            sinais_mesmo_jogo_abertos=sinais_mesmo_jogo,
         )
 
         if not isinstance(kelly, dict):
@@ -613,9 +803,22 @@ async def processar_jogos(dry_run=False):
         f"http_error={provider_health['http_error']} "
         f"connection_error={provider_health['connection_error']} "
         f"empty_payload={provider_health['empty_payload']} "
+        f"unknown_error={provider_health['unknown_error']} "
         f"invalid_input={provider_health['invalid_input']} "
-        f"fallback_used={provider_health['fallback_used']}"
+        f"fallback_used={provider_health['fallback_used']} "
+        f"missing_odd_oponente={provider_health.get('missing_odd_oponente', 0)} "
+        f"source_quality_low={provider_health.get('source_quality_low', 0)}"
     )
+    drift_alert = avaliar_alerta_drift_minimo(provider_health, total_avaliacoes_mercado)
+    if drift_alert:
+        log_event(
+            "runtime",
+            "drift",
+            "fallback_rate",
+            "alert",
+            "drift_min_threshold_exceeded",
+            drift_alert,
+        )
     log_event(
         "scheduler",
         "cycle_totals",
@@ -627,6 +830,7 @@ async def processar_jogos(dry_run=False):
             "enviados": sinais_enviados,
             "max_diario": MAX_SINAIS_DIA,
             "provider_health": provider_health,
+            "prior_context_counts": prior_context_counts,
         },
     )
 
@@ -722,13 +926,19 @@ async def verificar_clv_fechamento():
 
 async def verificar_resultados_automatico():
     from verificar_resultados import buscar_resultado_jogo, avaliar_mercado
-    from database import atualizar_resultado
+    from database import atualizar_resultado, atualizar_fixture_referencia
     from exportar_excel import gerar_excel
 
     bot = Bot(token=TOKEN)
     conn = sqlite3.connect("data/edge_protocol.db")
     c = conn.cursor()
-    c.execute("SELECT id, jogo, mercado, odd FROM sinais WHERE status = 'pendente'")
+    c.execute(
+        """
+        SELECT id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api, liga
+        FROM sinais
+        WHERE status = 'pendente'
+        """
+    )
     pendentes = c.fetchall()
     conn.close()
 
@@ -739,14 +949,31 @@ async def verificar_resultados_automatico():
     resultado_registrado = False
 
     for sinal in pendentes:
-        sinal_id, jogo, mercado, odd = sinal
+        sinal_id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api, liga = sinal
         try:
             times = jogo.split(" vs ")
             if len(times) != 2:
                 continue
 
             time_casa, time_fora = times
-            resultado = buscar_resultado_jogo(time_casa.strip(), time_fora.strip())
+            resultado = buscar_resultado_jogo(
+                time_casa.strip(),
+                time_fora.strip(),
+                data=fixture_data_api,
+                horario=horario,
+                fixture_id=fixture_id_api,
+                liga=liga,
+            )
+
+            if resultado and (resultado.get("fixture_id_api") or resultado.get("fixture_data_api")):
+                try:
+                    atualizar_fixture_referencia(
+                        sinal_id,
+                        fixture_id_api=resultado.get("fixture_id_api"),
+                        fixture_data_api=resultado.get("fixture_data_api"),
+                    )
+                except Exception as e:
+                    print(f"Erro persistindo fixture #{sinal_id}: {e}")
 
             if not resultado or resultado["status"] != "finalizado":
                 continue
@@ -793,19 +1020,19 @@ async def verificar_resultados_automatico():
                         await bot.set_message_reaction(
                             chat_id=CANAL_VIP,
                             message_id=ids[0],
-                            reaction=[{"type": "emoji", "emoji": reacao}]
+                            reaction=[reacao]
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Erro reação VIP #{sinal_id}: {e}")
                 if ids[1]:
                     try:
                         await bot.set_message_reaction(
                             chat_id=CANAL_FREE,
                             message_id=ids[1],
-                            reaction=[{"type": "emoji", "emoji": reacao}]
+                            reaction=[reacao]
                         )
-                    except Exception:
-                        pass
+                    except Exception as e:
+                        print(f"Erro reação FREE #{sinal_id}: {e}")
 
             # Atualiza Excel com resultado
             try:
@@ -838,7 +1065,7 @@ async def verificar_resultados_automatico():
 
 async def enviar_resumo_diario():
     from database import resumo_mensal
-    from exportar_excel import gerar_excel
+    from database import resumo_calibracao
     from clv_brier import calcular_metricas
 
     bot = Bot(token=TOKEN)
@@ -865,6 +1092,16 @@ async def enviar_resumo_diario():
         status = "✅" if metricas["brier_medio"] < 0.25 else "⚠️"
         brier_linha = f"Brier Score: {metricas['brier_medio']:.4f} {status}\n"
 
+    cal = resumo_calibracao(50)
+    if cal["faltam"] > 0:
+        calibracao_linha = f"📊 Calibração: {cal['total']}/50 apostas\n"
+    elif cal.get("alerta"):
+        calibracao_linha = f"⚠️ WR real {cal['win_rate_real']}% abaixo do esperado\n"
+    elif cal.get("calibrado"):
+        calibracao_linha = f"✅ Modelo calibrado: {cal['win_rate_real']}% WR\n"
+    else:
+        calibracao_linha = ""
+
     msg = (
         f"📊 RESUMO DO DIA\n\n"
         f"Sinais: {total} | ✅ {vitorias} | ❌ {derrotas}\n"
@@ -875,6 +1112,7 @@ async def enviar_resumo_diario():
         f"📉 Drawdown: {b['drawdown_atual_pct']:.1f}%\n"
         f"{clv_linha}"
         f"{brier_linha}"
+        f"{calibracao_linha}"
         f"\n━━━━━━━━━━━━━━━\n"
         f"⚡ Edge Protocol"
     )
@@ -884,7 +1122,6 @@ async def enviar_resumo_diario():
 
     # Full refresh do Excel no resumo diário
     try:
-        gerar_excel()
         atualizar_excel({"acao": "full_refresh"})
         print("Excel atualizado (full refresh).")
     except Exception as e:
@@ -929,6 +1166,34 @@ def atualizar_stats_semanalmente():
     print("Atualizando xG...")
     from xg_understat import atualizar_xg_todas_ligas
     atualizar_xg_todas_ligas()
+
+    try:
+        snapshot = registrar_snapshot_qualidade_semanal()
+        log_event(
+            "runtime",
+            "telemetry",
+            "quality_weekly",
+            "ok",
+            None,
+            {
+                "referencia_semana": snapshot.get("referencia_semana"),
+                "segmentos": len(snapshot.get("segmentos", [])),
+            },
+        )
+    except Exception as e:
+        marcar_ciclo_degradado("quality_snapshot_failed", {"erro": str(e)})
+
+    try:
+        alerta = avaliar_drift_historico(
+            janela=DRIFT_HISTORICO_JANELA,
+            min_persistencia=DRIFT_HISTORICO_MIN_PERSISTENCIA,
+        )
+        if alerta:
+            log_event("runtime", "drift", "quality_rolling", "alert", "drift_historico_threshold_exceeded", alerta)
+            enviar_alerta_drift_historico(alerta)
+    except Exception as e:
+        marcar_ciclo_degradado("quality_drift_eval_failed", {"erro": str(e)})
+
     print("Stats atualizadas.")
 
 def iniciar_scheduler():

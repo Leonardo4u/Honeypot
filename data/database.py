@@ -26,6 +26,8 @@ def criar_banco():
             message_id_vip INTEGER,
             message_id_free INTEGER,
             horario TEXT,
+            fixture_id_api TEXT,
+            fixture_data_api TEXT,
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -56,6 +58,7 @@ def criar_banco():
         )
     ''')
     conn.commit()
+    garantir_colunas_sinais()
     garantir_schema_historico_sinais()
     conn.close()
     print("Banco de dados criado com sucesso.")
@@ -72,6 +75,8 @@ def garantir_colunas_sinais():
         "message_id_free": "INTEGER",
         "horario": "TEXT",
         "fonte": "TEXT DEFAULT 'bot'",
+        "fixture_id_api": "TEXT",
+        "fixture_data_api": "TEXT",
     }
 
     for coluna, tipo in colunas_requeridas.items():
@@ -289,6 +294,22 @@ def atualizar_resultado(sinal_id, resultado, lucro):
     conn.commit()
     conn.close()
 
+
+def atualizar_fixture_referencia(sinal_id, fixture_id_api=None, fixture_data_api=None):
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    c.execute(
+        '''
+        UPDATE sinais
+        SET fixture_id_api = COALESCE(?, fixture_id_api),
+            fixture_data_api = COALESCE(?, fixture_data_api)
+        WHERE id = ?
+        ''',
+        (fixture_id_api, fixture_data_api, sinal_id),
+    )
+    conn.commit()
+    conn.close()
+
 def sinal_existe(sinal_id):
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -366,6 +387,73 @@ def calcular_confianca_calibrada(time_casa, time_fora):
             conf = max(50, conf - 15)
 
     return conf
+
+
+def buscar_metricas_qualidade_liga_mercado(liga, mercado, fonte_preferencial="historico"):
+    """
+    Retorna agregados historicos para prior de qualidade por liga+mercado.
+    Prioriza fonte historica quando disponivel; caso contrario, usa qualquer fonte.
+    """
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+
+    def _query(fonte=None):
+        if fonte:
+            c.execute(
+                '''
+                SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                    SUM(COALESCE(lucro_unidades, 0)) as lucro_total
+                FROM sinais
+                WHERE status = 'finalizado'
+                  AND liga = ?
+                  AND mercado = ?
+                  AND fonte = ?
+                ''',
+                (liga, mercado, fonte),
+            )
+        else:
+            c.execute(
+                '''
+                SELECT
+                    COUNT(*) as total,
+                    SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                    SUM(COALESCE(lucro_unidades, 0)) as lucro_total
+                FROM sinais
+                WHERE status = 'finalizado'
+                  AND liga = ?
+                  AND mercado = ?
+                ''',
+                (liga, mercado),
+            )
+        row = c.fetchone() or (0, 0, 0)
+        total = int(row[0] or 0)
+        vitorias = int(row[1] or 0)
+        lucro_total = float(row[2] or 0.0)
+        return total, vitorias, lucro_total
+
+    total, vitorias, lucro_total = _query(fonte_preferencial)
+    fonte_usada = fonte_preferencial if total > 0 else "todas"
+
+    if total == 0:
+        total, vitorias, lucro_total = _query()
+
+    conn.close()
+
+    win_rate = (vitorias / total) if total > 0 else 0.0
+    roi_pct = ((lucro_total / total) * 100.0) if total > 0 else 0.0
+
+    return {
+        "liga": liga,
+        "mercado": mercado,
+        "total": total,
+        "vitorias": vitorias,
+        "win_rate": round(win_rate, 4),
+        "roi_pct": round(roi_pct, 4),
+        "lucro_total": round(lucro_total, 4),
+        "fonte": fonte_usada,
+    }
 
 
 def resumo_calibracao(n_minimo=50):

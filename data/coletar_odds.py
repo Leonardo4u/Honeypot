@@ -7,11 +7,41 @@ load_dotenv()
 
 API_KEY = os.getenv("ODDS_API_KEY")
 BASE_URL = "https://api.the-odds-api.com/v4"
+SHARP_BOOKMAKERS = {"pinnacle", "betfair", "betfair_ex_eu"}
 
-def buscar_jogos_com_odds(liga, mercados="h2h,totals"):
+PROVIDER_STATUS_TO_HEALTH = {
+    "ok": "ok",
+    "simulated": "ok",
+    "timeout": "timeout",
+    "http_error": "http_error",
+    "connection_error": "connection_error",
+    "empty_payload": "empty_payload",
+}
+
+
+def normalizar_provider_status(status):
+    return PROVIDER_STATUS_TO_HEALTH.get(status, "unknown_error")
+
+
+def atualizar_contadores_provider_health(provider_health, status):
+    categoria = normalizar_provider_status(status)
+    if categoria not in provider_health:
+        provider_health[categoria] = 0
+    provider_health[categoria] += 1
+    return categoria
+
+
+def buscar_jogos_com_odds_com_status(liga, mercados="h2h,totals"):
     if not API_KEY:
         print("ODDS_API_KEY não configurada. Usando dados simulados.")
-        return _dados_simulados()
+        return {
+            "ok": True,
+            "status": "simulated",
+            "data": _dados_simulados(),
+            "status_code": None,
+            "attempts_used": 0,
+            "error": None,
+        }
 
     url = f"{BASE_URL}/sports/{liga}/odds"
     params = {
@@ -31,8 +61,15 @@ def buscar_jogos_com_odds(liga, mercados="h2h,totals"):
         source_name=f"odds_api:{liga}",
     )
 
-    if result["ok"]:
-        return result["data"]
+    if result.get("ok"):
+        return {
+            "ok": True,
+            "status": result.get("status", "ok"),
+            "data": result.get("data", []),
+            "status_code": result.get("status_code"),
+            "attempts_used": result.get("attempts_used"),
+            "error": None,
+        }
 
     print(
         "Erro API odds "
@@ -41,35 +78,68 @@ def buscar_jogos_com_odds(liga, mercados="h2h,totals"):
         f"attempts={result.get('attempts_used')} "
         f"error={result.get('error')}"
     )
-    return []
+    return {
+        "ok": False,
+        "status": result.get("status", "unknown_error"),
+        "data": [],
+        "status_code": result.get("status_code"),
+        "attempts_used": result.get("attempts_used"),
+        "error": result.get("error"),
+    }
+
+def buscar_jogos_com_odds(liga, mercados="h2h,totals"):
+    result = buscar_jogos_com_odds_com_status(liga, mercados=mercados)
+    return result.get("data", [])
 
 def extrair_melhor_odd(jogo):
     melhor_casa = 0
     melhor_fora = 0
     melhor_over = 0
     melhor_under = 0
+    sharp_casa = 0
+    sharp_fora = 0
+    sharp_over = 0
+    sharp_under = 0
 
     for bookmaker in jogo.get("bookmakers", []):
+        bookmaker_key = bookmaker.get("key", "")
+        is_sharp = bookmaker_key in SHARP_BOOKMAKERS
         for market in bookmaker.get("markets", []):
             if market["key"] == "h2h":
                 for o in market["outcomes"]:
                     if o["name"] == jogo["home_team"]:
                         melhor_casa = max(melhor_casa, o["price"])
+                        if is_sharp:
+                            sharp_casa = max(sharp_casa, o["price"])
                     elif o["name"] == jogo["away_team"]:
                         melhor_fora = max(melhor_fora, o["price"])
+                        if is_sharp:
+                            sharp_fora = max(sharp_fora, o["price"])
 
             elif market["key"] == "totals":
                 for o in market["outcomes"]:
                     if o["name"] == "Over":
                         melhor_over = max(melhor_over, o["price"])
+                        if is_sharp:
+                            sharp_over = max(sharp_over, o["price"])
                     elif o["name"] == "Under":
                         melhor_under = max(melhor_under, o["price"])
+                        if is_sharp:
+                            sharp_under = max(sharp_under, o["price"])
+
+    source_quality = {
+        "1x2_casa": "sharp" if sharp_casa > 0 and sharp_fora > 0 else "fallback",
+        "1x2_fora": "sharp" if sharp_fora > 0 and sharp_casa > 0 else "fallback",
+        "over_2.5": "sharp" if sharp_over > 0 and sharp_under > 0 else "fallback",
+        "under_2.5": "sharp" if sharp_under > 0 and sharp_over > 0 else "fallback",
+    }
 
     return {
         "casa": round(melhor_casa, 2),
         "fora": round(melhor_fora, 2),
         "over_2.5": round(melhor_over, 2),
-        "under_2.5": round(melhor_under, 2)
+        "under_2.5": round(melhor_under, 2),
+        "source_quality": source_quality,
     }
 
 def formatar_jogos(dados_api):
@@ -96,7 +166,13 @@ def formatar_jogos(dados_api):
             "home_team": jogo["home_team"],
             "away_team": jogo["away_team"],
             "horario": horario_str,
-            "odds": odds
+            "odds": {
+                "casa": odds["casa"],
+                "fora": odds["fora"],
+                "over_2.5": odds["over_2.5"],
+                "under_2.5": odds["under_2.5"],
+            },
+            "source_quality": odds.get("source_quality", {}),
         })
 
     return jogos

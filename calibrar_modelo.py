@@ -4,6 +4,8 @@ import sqlite3
 import requests
 import pandas as pd
 import numpy as np
+import json
+from datetime import datetime, timezone
 
 # Garante que os modulos do projeto sao encontrados
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -12,6 +14,7 @@ sys.path.insert(0, os.path.join(ROOT_DIR, "data"))
 sys.path.insert(0, os.path.join(ROOT_DIR, "model"))
 
 DB_PATH = os.path.join(ROOT_DIR, "data", "edge_protocol.db")
+CALIBRACAO_LIGAS_PATH = os.path.join(ROOT_DIR, "data", "calibracao_ligas.json")
 
 LIGAS_FOOTBALL_DATA = {
     "Premier League": "E0",
@@ -25,6 +28,32 @@ LIGAS_FOOTBALL_DATA = {
 # Usar medias_gols.json como fallback para times brasileiros
 TEMPORADAS = ["2425", "2324", "2223", "2122", "2021"]
 REQUEST_HEADERS = {"User-Agent": "edge-protocol-calibration/1.1"}
+
+
+def salvar_calibracao_ligas(rho_calibrado, amostra_por_liga=None):
+    amostra_por_liga = amostra_por_liga or {}
+    payload = {
+        "atualizado_em": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "fonte": "calibrar_modelo.py",
+        "ligas": {},
+    }
+
+    for liga, rho in rho_calibrado.items():
+        payload["ligas"][liga] = {
+            "rho": float(rho),
+            "home_advantage": 1.0,
+            "amostra_jogos": int(amostra_por_liga.get(liga, 0)),
+        }
+
+    try:
+        os.makedirs(os.path.dirname(CALIBRACAO_LIGAS_PATH), exist_ok=True)
+        with open(CALIBRACAO_LIGAS_PATH, "w", encoding="utf-8") as f:
+            json.dump(payload, f, ensure_ascii=False, indent=2)
+        print(f"Calibracao salva em: {CALIBRACAO_LIGAS_PATH}")
+        return True
+    except Exception as e:
+        print(f"[WARN] Falha ao salvar calibracao runtime: {e}")
+        return False
 
 
 def baixar_dados_historicos():
@@ -157,11 +186,13 @@ def calibrar_rho_por_liga(df):
     print(f"{'Liga':<28} {'Atual':>8} {'Calibrado':>10} {'Delta':>8} {'N jogos':>8}")
 
     rho_calibrado = {}
+    amostra_por_liga = {}
     ligas_unicas = sorted(df["liga"].dropna().unique().tolist())
 
     for liga in ligas_unicas:
         df_l = df[df["liga"] == liga]
         dados = df_l[["gols_casa", "gols_fora"]].to_dict("records")
+        amostra_por_liga[liga] = len(dados)
         rho = estimar_rho(dados)
         rho_calibrado[liga] = rho
 
@@ -170,8 +201,8 @@ def calibrar_rho_por_liga(df):
         print(f"{liga:<28} {atual:>8.4f} {rho:>10.4f} {delta:>+8.4f} {len(dados):>8}")
 
     print("Observacao: ligas com menos de 50 jogos usam fallback de rho padrao.")
-
-    print("\nCopie os valores acima e atualize RHO_POR_LIGA em poisson.py")
+    salvar_calibracao_ligas(rho_calibrado, amostra_por_liga=amostra_por_liga)
+    print("\nCalibracao runtime atualizada automaticamente.")
     return rho_calibrado
 
 
@@ -475,12 +506,11 @@ def rodar_calibracao_completa():
     print("  CALIBRACAO CONCLUIDA")
     print("=" * 55)
     print("\nPROXIMOS PASSOS:")
-    print("1. Abrir poisson.py e atualizar RHO_POR_LIGA")
-    print("   com os valores calibrados mostrados acima")
+    print("1. Revisar data/calibracao_ligas.json se desejar auditoria dos parametros")
     print("2. O banco ja tem historico - forma_recente.py")
     print("   vai usar calcular_confianca_calibrada() automaticamente")
-    print("3. Este script nao altera poisson.py automaticamente")
-    print("   (apenas mostra os valores calibrados para aplicacao manual)")
+    print("3. poisson.py aplica rho/home_advantage por liga automaticamente")
+    print("   usando o arquivo de calibracao salvo neste processo")
     if brier and brier.get("brier_score") is not None:
         if brier["brier_score"] < 0.20:
             print("4. Brier Score EXCELENTE - modelo bem calibrado")

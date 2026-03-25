@@ -1,31 +1,31 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: milestone
-status: v1.1 milestone complete
-last_updated: "2026-03-24T21:20:08.864Z"
+milestone: v1.3
+milestone_name: Calibration Freshness and Portfolio Risk Controls
+status: Phase 18 Completed
+last_updated: "2026-03-25T23:59:00.000Z"
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_phases: 5
+  completed_phases: 5
+  total_plans: 10
+  completed_plans: 10
 ---
 
 # STATE
 
 ## Status
 
-- Milestone: v1.1 - Calibracao Estatistica e Backtesting Operacional
-- Current phase: none (milestone archived)
-- Current command: awaiting next milestone initialization
-- Overall progress: v1.1 implementation and archive complete
+- Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
+- Current phase: phase 18 completed (plans 01 and 02 executed)
+- Current command: /gsd-complete-milestone v1.3
+- Overall progress: phases 14-18 complete
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Define next milestone scope (v1.2)
+**Current focus:** Milestone v1.3 closure and post-milestone prioritization
 
 ## Artifacts
 
@@ -33,7 +33,10 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - Roadmap: .planning/ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.0-ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.1-ROADMAP.md
+- Roadmap archive: .planning/milestones/v1.2-ROADMAP.md
 - Requirements archive: .planning/milestones/v1.1-REQUIREMENTS.md
+- Requirements archive: .planning/milestones/v1.2-REQUIREMENTS.md
+- Current requirements: .planning/REQUIREMENTS.md
 - Codebase map: .planning/codebase/
 - Research context: .planning/research/SUMMARY.md
 
@@ -54,10 +57,34 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - 2026-03-24: Phase 8 executed (08-01 and 08-02), verification passed, and EVAL requirements marked complete.
 - 2026-03-24: Phase 9 executed (09-01), verification passed, and HIST requirements marked complete.
 - 2026-03-24: v1.1 milestone archived with roadmap/requirements snapshots and post-milestone state update.
+- 2026-03-24: v1.2 initialized with active requirements and phases 10-13 focused on win-rate integrity.
+- 2026-03-24: Phase 10 planning artifacts created (10-RESEARCH, 10-01-PLAN, 10-02-PLAN).
+- 2026-03-24: Phase 10 plan 01 executed and summary created (runtime gate context integrity).
+- 2026-03-24: Phase 10 plan 02 executed and summary created (provider-health observability), with provider and dry-run tests passing.
+- 2026-03-24: Phase 11 planning artifacts created (11-RESEARCH, 11-01-PLAN, 11-02-PLAN) for settlement label integrity.
+- 2026-03-24: Phase 11 plan 01 executed and summary created (deterministic fixture resolution and fixture identity persistence).
+- 2026-03-24: Phase 11 plan 02 executed and summary created (cross-day scheduler settlement integration with fixture-id reuse).
+- 2026-03-24: Phase 12 planning artifacts created (12-RESEARCH, 12-01-PLAN, 12-02-PLAN) for confidence de-bias and quality-prior integration.
+- 2026-03-25: Phase 12 plan 01 executed and summary created (debiased confidence foundation and quality-prior contract).
+- 2026-03-25: Phase 12 plan 02 executed and summary created (prior-aware runtime ranking and dry-run telemetry compatibility).
+- 2026-03-25: Phase 13 planning artifacts created (13-RESEARCH, 13-01-PLAN, 13-02-PLAN, 13-03-PLAN).
+- 2026-03-25: Phase 13 plan 01 executed and summary created (no-vig Gate 1 divergence with fallback compatibility).
+- 2026-03-25: Phase 13 plan 02 executed and summary created (runtime market coverage expansion with guardrails).
+- 2026-03-25: Phase 13 plan 03 executed and summary created (pinned dependencies and canonical one-command baseline tests).
+- 2026-03-25: v1.2 milestone archived with roadmap/requirements snapshots and milestone register update.
+- 2026-03-24: v1.3 initialized from operator backlog with 15 improvements mapped into phases 14-18.
+- 2026-03-24: Phase 14 executed (14-01 and 14-02), calibration runtime automation and DC over/under consistency delivered with dedicated regression tests.
+- 2026-03-25: Phase 15 executed (15-01 and 15-02), temporal xG weighting plus confidence/SOS fallback controls delivered with dedicated regression tests and full baseline pass.
+- 2026-03-24: Phase 16 planned with two executable plans covering persistent standings cache, steam maturation window, source-aware no-vig/divergence, and immediate risk/telemetry safeguards.
+- 2026-03-24: Phase 16 executed (16-01 and 16-02), gate robustness and steam noise controls delivered with source-aware no-vig/divergence, per-match cap, and minimal drift/fallback telemetry; baseline tests passed.
+- 2026-03-24: Phase 17 planned with two executable plans for correlation-aware ranking penalty/cap parameterization and Kelly stake reduction by same-match exposure.
+- 2026-03-25: Phase 17 executed (17-01 and 17-02), ranking correlation penalty and same-match Kelly reducer integrated with scheduler propagation; baseline tests passed.
+- 2026-03-25: Phase 18 planned with two executable plans for weekly quality telemetry persistence, configurable settlement windows, and rolling drift alerting.
+- 2026-03-25: Phase 18 executed (18-01 and 18-02), weekly telemetry persistence, competition-profile settlement windows, and rolling drift alerting delivered; baseline tests passed.
 
 ## Next Step
 
-Run `/gsd-init-milestone v1.2` (or chosen version) to start the next planning cycle.
+Run `/gsd-complete-milestone v1.3` to finalize milestone archive and transition state.
 
 ---
-*Last updated: 2026-03-24 after v1.1 archive*
+*Last updated: 2026-03-25 after phase 18 execution*

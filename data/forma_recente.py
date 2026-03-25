@@ -1,7 +1,11 @@
 import sqlite3
 import json
 import os
-from dotenv import load_dotenv
+try:
+    from dotenv import load_dotenv
+except ModuleNotFoundError:
+    def load_dotenv():
+        return False
 
 load_dotenv()
 
@@ -87,43 +91,93 @@ def calcular_ajuste_forma(time_casa, time_fora):
     return ajuste_casa, ajuste_fora
 
 def calcular_confianca_dados(time_casa, time_fora):
-    """
-    Calcula score de confiança baseado na quantidade de dados disponíveis.
-    Quanto mais histórico, maior a confiança.
-    """
-    from atualizar_stats import carregar_medias
-    medias = carregar_medias()
+    contexto = calcular_confianca_contexto(time_casa, time_fora)
+    return contexto["confianca"]
 
-    tem_media_casa = time_casa in medias
-    tem_media_fora = time_fora in medias
 
-    jogos_casa = medias.get(time_casa, {}).get("jogos", 0)
-    jogos_fora = medias.get(time_fora, {}).get("jogos", 0)
+def carregar_medias_safe():
+    try:
+        try:
+            from .atualizar_stats import carregar_medias
+        except ImportError:
+            from atualizar_stats import carregar_medias
 
-    confianca = 50
+        return carregar_medias()
+    except Exception:
+        return {}
 
-    if tem_media_casa and tem_media_fora:
-        confianca += 20
 
-    if jogos_casa >= 10:
-        confianca += 10
-    elif jogos_casa >= 5:
-        confianca += 5
+def calcular_confianca_contexto(time_casa, time_fora, liga=None, mercado=None):
+    try:
+        from .database import buscar_historico_time, calcular_confianca_calibrada
+        from .quality_prior import calcular_prior_qualidade_mercado_liga
+    except ImportError:
+        from database import buscar_historico_time, calcular_confianca_calibrada
+        from quality_prior import calcular_prior_qualidade_mercado_liga
 
-    if jogos_fora >= 10:
-        confianca += 10
-    elif jogos_fora >= 5:
-        confianca += 5
+    medias = carregar_medias_safe()
 
-    forma_casa = calcular_forma_local(time_casa)
-    forma_fora = calcular_forma_local(time_fora)
+    hc = buscar_historico_time(time_casa)
+    hf = buscar_historico_time(time_fora)
+    amostra_time = min(len(hc), len(hf))
+    peso_time = min(1.0, amostra_time / 20.0) if amostra_time > 0 else 0.0
 
-    if forma_casa and not forma_casa.get("fallback", False):
-        confianca += 5
-    if forma_fora and not forma_fora.get("fallback", False):
-        confianca += 5
+    base_calibrada = float(calcular_confianca_calibrada(time_casa, time_fora))
+    componente_time = (base_calibrada - 50.0) * peso_time
 
-    return min(100, confianca)
+    bonus_cobertura = 0.0
+    if time_casa in medias and time_fora in medias:
+        bonus_cobertura = 5.0
+    elif time_casa in medias or time_fora in medias:
+        bonus_cobertura = 2.0
+
+    prior = {
+        "qualidade": "sem_sinal",
+        "amostra": 0,
+        "prior_confianca": -2.0,
+        "prior_ranking": -1.0,
+        "win_rate": 0.0,
+        "roi_pct": 0.0,
+        "fonte": "todas",
+    }
+    if liga and mercado:
+        prior = calcular_prior_qualidade_mercado_liga(liga, mercado)
+
+    fallback_proxy_confianca = 0.0
+    fallback_proxy_aplicado = False
+    if prior.get("qualidade") == "sem_sinal":
+        # Proxy conservador para reduzir cautela excessiva em mercados/ligas novas.
+        proxy_amostra = min(2.0, amostra_time / 12.0)
+        proxy_cobertura = 1.0 if bonus_cobertura >= 5.0 else (0.5 if bonus_cobertura > 0 else 0.0)
+        fallback_proxy_confianca = round(proxy_amostra + proxy_cobertura, 4)
+        fallback_proxy_aplicado = fallback_proxy_confianca > 0.0
+
+    confianca = (
+        50.0
+        + componente_time
+        + bonus_cobertura
+        + float(prior.get("prior_confianca", 0.0))
+        + fallback_proxy_confianca
+    )
+    confianca = max(50.0, min(100.0, confianca))
+
+    return {
+        "confianca": int(round(confianca)),
+        "origem": "debiased_prior_v1",
+        "base_calibrada": round(base_calibrada, 2),
+        "peso_amostra_time": round(peso_time, 4),
+        "amostra_time": amostra_time,
+        "bonus_cobertura": round(bonus_cobertura, 2),
+        "qualidade_prior": prior.get("qualidade", "sem_sinal"),
+        "amostra_prior": int(prior.get("amostra", 0)),
+        "prior_confianca": round(float(prior.get("prior_confianca", 0.0)), 4),
+        "prior_ranking": round(float(prior.get("prior_ranking", 0.0)), 4),
+        "prior_win_rate": round(float(prior.get("win_rate", 0.0)), 4),
+        "prior_roi_pct": round(float(prior.get("roi_pct", 0.0)), 4),
+        "fonte_prior": prior.get("fonte", "todas"),
+        "fallback_proxy_aplicado": fallback_proxy_aplicado,
+        "fallback_proxy_confianca": round(float(fallback_proxy_confianca), 4),
+    }
 
 def carregar_forma():
     if not os.path.exists(FORMA_PATH):
