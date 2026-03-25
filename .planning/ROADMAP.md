@@ -13,7 +13,7 @@ v1.3 Calibration Freshness and Portfolio Risk Controls
 
 ## Phases
 
-- [ ] **Phase 14: Calibration Automation and League Home Advantage** - Operationalize rho/home-advantage calibration and align O/U with Dixon-Coles behavior.
+- [x] **Phase 14: Calibration Automation and League Home Advantage** - Operationalize rho/home-advantage calibration and align O/U with Dixon-Coles behavior.
 - [ ] **Phase 15: Recency-Weighted xG and Confidence Fallbacks** - Improve freshness sensitivity and reduce over-cautious confidence for low-sample contexts.
 - [ ] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates against noisy inputs.
 - [ ] **Phase 17: Correlation-Aware Portfolio Controls** - Limit same-match concentration in ranking and Kelly sizing.
@@ -27,8 +27,8 @@ v1.3 Calibration Freshness and Portfolio Risk Controls
 **Requirements**: [CAL-01, CAL-02, CAL-03]
 **Plans:** 2 plans
 Plans:
-- [ ] 14-01-PLAN.md - Automatizar persistencia e consumo de calibracao por liga com home-advantage configuravel.
-- [ ] 14-02-PLAN.md - Aplicar consistencia Dixon-Coles no mercado over/under com regressao dedicada.
+- [x] 14-01-PLAN.md - Automatizar persistencia e consumo de calibracao por liga com home-advantage configuravel.
+- [x] 14-02-PLAN.md - Aplicar consistencia Dixon-Coles no mercado over/under com regressao dedicada.
 **Success Criteria**:
 	1. Rho per liga is loaded automatically after calibration output updates.
 	2. Home-advantage factor is league-specific and applied in lambda_casa.
@@ -78,7 +78,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 14. Calibration Automation and League Home Advantage | 0/2 | Planned | - |
+| 14. Calibration Automation and League Home Advantage | 2/2 | Completed | 2026-03-24 |
 | 15. Recency-Weighted xG and Confidence Fallbacks | 0/0 | Not started | - |
 | 16. Gate Robustness and Steam Noise Filtering | 0/0 | Not started | - |
 | 17. Correlation-Aware Portfolio Controls | 0/0 | Not started | - |
@@ -86,7 +86,7 @@ Plans:
 
 ## Next Step
 
-Run `/gsd-plan-phase 14` to create executable plans for the first v1.3 slice.
+Run `/gsd-plan-phase 15` to create executable plans for the next v1.3 slice.
 
 ---
-*Last updated: 2026-03-24 after v1.3 roadmap initialization*
+*Last updated: 2026-03-24 after phase 14 execution completion*
