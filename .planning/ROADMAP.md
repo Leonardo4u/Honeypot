@@ -15,8 +15,8 @@ v1.3 Calibration Freshness and Portfolio Risk Controls
 
 - [x] **Phase 14: Calibration Automation and League Home Advantage** - Operationalize rho/home-advantage calibration and align O/U with Dixon-Coles behavior.
 - [x] **Phase 15: Recency-Weighted xG and Confidence Fallbacks** - Improve freshness sensitivity and reduce over-cautious confidence for low-sample contexts.
-- [ ] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates, add immediate portfolio guardrails, and enable early drift alerts.
-- [ ] **Phase 17: Correlation-Aware Portfolio Controls** - Expand same-match correlation handling in Kelly sizing and ranking penalties.
+- [x] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates, add immediate portfolio guardrails, and enable early drift alerts.
+- [x] **Phase 17: Correlation-Aware Portfolio Controls** - Expand same-match correlation handling in Kelly sizing and ranking penalties.
 - [ ] **Phase 18: Operational Telemetry and Drift Safeguards** - Expand weekly diagnostics, configurable settlement windows, and long-horizon quality monitoring.
 
 ## Phase Details
@@ -71,8 +71,8 @@ Plans:
 **Requirements**: [RISK-01, RISK-02]
 **Plans:** 2 plans
 Plans:
-- [ ] 17-01-PLAN.md - Aplicar penalizacao escalonada de correlacao no ranking e parametrizar cap/gradiente por jogo.
-- [ ] 17-02-PLAN.md - Estender Kelly com redutor por sinais do mesmo jogo e integrar contexto no scheduler.
+- [x] 17-01-PLAN.md - Aplicar penalizacao escalonada de correlacao no ranking e parametrizar cap/gradiente por jogo.
+- [x] 17-02-PLAN.md - Estender Kelly com redutor por sinais do mesmo jogo e integrar contexto no scheduler.
 **Success Criteria**:
 	1. Kelly stake is reduced more aggressively when open signals are same-match correlated.
 	2. Correlation-aware ranking penalty scales with concentration severity across open signals.
@@ -94,12 +94,12 @@ Plans:
 | 14. Calibration Automation and League Home Advantage | 2/2 | Completed | 2026-03-24 |
 | 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
 | 16. Gate Robustness and Steam Noise Filtering | 2/2 | Completed | 2026-03-24 |
-| 17. Correlation-Aware Portfolio Controls | 0/2 | Planned | - |
+| 17. Correlation-Aware Portfolio Controls | 2/2 | Completed | 2026-03-25 |
 | 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
 
 ## Next Step
 
-Run `/gsd-execute-phase 17` to implement advanced correlation-aware portfolio controls.
+Run `/gsd-plan-phase 18` to plan operational telemetry and drift safeguards.
 
 ---
-*Last updated: 2026-03-24 after phase 17 planning*
+*Last updated: 2026-03-25 after phase 17 execution*

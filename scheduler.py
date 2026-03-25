@@ -35,7 +35,7 @@ from forma_recente import calcular_ajuste_forma, calcular_confianca_contexto
 from xg_understat import calcular_media_gols_com_xg
 from sos_ajuste import calcular_xg_com_sos
 from clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_fechar, buscar_odd_fechamento_pinnacle, atualizar_clv
-from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
+from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, contar_sinais_mesmo_jogo_abertos, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
 from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
@@ -51,6 +51,7 @@ CANAL_FREE = os.getenv("CANAL_FREE")
 
 MAX_SINAIS_DIA = 10
 MAX_MERCADOS_POR_JOGO = 2
+CORRELACAO_PENALTY_STEP = 2.0
 DRIFT_MIN_FALLBACK_LIMIAR = 0.35
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
@@ -226,6 +227,41 @@ def aplicar_cap_por_jogo(candidatos, max_por_jogo=MAX_MERCADOS_POR_JOGO):
         por_jogo[jogo] = atual + 1
         selecionados.append(candidato)
     return selecionados
+
+
+def aplicar_penalizacao_correlacao_ranking(candidatos, penalty_step=CORRELACAO_PENALTY_STEP):
+    ordenados_base = sorted(
+        candidatos,
+        key=lambda x: (
+            x.get("score_prior", x.get("score", 0)),
+            x.get("score", 0),
+            x.get("confianca", 0),
+        ),
+        reverse=True,
+    )
+
+    vistos_por_jogo = {}
+    ajustados = []
+    for candidato in ordenados_base:
+        jogo = candidato.get("jogo", {}).get("jogo")
+        contagem = vistos_por_jogo.get(jogo, 0)
+        penalizacao = contagem * float(penalty_step)
+        base = candidato.get("score_prior", candidato.get("score", 0))
+        candidato["penalizacao_correlacao_ranking"] = round(penalizacao, 4)
+        candidato["score_prior_ajustado"] = round(base - penalizacao, 4)
+        vistos_por_jogo[jogo] = contagem + 1
+        ajustados.append(candidato)
+
+    return sorted(
+        ajustados,
+        key=lambda x: (
+            x.get("score_prior_ajustado", x.get("score_prior", x.get("score", 0))),
+            x.get("score_prior", x.get("score", 0)),
+            x.get("score", 0),
+            x.get("confianca", 0),
+        ),
+        reverse=True,
+    )
 
 
 def avaliar_alerta_drift_minimo(provider_health, total_avaliacoes, limiar=DRIFT_MIN_FALLBACK_LIMIAR):
@@ -591,14 +627,7 @@ async def processar_jogos(dry_run=False):
                 provider_health["connection_error"] += 1
                 print(f"Erro ao processar {jogo['jogo']}: {e}")
 
-    candidatos.sort(
-        key=lambda x: (
-            x.get("score_prior", x.get("score", 0)),
-            x.get("score", 0),
-            x.get("confianca", 0),
-        ),
-        reverse=True,
-    )
+    candidatos = aplicar_penalizacao_correlacao_ranking(candidatos)
     candidatos = aplicar_cap_por_jogo(candidatos)
     vagas_restantes = MAX_SINAIS_DIA - sinais_hoje
     selecionados = candidatos[:vagas_restantes]
@@ -615,6 +644,7 @@ async def processar_jogos(dry_run=False):
 
         sinais_abertos = contar_sinais_abertos()
         sinais_liga = contar_sinais_liga_hoje(analise["liga"])
+        sinais_mesmo_jogo = contar_sinais_mesmo_jogo_abertos(analise["jogo"])
 
         kelly = calcular_kelly(
             prob_modelo=analise.get("prob_modelo", 0.55),
@@ -622,7 +652,8 @@ async def processar_jogos(dry_run=False):
             edge_score=analise["edge_score"],
             sinais_abertos=sinais_abertos,
             liga=analise["liga"],
-            sinais_liga_hoje=sinais_liga
+            sinais_liga_hoje=sinais_liga,
+            sinais_mesmo_jogo_abertos=sinais_mesmo_jogo,
         )
 
         if not isinstance(kelly, dict):
