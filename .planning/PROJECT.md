@@ -22,14 +22,11 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Historical calibration baseline is operational with cache-aware ingestion and league-level rho reporting (validated in Phase 7: Historical Calibration Baseline).
 - ✓ Settlement labeling is deterministic across pending days with fixture identity persistence and date-safe fallback resolution (validated in Phase 11: Settlement Label Integrity).
 - ✓ Confidence scoring is de-biased with sample-aware market+league quality prior and runtime observability (validated in Phase 12: Confidence De-bias and Quality Prior).
+- ✓ Market divergence uses no-vig comparison, runtime market coverage was expanded, and reproducible one-command test baseline is established (validated in Phase 13: No-vig Comparison, Market Coverage, and Test Baseline).
 
 ### Active
 
-- [ ] Reativar gates 2/3/4 no fluxo real de selecao de sinais.
-- [ ] Corrigir comparacao modelo vs mercado com probabilidade sem vigorish.
-- [ ] Ampliar cobertura de mercados com foco em hit-rate.
-- [ ] Completar observabilidade de health dos provedores.
-- [ ] Garantir baseline reprodutivel de testes e dependencias.
+- [ ] No pending v1.2 feature requirements. Ready for milestone closure and archive.
 
 ### Out of Scope
 
@@ -48,7 +45,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
 - Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- Milestone v1.2 is active with phases 10, 11, and 12 completed.
+- Milestone v1.2 is active with phases 10, 11, 12, and 13 completed.
 
 ## Current Milestone: v1.2 Win Rate Integrity and Runtime Quality
 
@@ -112,4 +109,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after phase 12 completion*
+*Last updated: 2026-03-25 after phase 13 completion*

@@ -125,7 +125,7 @@ class _ConnStub:
 
 
 class TestSchedulerQualityPriorRanking(unittest.TestCase):
-    def _run_cycle(self, jogos, prior_contexto_por_jogo_mercado, gate_payload, mocked_log_event=None):
+    def _run_cycle(self, jogos, prior_contexto_por_jogo_mercado, gate_payload, mocked_log_event=None, gate_side_effect=None):
         def _fake_analisar(dados_analise, log_dc=False):
             return {
                 "decisao": "APOSTAR",
@@ -142,6 +142,10 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
             chave = (f"{home} vs {away}", mercado)
             return prior_contexto_por_jogo_mercado[chave]
 
+        gate_patch = patch("scheduler.aplicar_triple_gate", return_value=gate_payload)
+        if gate_side_effect is not None:
+            gate_patch = patch("scheduler.aplicar_triple_gate", side_effect=gate_side_effect)
+
         patches = [
             patch.object(scheduler, "LIGAS", ["soccer_epl"]),
             patch("scheduler.sqlite3.connect", return_value=_ConnStub()),
@@ -153,7 +157,7 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
             patch("scheduler.calcular_confianca_contexto", side_effect=_fake_confianca),
             patch("scheduler.analisar_jogo", side_effect=_fake_analisar),
             patch("scheduler.buscar_odds_todas_casas", return_value=None),
-            patch("scheduler.aplicar_triple_gate", return_value=gate_payload),
+            gate_patch,
             patch("scheduler.contar_sinais_abertos", return_value=0),
             patch("scheduler.contar_sinais_liga_hoje", return_value=0),
             patch(
@@ -181,7 +185,7 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "jogo": "TeamStrong vs TeamA",
                 "liga": "Premier League",
                 "horario": "2026-03-25T20:00:00Z",
-                "odds": {"casa": 1.9, "over_2.5": 1.9},
+                "odds": {"casa": 1.9, "fora": 3.2, "over_2.5": 1.9, "under_2.5": 1.95},
             },
             {
                 "home_team": "TeamWeak",
@@ -189,7 +193,7 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "jogo": "TeamWeak vs TeamB",
                 "liga": "Premier League",
                 "horario": "2026-03-25T21:00:00Z",
-                "odds": {"casa": 1.9, "over_2.5": 1.9},
+                "odds": {"casa": 1.9, "fora": 3.2, "over_2.5": 1.9, "under_2.5": 1.95},
             },
         ]
         prior = {
@@ -199,11 +203,23 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "amostra_prior": 50,
                 "prior_ranking": 6.0,
             },
+            ("TeamStrong vs TeamA", "1x2_fora"): {
+                "confianca": 70,
+                "qualidade_prior": "ok",
+                "amostra_prior": 50,
+                "prior_ranking": 5.5,
+            },
             ("TeamStrong vs TeamA", "over_2.5"): {
                 "confianca": 70,
                 "qualidade_prior": "ok",
                 "amostra_prior": 50,
                 "prior_ranking": 6.0,
+            },
+            ("TeamStrong vs TeamA", "under_2.5"): {
+                "confianca": 70,
+                "qualidade_prior": "ok",
+                "amostra_prior": 50,
+                "prior_ranking": 5.0,
             },
             ("TeamWeak vs TeamB", "1x2_casa"): {
                 "confianca": 70,
@@ -211,11 +227,23 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "amostra_prior": 8,
                 "prior_ranking": -4.0,
             },
+            ("TeamWeak vs TeamB", "1x2_fora"): {
+                "confianca": 70,
+                "qualidade_prior": "baixa_amostra",
+                "amostra_prior": 8,
+                "prior_ranking": -4.5,
+            },
             ("TeamWeak vs TeamB", "over_2.5"): {
                 "confianca": 70,
                 "qualidade_prior": "baixa_amostra",
                 "amostra_prior": 8,
                 "prior_ranking": -4.0,
+            },
+            ("TeamWeak vs TeamB", "under_2.5"): {
+                "confianca": 70,
+                "qualidade_prior": "baixa_amostra",
+                "amostra_prior": 8,
+                "prior_ranking": -4.2,
             },
         }
 
@@ -229,6 +257,39 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
         self.assertGreaterEqual(len(dry_run_msgs), 2)
         self.assertIn("TeamStrong vs TeamA", dry_run_msgs[0])
 
+    def test_expansao_mercados_envia_odd_oponente_para_gate(self):
+        jogos = [
+            {
+                "home_team": "TeamGate",
+                "away_team": "TeamE",
+                "jogo": "TeamGate vs TeamE",
+                "liga": "Premier League",
+                "horario": "2026-03-25T20:00:00Z",
+                "odds": {"casa": 1.9, "fora": 3.1, "over_2.5": 1.92, "under_2.5": 1.96},
+            }
+        ]
+
+        prior = {
+            ("TeamGate vs TeamE", "1x2_casa"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 2.0},
+            ("TeamGate vs TeamE", "1x2_fora"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 1.5},
+            ("TeamGate vs TeamE", "over_2.5"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 1.0},
+            ("TeamGate vs TeamE", "under_2.5"): {"confianca": 72, "qualidade_prior": "ok", "amostra_prior": 20, "prior_ranking": 0.5},
+        }
+
+        captured_payloads = []
+
+        def _capture_gate(payload, sinais_hoje=0):
+            captured_payloads.append(payload)
+            return {"aprovado": True, "penalizacao_score": 0}
+
+        self._run_cycle(jogos, prior, {"aprovado": True, "penalizacao_score": 0}, gate_side_effect=_capture_gate)
+
+        self.assertTrue(captured_payloads)
+        mercados = {p.get("mercado") for p in captured_payloads}
+        self.assertIn("1x2_fora", mercados)
+        self.assertIn("under_2.5", mercados)
+        self.assertTrue(any(p.get("odd_oponente_mercado", 0) > 0 for p in captured_payloads))
+
     def test_prior_fraco_apenas_penaliza_sem_bloqueio_forcado(self):
         jogos = [
             {
@@ -237,7 +298,7 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "jogo": "TeamNoSignal vs TeamC",
                 "liga": "Premier League",
                 "horario": "2026-03-25T22:00:00Z",
-                "odds": {"casa": 1.95, "over_2.5": 1.95},
+                "odds": {"casa": 1.95, "fora": 3.05, "over_2.5": 1.95, "under_2.5": 1.91},
             }
         ]
         prior = {
@@ -247,7 +308,19 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "amostra_prior": 0,
                 "prior_ranking": -5.0,
             },
+            ("TeamNoSignal vs TeamC", "1x2_fora"): {
+                "confianca": 70,
+                "qualidade_prior": "sem_sinal",
+                "amostra_prior": 0,
+                "prior_ranking": -5.0,
+            },
             ("TeamNoSignal vs TeamC", "over_2.5"): {
+                "confianca": 70,
+                "qualidade_prior": "sem_sinal",
+                "amostra_prior": 0,
+                "prior_ranking": -5.0,
+            },
+            ("TeamNoSignal vs TeamC", "under_2.5"): {
                 "confianca": 70,
                 "qualidade_prior": "sem_sinal",
                 "amostra_prior": 0,
@@ -272,7 +345,7 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "jogo": "TeamReject vs TeamD",
                 "liga": "Premier League",
                 "horario": "2026-03-25T23:00:00Z",
-                "odds": {"casa": 1.88, "over_2.5": 1.88},
+                "odds": {"casa": 1.88, "fora": 3.0, "over_2.5": 1.88, "under_2.5": 1.93},
             }
         ]
         prior = {
@@ -282,7 +355,19 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
                 "amostra_prior": 6,
                 "prior_ranking": -3.0,
             },
+            ("TeamReject vs TeamD", "1x2_fora"): {
+                "confianca": 71,
+                "qualidade_prior": "baixa_amostra",
+                "amostra_prior": 6,
+                "prior_ranking": -3.0,
+            },
             ("TeamReject vs TeamD", "over_2.5"): {
+                "confianca": 71,
+                "qualidade_prior": "baixa_amostra",
+                "amostra_prior": 6,
+                "prior_ranking": -3.0,
+            },
+            ("TeamReject vs TeamD", "under_2.5"): {
                 "confianca": 71,
                 "qualidade_prior": "baixa_amostra",
                 "amostra_prior": 6,

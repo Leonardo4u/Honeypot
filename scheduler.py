@@ -70,6 +70,13 @@ LIGAS = [
     "soccer_france_ligue_one"
 ]
 
+MARKET_RUNTIME_CONFIG = [
+    {"mercado": "1x2_casa", "odd_key": "casa", "odd_oponente_key": "fora"},
+    {"mercado": "1x2_fora", "odd_key": "fora", "odd_oponente_key": "casa"},
+    {"mercado": "over_2.5", "odd_key": "over_2.5", "odd_oponente_key": "under_2.5"},
+    {"mercado": "under_2.5", "odd_key": "under_2.5", "odd_oponente_key": "over_2.5"},
+]
+
 LIGA_KEY_MAP = {
     "EPL": "soccer_epl",
     "Premier League": "soccer_epl",
@@ -199,6 +206,10 @@ def validar_entrada_analise(jogo, odd):
 
     return True, "ok"
 
+
+def listar_mercados_runtime():
+    return list(MARKET_RUNTIME_CONFIG)
+
 def obter_media_gols(time_casa, time_fora, liga_key="soccer_epl"):
     xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
     return xg_casa, xg_fora, fonte
@@ -302,7 +313,9 @@ def formatar_sinal_kelly(analise, kelly):
 
     mercados_legivel = {
         "1x2_casa": "Vitória do time da casa",
+        "1x2_fora": "Vitória do time visitante",
         "over_2.5":  "Mais de 2.5 gols na partida",
+        "under_2.5": "Menos de 2.5 gols na partida",
     }
     mercado_texto = mercados_legivel.get(analise["mercado"], analise["mercado"])
 
@@ -401,10 +414,10 @@ async def processar_jogos(dry_run=False):
                 ajuste_casa, ajuste_fora = calcular_ajuste_forma(home, away)
 
                 primeiro_mercado = True
-                for mercado, odd_key in [
-                    ("1x2_casa", "casa"),
-                    ("over_2.5", "over_2.5"),
-                ]:
+                for market_cfg in listar_mercados_runtime():
+                    mercado = market_cfg["mercado"]
+                    odd_key = market_cfg["odd_key"]
+                    odd_oponente_key = market_cfg["odd_oponente_key"]
                     contexto_confianca = calcular_confianca_contexto(home, away, jogo["liga"], mercado)
                     confianca = int(contexto_confianca.get("confianca", 50))
 
@@ -420,6 +433,7 @@ async def processar_jogos(dry_run=False):
                     ajuste_prior = calcular_ajuste_prior_ranking(contexto_confianca.get("prior_ranking", 0.0))
 
                     odd = jogo["odds"].get(odd_key, 0)
+                    odd_oponente_mercado = jogo["odds"].get(odd_oponente_key, 0)
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
                         provider_health["invalid_input"] += 1
@@ -475,6 +489,7 @@ async def processar_jogos(dry_run=False):
                     filtro = aplicar_triple_gate({
                         "ev": analise.get("ev", 0),
                         "odd": odd,
+                        "odd_oponente_mercado": odd_oponente_mercado,
                         "mercado": mercado,
                         "escalacao_confirmada": escalacao_confirmada,
                         "variacao_odd": variacao_odd_gate,
