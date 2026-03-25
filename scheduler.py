@@ -38,6 +38,7 @@ from clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_
 from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, contar_sinais_mesmo_jogo_abertos, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
 from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
+from quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
 from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
 
@@ -53,6 +54,8 @@ MAX_SINAIS_DIA = 10
 MAX_MERCADOS_POR_JOGO = 2
 CORRELACAO_PENALTY_STEP = 2.0
 DRIFT_MIN_FALLBACK_LIMIAR = 0.35
+DRIFT_HISTORICO_MIN_PERSISTENCIA = 3
+DRIFT_HISTORICO_JANELA = 4
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
 
@@ -278,6 +281,28 @@ def avaliar_alerta_drift_minimo(provider_health, total_avaliacoes, limiar=DRIFT_
             "limiar": limiar,
         }
     return None
+
+
+def enviar_alerta_drift_historico(alerta):
+    if not alerta:
+        return
+    if not TOKEN or not CANAL_VIP:
+        return
+
+    msg = (
+        "ALERTA DRIFT (rolling)\n\n"
+        f"Metrica: {alerta.get('metrica')}\n"
+        f"Segmento: {alerta.get('segmento_tipo')}={alerta.get('segmento_valor')}\n"
+        f"Periodo: {alerta.get('periodo_inicio')} ate {alerta.get('periodo_fim')}\n"
+        f"Persistencia minima: {alerta.get('min_persistencia')} semanas\n"
+        f"Valor atual: {alerta.get('valor_atual')}"
+    )
+
+    try:
+        bot = Bot(token=TOKEN)
+        asyncio.run(bot.send_message(chat_id=CANAL_VIP, text=msg))
+    except Exception as e:
+        log_event("runtime", "drift", "telegram", "warning", "drift_alert_send_failed", {"erro": str(e)})
 
 def obter_media_gols(time_casa, time_fora, liga_key="soccer_epl"):
     xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
@@ -909,7 +934,7 @@ async def verificar_resultados_automatico():
     c = conn.cursor()
     c.execute(
         """
-        SELECT id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api
+        SELECT id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api, liga
         FROM sinais
         WHERE status = 'pendente'
         """
@@ -924,7 +949,7 @@ async def verificar_resultados_automatico():
     resultado_registrado = False
 
     for sinal in pendentes:
-        sinal_id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api = sinal
+        sinal_id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api, liga = sinal
         try:
             times = jogo.split(" vs ")
             if len(times) != 2:
@@ -937,6 +962,7 @@ async def verificar_resultados_automatico():
                 data=fixture_data_api,
                 horario=horario,
                 fixture_id=fixture_id_api,
+                liga=liga,
             )
 
             if resultado and (resultado.get("fixture_id_api") or resultado.get("fixture_data_api")):
@@ -1140,6 +1166,34 @@ def atualizar_stats_semanalmente():
     print("Atualizando xG...")
     from xg_understat import atualizar_xg_todas_ligas
     atualizar_xg_todas_ligas()
+
+    try:
+        snapshot = registrar_snapshot_qualidade_semanal()
+        log_event(
+            "runtime",
+            "telemetry",
+            "quality_weekly",
+            "ok",
+            None,
+            {
+                "referencia_semana": snapshot.get("referencia_semana"),
+                "segmentos": len(snapshot.get("segmentos", [])),
+            },
+        )
+    except Exception as e:
+        marcar_ciclo_degradado("quality_snapshot_failed", {"erro": str(e)})
+
+    try:
+        alerta = avaliar_drift_historico(
+            janela=DRIFT_HISTORICO_JANELA,
+            min_persistencia=DRIFT_HISTORICO_MIN_PERSISTENCIA,
+        )
+        if alerta:
+            log_event("runtime", "drift", "quality_rolling", "alert", "drift_historico_threshold_exceeded", alerta)
+            enviar_alerta_drift_historico(alerta)
+    except Exception as e:
+        marcar_ciclo_degradado("quality_drift_eval_failed", {"erro": str(e)})
+
     print("Stats atualizadas.")
 
 def iniciar_scheduler():

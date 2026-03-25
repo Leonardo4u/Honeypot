@@ -83,8 +83,8 @@ Plans:
 **Requirements**: [OBS-01, SETTLE-01, OBS-02]
 **Plans:** 2 plans
 Plans:
-- [ ] 18-01-PLAN.md - Persistir telemetria semanal segmentada (Brier/WR/ROI) e integrar job de snapshot no scheduler.
-- [ ] 18-02-PLAN.md - Configurar janela de settlement por perfil de competicao e acionar drift alert rolling com historico.
+- [x] 18-01-PLAN.md - Persistir telemetria semanal segmentada (Brier/WR/ROI) e integrar job de snapshot no scheduler.
+- [x] 18-02-PLAN.md - Configurar janela de settlement por perfil de competicao e acionar drift alert rolling com historico.
 **Success Criteria**:
 	1. Weekly automation records Brier and win-rate trends from real sinais data.
 	2. Settlement lookup window is configurable by league/competition profile.
@@ -98,11 +98,11 @@ Plans:
 | 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
 | 16. Gate Robustness and Steam Noise Filtering | 2/2 | Completed | 2026-03-24 |
 | 17. Correlation-Aware Portfolio Controls | 2/2 | Completed | 2026-03-25 |
-| 18. Operational Telemetry and Drift Safeguards | 0/2 | Planned | - |
+| 18. Operational Telemetry and Drift Safeguards | 2/2 | Completed | 2026-03-25 |
 
 ## Next Step
 
-Run `/gsd-execute-phase 18` to implement operational telemetry and drift safeguards.
+Run `/gsd-complete-milestone v1.3` to finalize milestone closure artifacts.
 
 ---
-*Last updated: 2026-03-25 after phase 18 planning*
+*Last updated: 2026-03-25 after phase 18 execution*

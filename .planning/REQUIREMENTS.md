@@ -32,9 +32,9 @@
 
 ### Operational Quality Telemetry
 
-- [ ] **OBS-01**: A weekly job must compute and persist Brier/win-rate trend metrics from real settled `sinais` data.
-- [ ] **SETTLE-01**: Settlement lookup window must be configurable by competition profile (including wider windows for European competitions).
-- [ ] **OBS-02**: Drift detection must send Telegram alert when quality metrics exceed configured degradation thresholds over time.
+- [x] **OBS-01**: A weekly job must compute and persist Brier/win-rate trend metrics from real settled `sinais` data.
+- [x] **SETTLE-01**: Settlement lookup window must be configurable by competition profile (including wider windows for European competitions).
+- [x] **OBS-02**: Drift detection must send Telegram alert when quality metrics exceed configured degradation thresholds over time.
 
 ## v2 Requirements
 
@@ -67,9 +67,9 @@
 | STEAM-01 | Phase 16 | Completed |
 | RISK-01 | Phase 17 | Completed |
 | RISK-02 | Phase 17 | Completed |
-| OBS-01 | Phase 18 | Pending |
-| SETTLE-01 | Phase 18 | Pending |
-| OBS-02 | Phase 18 | Pending |
+| OBS-01 | Phase 18 | Completed |
+| SETTLE-01 | Phase 18 | Completed |
+| OBS-02 | Phase 18 | Completed |
 
 **Coverage:**
 - v1 requirements: 15 total
@@ -78,4 +78,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-25 after phase 17 execution completion*
+*Last updated: 2026-03-25 after phase 18 execution completion*

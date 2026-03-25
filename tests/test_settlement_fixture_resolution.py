@@ -21,10 +21,15 @@ if "dotenv" not in sys.modules:
     dotenv_stub.load_dotenv = lambda *args, **kwargs: None
     sys.modules["dotenv"] = dotenv_stub
 
-from data.verificar_resultados import buscar_resultado_jogo
+from data.verificar_resultados import buscar_resultado_jogo, obter_janela_settlement_dias
 
 
 class TestSettlementFixtureResolution(unittest.TestCase):
+    def test_obter_janela_settlement_por_competicao(self):
+        self.assertEqual(obter_janela_settlement_dias("UEFA Champions League"), 4)
+        self.assertEqual(obter_janela_settlement_dias("soccer_uefa_europa_league"), 4)
+        self.assertEqual(obter_janela_settlement_dias("Premier League"), 2)
+
     @patch("data.verificar_resultados.request_with_retry")
     def test_resolver_prioriza_fixture_id_quando_disponivel(self, mocked_retry):
         mocked_retry.return_value = {
@@ -132,6 +137,26 @@ class TestSettlementFixtureResolution(unittest.TestCase):
         )
 
         self.assertIsNone(resultado)
+
+    @patch("data.verificar_resultados.request_with_retry")
+    def test_janela_maior_para_competicao_aumenta_busca_por_datas(self, mocked_retry):
+        mocked_retry.return_value = {"ok": True, "data": {"response": []}}
+
+        resultado = buscar_resultado_jogo(
+            time_casa="Arsenal",
+            time_fora="Chelsea",
+            horario="2026-03-21T17:30:00Z",
+            liga="UEFA Champions League",
+        )
+
+        self.assertIsNone(resultado)
+
+        date_calls = [
+            call
+            for call in mocked_retry.call_args_list
+            if call.kwargs.get("params", {}).get("date")
+        ]
+        self.assertEqual(len(date_calls), 9)
 
 
 if __name__ == "__main__":
