@@ -81,7 +81,10 @@ Plans:
 **Goal**: Detect and react to quality degradation earlier with lightweight recurring diagnostics.
 **Depends on**: Phase 17
 **Requirements**: [OBS-01, SETTLE-01, OBS-02]
-**Plans:** 0 plans
+**Plans:** 2 plans
+Plans:
+- [ ] 18-01-PLAN.md - Persistir telemetria semanal segmentada (Brier/WR/ROI) e integrar job de snapshot no scheduler.
+- [ ] 18-02-PLAN.md - Configurar janela de settlement por perfil de competicao e acionar drift alert rolling com historico.
 **Success Criteria**:
 	1. Weekly automation records Brier and win-rate trends from real sinais data.
 	2. Settlement lookup window is configurable by league/competition profile.
@@ -95,11 +98,11 @@ Plans:
 | 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
 | 16. Gate Robustness and Steam Noise Filtering | 2/2 | Completed | 2026-03-24 |
 | 17. Correlation-Aware Portfolio Controls | 2/2 | Completed | 2026-03-25 |
-| 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
+| 18. Operational Telemetry and Drift Safeguards | 0/2 | Planned | - |
 
 ## Next Step
 
-Run `/gsd-plan-phase 18` to plan operational telemetry and drift safeguards.
+Run `/gsd-execute-phase 18` to implement operational telemetry and drift safeguards.
 
 ---
-*Last updated: 2026-03-25 after phase 17 execution*
+*Last updated: 2026-03-25 after phase 18 planning*
