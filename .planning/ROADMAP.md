@@ -15,9 +15,9 @@ v1.3 Calibration Freshness and Portfolio Risk Controls
 
 - [x] **Phase 14: Calibration Automation and League Home Advantage** - Operationalize rho/home-advantage calibration and align O/U with Dixon-Coles behavior.
 - [x] **Phase 15: Recency-Weighted xG and Confidence Fallbacks** - Improve freshness sensitivity and reduce over-cautious confidence for low-sample contexts.
-- [ ] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates against noisy inputs.
-- [ ] **Phase 17: Correlation-Aware Portfolio Controls** - Limit same-match concentration in ranking and Kelly sizing.
-- [ ] **Phase 18: Operational Telemetry and Drift Safeguards** - Automate weekly backtesting metrics, configurable settlement windows, and drift alerts.
+- [ ] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates, add immediate portfolio guardrails, and enable early drift alerts.
+- [ ] **Phase 17: Correlation-Aware Portfolio Controls** - Expand same-match correlation handling in Kelly sizing and ranking penalties.
+- [ ] **Phase 18: Operational Telemetry and Drift Safeguards** - Expand weekly diagnostics, configurable settlement windows, and long-horizon quality monitoring.
 
 ## Phase Details
 
@@ -48,24 +48,31 @@ Plans:
 	3. SOS cap is conservative when data source quality is weaker than xG.
 
 ### Phase 16: Gate Robustness and Steam Noise Filtering
-**Goal**: Reduce false positives from market/gate data quality and short-window steam noise.
+**Goal**: Reduce false positives from market/gate data quality and short-window steam noise while adding immediate portfolio and observability safeguards.
 **Depends on**: Phase 15
 **Requirements**: [GATE-01, GATE-02, GATE-03, STEAM-01]
-**Plans:** 0 plans
+**Plans:** 2 plans
+Plans:
+- [ ] 16-01-PLAN.md - Persistir cache de standings com TTL e exigir janela minima para bonus de steam.
+- [ ] 16-02-PLAN.md - Aplicar no-vig source-aware, divergencia pre-contexto, cap por jogo e telemetria minima de fallback/drift.
 **Success Criteria**:
 	1. Gate 5 standings cache survives scheduler restarts with persistent TTL behavior.
 	2. No-vig normalization only runs for approved market source quality.
 	3. Divergence gate compares base Poisson probability vs market, not post-context adjusted probability.
 	4. Steam bonus requires minimum market-open elapsed time.
+	5. No-vig normalization is restricted to an explicit sharp-bookmaker whitelist to prevent niche-odds distortion.
+	6. Scheduler records fallback usage rate for markets lacking odd oponente (including 1x2_fora and under_2.5).
+	7. Ranking enforces a per-match market cap after score sorting to reduce immediate concentration risk.
+	8. Drift alert runs on a minimal cadence with threshold-based notification when quality metrics deteriorate.
 
 ### Phase 17: Correlation-Aware Portfolio Controls
-**Goal**: Reduce intraday exposure clustering from highly correlated same-match signals.
+**Goal**: Reduce intraday exposure clustering from highly correlated same-match signals with stronger stake-level controls.
 **Depends on**: Phase 16
 **Requirements**: [RISK-01, RISK-02]
 **Plans:** 0 plans
 **Success Criteria**:
-	1. Ranking enforces per-match market cap after score sorting.
-	2. Kelly stake is reduced more aggressively when open signals are same-match correlated.
+	1. Kelly stake is reduced more aggressively when open signals are same-match correlated.
+	2. Correlation-aware ranking penalty scales with concentration severity across open signals.
 
 ### Phase 18: Operational Telemetry and Drift Safeguards
 **Goal**: Detect and react to quality degradation earlier with lightweight recurring diagnostics.
@@ -75,7 +82,7 @@ Plans:
 **Success Criteria**:
 	1. Weekly automation records Brier and win-rate trends from real sinais data.
 	2. Settlement lookup window is configurable by league/competition profile.
-	3. Telegram alerts trigger when quality metrics exceed drift thresholds.
+	3. Telemetry expands to segmented trend analysis and durable history for long-horizon drift investigation.
 
 ## Progress
 
@@ -83,13 +90,13 @@ Plans:
 |-------|----------------|--------|-----------|
 | 14. Calibration Automation and League Home Advantage | 2/2 | Completed | 2026-03-24 |
 | 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
-| 16. Gate Robustness and Steam Noise Filtering | 0/0 | Not started | - |
+| 16. Gate Robustness and Steam Noise Filtering | 0/2 | Planned | - |
 | 17. Correlation-Aware Portfolio Controls | 0/0 | Not started | - |
 | 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
 
 ## Next Step
 
-Run `/gsd-plan-phase 16` to define executable plans for gate robustness and steam filtering.
+Run `/gsd-execute-phase 16` to execute gate robustness, source-quality safeguards, and immediate risk controls.
 
 ---
-*Last updated: 2026-03-24 after phase 15 execution completion*
+*Last updated: 2026-03-24 after phase 16 planning*

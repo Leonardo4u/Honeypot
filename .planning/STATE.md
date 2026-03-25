@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 15 Completed
+status: Phase 16 Planned
 last_updated: "2026-03-25T02:20:00.000Z"
 progress:
   total_phases: 5
@@ -16,9 +16,9 @@ progress:
 ## Status
 
 - Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
-- Current phase: phase 15 completed (plans 01 and 02 done)
-- Current command: /gsd-plan-phase 16
-- Overall progress: phases 14-15 complete; phases 16-18 pending
+- Current phase: phase 16 planned (plans 01 and 02 created)
+- Current command: /gsd-execute-phase 16
+- Overall progress: phases 14-15 complete; phase 16 planned; phases 17-18 pending
 
 ## Project Reference
 
@@ -75,10 +75,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-24: v1.3 initialized from operator backlog with 15 improvements mapped into phases 14-18.
 - 2026-03-24: Phase 14 executed (14-01 and 14-02), calibration runtime automation and DC over/under consistency delivered with dedicated regression tests.
 - 2026-03-25: Phase 15 executed (15-01 and 15-02), temporal xG weighting plus confidence/SOS fallback controls delivered with dedicated regression tests and full baseline pass.
+- 2026-03-24: Phase 16 planned with two executable plans covering persistent standings cache, steam maturation window, source-aware no-vig/divergence, and immediate risk/telemetry safeguards.
 
 ## Next Step
 
-Run `/gsd-plan-phase 16` to continue v1.3 implementation.
+Run `/gsd-execute-phase 16` to continue v1.3 implementation.
 
 ---
-*Last updated: 2026-03-25 after phase 15 execution completion*
+*Last updated: 2026-03-24 after phase 16 planning*
