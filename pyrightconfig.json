@@ -1,0 +1,21 @@
+{
+  "typeCheckingMode": "off",
+  "reportMissingImports": "none",
+  "include": [
+    "**/*.py"
+  ],
+  "exclude": [
+    "**/__pycache__",
+    ".planning/**"
+  ],
+  "executionEnvironments": [
+    {
+      "root": ".",
+      "extraPaths": [
+        "model",
+        "data"
+      ]
+    }
+  ],
+  "reportMissingModuleSource": "none"
+}
