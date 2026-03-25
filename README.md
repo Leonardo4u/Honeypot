@@ -5,6 +5,7 @@
 ![License](https://img.shields.io/badge/license-Unlicensed-lightgrey)
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![Status](https://img.shields.io/badge/status-active-success)
+![CI](https://img.shields.io/badge/ci-github%20actions-blue)
 
 Sistema de análise e execução operacional para sinais de apostas esportivas com foco em:
 
@@ -162,7 +163,25 @@ python scripts/run_tests.py
 python -m unittest tests.test_quality_telemetry_weekly -v
 ```
 
+### Check de higiene de repositório
+
+```bash
+python scripts/check_repo_hygiene.py
+```
+
+Esse check bloqueia artefatos gerados no git (como `__pycache__`, `.pyc`, `.db` e `logs/*.xlsx`).
+
 A suíte canônica cobre módulos críticos de gates, scheduler, settlement, qualidade de dados, telemetria e integração de banco.
+
+---
+
+## 🤖 CI automatizado
+
+O projeto executa pipeline no GitHub Actions em push/PR para:
+
+- instalar dependências,
+- rodar suíte canônica (`python scripts/run_tests.py`),
+- validar higiene de versionamento (`python scripts/check_repo_hygiene.py`).
 
 ---
 
