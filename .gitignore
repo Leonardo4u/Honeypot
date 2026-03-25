@@ -1,2 +1,15 @@
 .env
+
+# Python caches/bytecode
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Local virtual environment
+.venv/
+
+# Local runtime artifacts
+*.db
+logs/*.xlsx
 .env.*
