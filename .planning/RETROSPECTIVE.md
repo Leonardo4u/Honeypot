@@ -34,6 +34,41 @@
 - Most cost was concentrated in iterative verification and audit/metadata reconciliation.
 - Reusing existing test evidence and deterministic checks provided efficient closure confidence.
 
+## Milestone: v1.2 - Win Rate Integrity and Runtime Quality
+
+**Shipped:** 2026-03-25
+**Phases:** 4 | **Plans:** 9
+
+### What Was Built
+- Runtime gate integrity restoration with real lineup/odd/daily-count inputs and explicit gate reject reason telemetry.
+- Provider-health categorization hardening with status-aware cycle counters across timeout/http/connection/empty payload outcomes.
+- Deterministic settlement resolution with fixture-id-first matching and date-safe fallback for cross-day pending signals.
+- Confidence de-bias foundation and market+league quality-prior integration into runtime ranking and observability.
+- No-vig market divergence in Gate 1 and expanded runtime market coverage (`1x2_fora`, `under_2.5`) with guardrails preserved.
+- Reproducible local verification baseline via pinned dependencies and canonical `python scripts/run_tests.py` command.
+
+### What Worked
+- Wave-based execution (10->11->12->13) kept high-risk behavior changes isolated and verifiable.
+- Regression tests were extended alongside each behavior change, preventing hidden contract drift.
+- Existing summary/verification artifacts made milestone closure traceability straightforward.
+
+### What Was Inefficient
+- Milestone CLI extraction missed one-liner/task metadata, requiring manual milestone register enrichment.
+- Runtime side artifacts (`.pyc`, local DB churn) increased git noise during docs-only closure steps.
+
+### Patterns Established
+- Keep gate payload contracts explicit (`odd_oponente_mercado`) when probability semantics change.
+- Preserve deterministic scheduler ordering whenever ranking logic is expanded.
+- Maintain one-command baseline tests as a release criterion for milestone closure.
+
+### Key Lessons
+- Probability comparison improvements (no-vig) are safest when implemented with compatibility fallback and dedicated regression tests.
+- Milestone closure quality improves when archival automation is followed by manual metadata sanity checks.
+
+### Cost Observations
+- Most cost concentrated in validation hardening and reproducibility stabilization (dependency and baseline test path).
+- Incremental phase scope kept execution predictable despite cross-cutting scheduler and settlement changes.
+
 ## Cross-Milestone Trends
 
 | Trend | Status | Notes |
