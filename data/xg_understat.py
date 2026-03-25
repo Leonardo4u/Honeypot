@@ -12,6 +12,29 @@ LIGAS_UNDERSTAT = {
     "soccer_france_ligue_one": "Ligue_1",
 }
 
+
+def _media_ponderada_temporal(valores, decay_base=0.9):
+    """
+    Media ponderada com decaimento exponencial por recencia.
+    Espera lista em ordem cronologica (mais antigo -> mais recente).
+    """
+    if not valores:
+        return 1.2
+
+    total_peso = 0.0
+    soma = 0.0
+    n = len(valores)
+    for idx, valor in enumerate(valores):
+        expoente = (n - 1) - idx
+        peso = decay_base ** expoente
+        soma += float(valor) * peso
+        total_peso += peso
+
+    if total_peso <= 0:
+        return round(sum(valores) / len(valores), 3)
+
+    return round(soma / total_peso, 3)
+
 def buscar_xg_liga(liga_key, temporada=2024):
     from selenium import webdriver
     from selenium.webdriver.chrome.service import Service
@@ -79,14 +102,11 @@ def buscar_xg_liga(liga_key, temporada=2024):
                     xg_marcado_fora.append(xg)
                     xg_sofrido_fora.append(xga)
 
-            def media(lista):
-                return round(sum(lista) / len(lista), 3) if lista else 1.2
-
             xg_times[nome] = {
-                "xg_marcado_casa": media(xg_marcado_casa),
-                "xg_marcado_fora": media(xg_marcado_fora),
-                "xg_sofrido_casa": media(xg_sofrido_casa),
-                "xg_sofrido_fora": media(xg_sofrido_fora),
+                "xg_marcado_casa": _media_ponderada_temporal(xg_marcado_casa),
+                "xg_marcado_fora": _media_ponderada_temporal(xg_marcado_fora),
+                "xg_sofrido_casa": _media_ponderada_temporal(xg_sofrido_casa),
+                "xg_sofrido_fora": _media_ponderada_temporal(xg_sofrido_fora),
                 "jogos_casa": len(xg_marcado_casa),
                 "jogos_fora": len(xg_marcado_fora)
             }

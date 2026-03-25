@@ -24,6 +24,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Confidence scoring is de-biased with sample-aware market+league quality prior and runtime observability (validated in Phase 12: Confidence De-bias and Quality Prior).
 - ✓ Market divergence uses no-vig comparison, runtime market coverage was expanded, and reproducible one-command test baseline is established (validated in Phase 13: No-vig Comparison, Market Coverage, and Test Baseline).
 - ✓ Runtime calibration now auto-applies league rho/home-advantage and over/under uses Dixon-Coles consistency with dedicated regressions (validated in Phase 14: Calibration Automation and League Home Advantage).
+- ✓ xG now uses recency-weighted decay, confidence sem_sinal uses bounded proxy fallback, and SOS caps adapt to source quality (validated in Phase 15: Recency-Weighted xG and Confidence Fallbacks).
 
 ### Active
 
@@ -126,4 +127,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-24 after phase 14 completion*
+*Last updated: 2026-03-24 after phase 15 completion*

@@ -115,6 +115,19 @@ class TestConfidenceQualityPrior(unittest.TestCase):
         self.assertGreaterEqual(contexto["confianca"], conf)
         self.assertGreaterEqual(conf, 50)
 
+    def test_confianca_sem_sinal_aplica_proxy_conservador(self):
+        # Sem sinais historicos no DB -> prior sem_sinal.
+        with patch.object(database, "DB_PATH", self.db_path), patch("data.forma_recente.DB_PATH", self.db_path), patch(
+            "data.forma_recente.carregar_medias_safe",
+            return_value={"Arsenal": {"casa": 1.6}, "Chelsea": {"fora": 1.2}},
+        ):
+            contexto = calcular_confianca_contexto("Arsenal", "Chelsea", "Premier League", "1x2_casa")
+
+        self.assertEqual(contexto["qualidade_prior"], "sem_sinal")
+        self.assertIn("fallback_proxy_aplicado", contexto)
+        self.assertIn("fallback_proxy_confianca", contexto)
+        self.assertGreaterEqual(contexto["confianca"], 50)
+
 
 if __name__ == "__main__":
     unittest.main()

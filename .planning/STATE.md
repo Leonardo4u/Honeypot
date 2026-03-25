@@ -1,14 +1,14 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
+milestone: v1.0
 milestone_name: milestone
-status: v1.3 phase-14 completed
-last_updated: "2026-03-24T23:55:00.000Z"
+status: Phase 15 Completed
+last_updated: "2026-03-25T02:20:00.000Z"
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # STATE
@@ -16,16 +16,16 @@ progress:
 ## Status
 
 - Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
-- Current phase: phase 14 completed (plans 01 and 02 done)
-- Current command: /gsd-plan-phase 15
-- Overall progress: phase 14 complete; phases 15-18 pending
+- Current phase: phase 15 completed (plans 01 and 02 done)
+- Current command: /gsd-plan-phase 16
+- Overall progress: phases 14-15 complete; phases 16-18 pending
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Plan phase 15 (recency-weighted xG and confidence fallbacks)
+**Current focus:** Phase 15 — recency-weighted-xg-and-confidence-fallbacks
 
 ## Artifacts
 
@@ -74,10 +74,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-25: v1.2 milestone archived with roadmap/requirements snapshots and milestone register update.
 - 2026-03-24: v1.3 initialized from operator backlog with 15 improvements mapped into phases 14-18.
 - 2026-03-24: Phase 14 executed (14-01 and 14-02), calibration runtime automation and DC over/under consistency delivered with dedicated regression tests.
+- 2026-03-25: Phase 15 executed (15-01 and 15-02), temporal xG weighting plus confidence/SOS fallback controls delivered with dedicated regression tests and full baseline pass.
 
 ## Next Step
 
-Run `/gsd-plan-phase 15` to continue v1.3 implementation.
+Run `/gsd-plan-phase 16` to continue v1.3 implementation.
 
 ---
-*Last updated: 2026-03-24 after phase 14 execution completion*
+*Last updated: 2026-03-25 after phase 15 execution completion*

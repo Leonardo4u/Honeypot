@@ -14,7 +14,7 @@ v1.3 Calibration Freshness and Portfolio Risk Controls
 ## Phases
 
 - [x] **Phase 14: Calibration Automation and League Home Advantage** - Operationalize rho/home-advantage calibration and align O/U with Dixon-Coles behavior.
-- [ ] **Phase 15: Recency-Weighted xG and Confidence Fallbacks** - Improve freshness sensitivity and reduce over-cautious confidence for low-sample contexts.
+- [x] **Phase 15: Recency-Weighted xG and Confidence Fallbacks** - Improve freshness sensitivity and reduce over-cautious confidence for low-sample contexts.
 - [ ] **Phase 16: Gate Robustness and Steam Noise Filtering** - Harden no-vig/divergence/motivation/steam gates against noisy inputs.
 - [ ] **Phase 17: Correlation-Aware Portfolio Controls** - Limit same-match concentration in ranking and Kelly sizing.
 - [ ] **Phase 18: Operational Telemetry and Drift Safeguards** - Automate weekly backtesting metrics, configurable settlement windows, and drift alerts.
@@ -40,8 +40,8 @@ Plans:
 **Requirements**: [XGF-01, CONF-01, MODEL-01]
 **Plans:** 2 plans
 Plans:
-- [ ] 15-01-PLAN.md - Aplicar recency-weighted xG com decay exponencial e regressao dedicada.
-- [ ] 15-02-PLAN.md - Enriquecer fallback de confianca sem_sinal e cap SOS adaptativo por qualidade da fonte.
+- [x] 15-01-PLAN.md - Aplicar recency-weighted xG com decay exponencial e regressao dedicada.
+- [x] 15-02-PLAN.md - Enriquecer fallback de confianca sem_sinal e cap SOS adaptativo por qualidade da fonte.
 **Success Criteria**:
 	1. xG aggregation uses exponential decay weighting over historical matches.
 	2. Confidence fallback uses proxy signals when prior state is sem_sinal.
@@ -82,14 +82,14 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 14. Calibration Automation and League Home Advantage | 2/2 | Completed | 2026-03-24 |
-| 15. Recency-Weighted xG and Confidence Fallbacks | 0/2 | Planned | - |
+| 15. Recency-Weighted xG and Confidence Fallbacks | 2/2 | Completed | 2026-03-24 |
 | 16. Gate Robustness and Steam Noise Filtering | 0/0 | Not started | - |
 | 17. Correlation-Aware Portfolio Controls | 0/0 | Not started | - |
 | 18. Operational Telemetry and Drift Safeguards | 0/0 | Not started | - |
 
 ## Next Step
 
-Run `/gsd-execute-phase 15` to implement recency-weighted xG and confidence fallback improvements.
+Run `/gsd-plan-phase 16` to define executable plans for gate robustness and steam filtering.
 
 ---
-*Last updated: 2026-03-24 after phase 15 planning*
+*Last updated: 2026-03-24 after phase 15 execution completion*
