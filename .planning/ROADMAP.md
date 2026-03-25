@@ -55,6 +55,10 @@ v1.2 Win Rate Integrity and Runtime Quality
 **Goal**: Make confidence less self-referential and selection quality-aware.
 **Depends on**: Phase 11
 **Requirements**: [WR-05, WR-06]
+**Plans:** 2 plans
+Plans:
+- [ ] 12-01-PLAN.md - Debiased confidence foundation and market+league quality-prior contract.
+- [ ] 12-02-PLAN.md - Runtime ranking integration with quality-prior observability and dry-run compatibility.
 **Success Criteria**:
 	1. Confidence avoids pure self-selected signal feedback loops.
 	2. Runtime candidate ranking includes market+league quality prior with sample guardrails.
@@ -75,7 +79,7 @@ v1.2 Win Rate Integrity and Runtime Quality
 |-------|----------------|--------|-----------|
 | 10. Runtime Gate Integrity and Provider Health | 2/2 | Completed | 2026-03-24 |
 | 11. Settlement Label Integrity | 2/2 | Completed | 2026-03-24 |
-| 12. Confidence De-bias and Quality Prior | 0/0 | Planned | - |
+| 12. Confidence De-bias and Quality Prior | 0/2 | Planned | - |
 | 13. No-vig Comparison, Market Coverage, and Test Baseline | 0/0 | Planned | - |
 
 ## Next Step
