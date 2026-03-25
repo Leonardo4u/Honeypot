@@ -86,7 +86,13 @@ def calcular_sos(time_casa, time_fora, liga_key):
         "xg_gerado_ataque_casa": xg_gerado_casa,
     }
 
-def ajustar_xg_por_sos(xg_bruto_casa, xg_bruto_fora, time_casa, time_fora, liga_key):
+def _faixa_cap_sos(source_quality):
+    if source_quality in ("medias", "médias", "fallback", "fallback_sos"):
+        return 0.85, 1.15
+    return 0.7, 1.5
+
+
+def ajustar_xg_por_sos(xg_bruto_casa, xg_bruto_fora, time_casa, time_fora, liga_key, source_quality="xG"):
     sos = calcular_sos(time_casa, time_fora, liga_key)
 
     if not sos:
@@ -103,8 +109,9 @@ def ajustar_xg_por_sos(xg_bruto_casa, xg_bruto_fora, time_casa, time_fora, liga_
     fator_casa = round((fator_ataque_casa + fator_defesa_casa) / 2, 3)
     fator_fora = round((fator_ataque_fora + fator_defesa_fora) / 2, 3)
 
-    fator_casa = max(0.7, min(1.5, fator_casa))
-    fator_fora = max(0.7, min(1.5, fator_fora))
+    cap_min, cap_max = _faixa_cap_sos(source_quality)
+    fator_casa = max(cap_min, min(cap_max, fator_casa))
+    fator_fora = max(cap_min, min(cap_max, fator_fora))
 
     xg_ajustado_casa = round(xg_bruto_casa * fator_casa, 3)
     xg_ajustado_fora = round(xg_bruto_fora * fator_fora, 3)
@@ -116,6 +123,9 @@ def ajustar_xg_por_sos(xg_bruto_casa, xg_bruto_fora, time_casa, time_fora, liga_
         "xg_ajustado_fora": xg_ajustado_fora,
         "fator_casa": fator_casa,
         "fator_fora": fator_fora,
+        "cap_min": cap_min,
+        "cap_max": cap_max,
+        "source_quality": source_quality,
         "sos": sos
     }
 
@@ -158,7 +168,7 @@ def calcular_xg_com_sos(time_casa, time_fora, liga_key="soccer_epl"):
     media_casa, media_fora, fonte = calcular_media_gols_com_xg(time_casa, time_fora)
 
     xg_ajustado_casa, xg_ajustado_fora, status, detalhes = ajustar_xg_por_sos(
-        media_casa, media_fora, time_casa, time_fora, liga_key
+        media_casa, media_fora, time_casa, time_fora, liga_key, source_quality=fonte
     )
 
     if detalhes:

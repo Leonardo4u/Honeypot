@@ -143,7 +143,22 @@ def calcular_confianca_contexto(time_casa, time_fora, liga=None, mercado=None):
     if liga and mercado:
         prior = calcular_prior_qualidade_mercado_liga(liga, mercado)
 
-    confianca = 50.0 + componente_time + bonus_cobertura + float(prior.get("prior_confianca", 0.0))
+    fallback_proxy_confianca = 0.0
+    fallback_proxy_aplicado = False
+    if prior.get("qualidade") == "sem_sinal":
+        # Proxy conservador para reduzir cautela excessiva em mercados/ligas novas.
+        proxy_amostra = min(2.0, amostra_time / 12.0)
+        proxy_cobertura = 1.0 if bonus_cobertura >= 5.0 else (0.5 if bonus_cobertura > 0 else 0.0)
+        fallback_proxy_confianca = round(proxy_amostra + proxy_cobertura, 4)
+        fallback_proxy_aplicado = fallback_proxy_confianca > 0.0
+
+    confianca = (
+        50.0
+        + componente_time
+        + bonus_cobertura
+        + float(prior.get("prior_confianca", 0.0))
+        + fallback_proxy_confianca
+    )
     confianca = max(50.0, min(100.0, confianca))
 
     return {
@@ -160,6 +175,8 @@ def calcular_confianca_contexto(time_casa, time_fora, liga=None, mercado=None):
         "prior_win_rate": round(float(prior.get("win_rate", 0.0)), 4),
         "prior_roi_pct": round(float(prior.get("roi_pct", 0.0)), 4),
         "fonte_prior": prior.get("fonte", "todas"),
+        "fallback_proxy_aplicado": fallback_proxy_aplicado,
+        "fallback_proxy_confianca": round(float(fallback_proxy_confianca), 4),
     }
 
 def carregar_forma():

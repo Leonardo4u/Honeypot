@@ -14,9 +14,9 @@
 
 ### Freshness and Confidence Quality
 
-- [ ] **XGF-01**: xG aggregation must use temporal decay weighting so recent matches influence predictions more than older matches.
-- [ ] **CONF-01**: Confidence fallback for prior state `sem_sinal` must use proxy quality signals (league stability, scoring profile, or volatility) instead of only floor behavior.
-- [ ] **MODEL-01**: SOS adjustment cap must be more conservative when based on fallback averages instead of trusted xG inputs.
+- [x] **XGF-01**: xG aggregation must use temporal decay weighting so recent matches influence predictions more than older matches.
+- [x] **CONF-01**: Confidence fallback for prior state `sem_sinal` must use proxy quality signals (league stability, scoring profile, or volatility) instead of only floor behavior.
+- [x] **MODEL-01**: SOS adjustment cap must be more conservative when based on fallback averages instead of trusted xG inputs.
 
 ### Gate and Market Signal Robustness
 
@@ -58,9 +58,9 @@
 | CAL-01 | Phase 14 | Completed |
 | CAL-02 | Phase 14 | Completed |
 | CAL-03 | Phase 14 | Completed |
-| XGF-01 | Phase 15 | Pending |
-| CONF-01 | Phase 15 | Pending |
-| MODEL-01 | Phase 15 | Pending |
+| XGF-01 | Phase 15 | Completed |
+| CONF-01 | Phase 15 | Completed |
+| MODEL-01 | Phase 15 | Completed |
 | GATE-01 | Phase 16 | Pending |
 | GATE-02 | Phase 16 | Pending |
 | GATE-03 | Phase 16 | Pending |
@@ -78,4 +78,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after phase 14 execution completion*
+*Last updated: 2026-03-24 after phase 15 execution completion*
