@@ -26,7 +26,10 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ### Active
 
-- [ ] Define v1.3 requirements based on v1.2 outcomes and operator priorities.
+- [ ] Auto-apply league rho and home-advantage calibration outputs in runtime Poisson.
+- [ ] Improve recency and confidence quality with temporal xG weighting and better fallback proxies.
+- [ ] Harden gate/ranking logic against market noise, steam noise, and same-match exposure concentration.
+- [ ] Add weekly quality telemetry and drift alerting to protect bankroll performance.
 
 ### Out of Scope
 
@@ -46,7 +49,19 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
 - Milestone v1.2 (Win Rate Integrity and Runtime Quality) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- No active milestone is currently open.
+- Milestone v1.3 is active for model calibration and portfolio risk controls.
+
+## Current Milestone: v1.3 Calibration Freshness and Portfolio Risk Controls
+
+**Goal:** Improve signal quality consistency by making calibration outputs operational, reducing stale priors, and controlling portfolio correlation risk.
+
+**Target features:**
+- Apply Dixon-Coles rho calibration automatically per league and season output.
+- Add temporal xG decay and league-aware home-advantage modeling in Poisson inputs.
+- Improve confidence fallback behavior for low-sample leagues/markets.
+- Harden gates with source-aware no-vig, pre-context divergence baseline, and persistent standings cache.
+- Limit correlated exposure in ranking and Kelly sizing for same-match signals.
+- Add automated weekly quality telemetry and drift alerts.
 
 ## Last Shipped Milestone: v1.2 Win Rate Integrity and Runtime Quality
 
@@ -71,9 +86,9 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ## Next Milestone Goals
 
-- Define v1.3 scope with measurable hypothesis-driven improvements.
-- Preserve v1.2 safety/quality floor while iterating on calibration and market quality controls.
-- Keep deterministic verification baseline and one-command regression checks as mandatory guardrails.
+- Deliver phased implementation of calibration freshness, gate hardening, and portfolio-risk controls.
+- Keep v1.2 verification baseline as mandatory non-regression floor.
+- Add observability loops that detect degradation before bankroll impact compounds.
 
 ## Constraints
 
