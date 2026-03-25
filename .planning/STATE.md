@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: v1.2 phase-13 completed
-last_updated: "2026-03-25T22:15:00.000Z"
+status: v1.2 milestone complete
+last_updated: "2026-03-25T01:18:29.282Z"
 progress:
   total_phases: 4
   completed_phases: 4
@@ -17,24 +17,25 @@ progress:
 
 - Milestone: v1.2 - Win Rate Integrity and Runtime Quality
 - Current phase: phase 13 completed (plans 01, 02, and 03 done)
-- Current command: /gsd-complete-milestone
-- Overall progress: milestone initialized, phases 10-13 completed
+- Current command: milestone archived
+- Overall progress: v1.2 archived with roadmap and requirements snapshots
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Close and archive milestone v1.2 after full phase completion
+**Current focus:** Define v1.3 requirements and roadmap
 
 ## Artifacts
 
 - Project context: .planning/PROJECT.md
-- Current requirements: .planning/REQUIREMENTS.md
 - Roadmap: .planning/ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.0-ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.1-ROADMAP.md
+- Roadmap archive: .planning/milestones/v1.2-ROADMAP.md
 - Requirements archive: .planning/milestones/v1.1-REQUIREMENTS.md
+- Requirements archive: .planning/milestones/v1.2-REQUIREMENTS.md
 - Codebase map: .planning/codebase/
 - Research context: .planning/research/SUMMARY.md
 
@@ -69,10 +70,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-25: Phase 13 plan 01 executed and summary created (no-vig Gate 1 divergence with fallback compatibility).
 - 2026-03-25: Phase 13 plan 02 executed and summary created (runtime market coverage expansion with guardrails).
 - 2026-03-25: Phase 13 plan 03 executed and summary created (pinned dependencies and canonical one-command baseline tests).
+- 2026-03-25: v1.2 milestone archived with roadmap/requirements snapshots and milestone register update.
 
 ## Next Step
 
-Run `/gsd-complete-milestone` to archive v1.2 and prepare next milestone.
+Run `/gsd-new-milestone` to start v1.3 definition.
 
 ---
-*Last updated: 2026-03-25 after phase 13 execution completion*
+*Last updated: 2026-03-25 after v1.2 milestone archival*

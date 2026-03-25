@@ -26,7 +26,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ### Active
 
-- [ ] No pending v1.2 feature requirements. Ready for milestone closure and archive.
+- [ ] Define v1.3 requirements based on v1.2 outcomes and operator priorities.
 
 ### Out of Scope
 
@@ -44,22 +44,23 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
 - Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
+- Milestone v1.2 (Win Rate Integrity and Runtime Quality) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- Milestone v1.2 is active with phases 10, 11, 12, and 13 completed.
+- No active milestone is currently open.
 
-## Current Milestone: v1.2 Win Rate Integrity and Runtime Quality
+## Last Shipped Milestone: v1.2 Win Rate Integrity and Runtime Quality
 
-**Goal:** Increase real win rate reliability by fixing label integrity, restoring effective gates, reducing confidence bias, and using historical market quality in live selection.
+**Goal achieved:** Increase win-rate reliability with deterministic settlement, restored gate integrity, no-vig divergence checks, and prior-aware runtime selection.
 
-**Target features:**
-- Runtime gates receive real inputs (lineup/odd variation/daily limits) and block low-quality entries.
-- Settlement resolves matches deterministically with fixture/date-safe matching.
-- Confidence scoring uses less biased evidence and explicit quality priors.
-- Market-vs-model comparison uses no-vig market probabilities.
-- Runtime market selection expands with quality guardrails and measurable win-rate impact.
-- Provider health metrics and dependency baseline are reproducible in local validation.
+**Delivered features:**
+- Runtime gate payloads now consume real lineup/odd/daily-count context with explicit reject telemetry.
+- Provider health counters now classify timeout/http/connection/empty payload status paths consistently.
+- Settlement resolution is fixture-id-first with date-safe fallback for cross-day pending bets.
+- Confidence context includes market+league quality priors and deterministic prior-aware scheduler ranking.
+- Gate 1 compares model divergence against no-vig market probability when both market sides exist.
+- Reproducible test baseline established with pinned dependencies and canonical command `python scripts/run_tests.py`.
 
-## Last Shipped Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
+## Previous Shipped Milestone: v1.1 Calibracao Estatistica e Backtesting Operacional
 
 **Goal achieved:** Improve model calibration confidence with reproducible historical evaluation and safe persistence of calibration-oriented history.
 
@@ -70,9 +71,9 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ## Next Milestone Goals
 
-- Execute v1.2 requirements through roadmap phases 10+ with measurable win-rate safeguards.
-- Keep reliability-first approach while extending model quality checks.
-- Preserve current runtime safety guarantees while introducing incremental improvements only.
+- Define v1.3 scope with measurable hypothesis-driven improvements.
+- Preserve v1.2 safety/quality floor while iterating on calibration and market quality controls.
+- Keep deterministic verification baseline and one-command regression checks as mandatory guardrails.
 
 ## Constraints
 
@@ -89,7 +90,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 | Prioritize reliability and validation before adding new product surfaces | Better signal trustworthiness gives highest immediate value | ✓ Confirmed in v1.0 |
 | Use phased hardening approach (data reliability -> model gates -> ops quality) | Reduces risk and keeps changes reviewable | ✓ Confirmed in v1.0 |
 | Prioritize calibration quality before market expansion in v1.1 | Better confidence calibration raises signal trust without adding product surface area | ✓ Confirmed in v1.1 |
-| Prioritize label integrity and effective gating in v1.2 | Win-rate improvement depends on clean feedback loop and strict pre-trade quality filters | Planned in v1.2 |
+| Prioritize label integrity and effective gating in v1.2 | Win-rate improvement depends on clean feedback loop and strict pre-trade quality filters | ✓ Confirmed in v1.2 |
 
 ## Evolution
 
@@ -109,4 +110,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after phase 13 completion*
+*Last updated: 2026-03-25 after v1.2 milestone completion*

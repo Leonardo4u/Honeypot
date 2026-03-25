@@ -1,5 +1,28 @@
 # Milestones
 
+## v1.2 Win Rate Integrity and Runtime Quality (Shipped: 2026-03-25)
+
+**Phases completed:** 4 phases, 9 plans
+
+**Git range:** `3d2f8ff..a5960ad`
+
+**Change size:** 39 files changed, 3303 insertions(+), 268 deletions(-)
+
+**Key accomplishments:**
+
+- Restored runtime gate integrity with real lineup/odd-variation/daily-count inputs and explicit reject reason telemetry.
+- Implemented status-aware provider health categorization for timeout/http/connection/empty payload paths in cycle metrics.
+- Made settlement deterministic across pending days using fixture-id-first resolution with date-safe fallback matching.
+- Added confidence de-bias and league+market quality-prior context to runtime ranking with deterministic ordering safeguards.
+- Replaced raw 1/odd divergence checks with no-vig market probability and propagated opponent odd payloads in scheduler gates.
+- Established reproducible local validation with pinned dependencies and canonical one-command test execution.
+
+**Known technical debt (non-blocking):**
+
+- Milestone audit file for v1.2 was not generated during preflight and should be added in a governance pass (`/gsd-audit-milestone`).
+
+---
+
 ## v1.1 Calibracao Estatistica e Backtesting Operacional (Shipped: 2026-03-24)
 
 **Phases completed:** 3 phases, 5 plans, 11 tasks
