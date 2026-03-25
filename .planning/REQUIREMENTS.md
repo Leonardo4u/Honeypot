@@ -8,9 +8,9 @@
 
 ### Calibration Automation and Model Consistency
 
-- [ ] **CAL-01**: Dixon-Coles rho per league must be applied automatically in runtime after calibration updates (no manual parameter sync).
-- [ ] **CAL-02**: Poisson must support league-specific home-advantage factor in lambda_home calculation.
-- [ ] **CAL-03**: Over/under probabilities must include Dixon-Coles low-score correction to stay consistent with 1x2 behavior.
+- [x] **CAL-01**: Dixon-Coles rho per league must be applied automatically in runtime after calibration updates (no manual parameter sync).
+- [x] **CAL-02**: Poisson must support league-specific home-advantage factor in lambda_home calculation.
+- [x] **CAL-03**: Over/under probabilities must include Dixon-Coles low-score correction to stay consistent with 1x2 behavior.
 
 ### Freshness and Confidence Quality
 
@@ -55,9 +55,9 @@
 
 | Requirement | Planned Phase | Status |
 |-------------|---------------|--------|
-| CAL-01 | Phase 14 | Pending |
-| CAL-02 | Phase 14 | Pending |
-| CAL-03 | Phase 14 | Pending |
+| CAL-01 | Phase 14 | Completed |
+| CAL-02 | Phase 14 | Completed |
+| CAL-03 | Phase 14 | Completed |
 | XGF-01 | Phase 15 | Pending |
 | CONF-01 | Phase 15 | Pending |
 | MODEL-01 | Phase 15 | Pending |
@@ -78,4 +78,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after v1.3 initialization*
+*Last updated: 2026-03-24 after phase 14 execution completion*
