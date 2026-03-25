@@ -28,7 +28,7 @@ v1.2 Win Rate Integrity and Runtime Quality
 
 - [x] **Phase 10: Runtime Gate Integrity and Provider Health** - Restore effective gate inputs and complete health telemetry coverage.
 - [x] **Phase 11: Settlement Label Integrity** - Make pending-signal closure deterministic and date-safe.
-- [ ] **Phase 12: Confidence De-bias and Quality Prior** - Remove confidence selection bias and apply market/league quality prior at runtime.
+- [x] **Phase 12: Confidence De-bias and Quality Prior** - Remove confidence selection bias and apply market/league quality prior at runtime.
 - [ ] **Phase 13: No-vig Comparison, Market Coverage, and Test Baseline** - Upgrade market probability comparison, expand coverage, and lock reproducible tests.
 
 ## Phase Details
@@ -57,8 +57,8 @@ v1.2 Win Rate Integrity and Runtime Quality
 **Requirements**: [WR-05, WR-06]
 **Plans:** 2 plans
 Plans:
-- [ ] 12-01-PLAN.md - Debiased confidence foundation and market+league quality-prior contract.
-- [ ] 12-02-PLAN.md - Runtime ranking integration with quality-prior observability and dry-run compatibility.
+- [x] 12-01-PLAN.md - Debiased confidence foundation and market+league quality-prior contract.
+- [x] 12-02-PLAN.md - Runtime ranking integration with quality-prior observability and dry-run compatibility.
 **Success Criteria**:
 	1. Confidence avoids pure self-selected signal feedback loops.
 	2. Runtime candidate ranking includes market+league quality prior with sample guardrails.
@@ -79,12 +79,12 @@ Plans:
 |-------|----------------|--------|-----------|
 | 10. Runtime Gate Integrity and Provider Health | 2/2 | Completed | 2026-03-24 |
 | 11. Settlement Label Integrity | 2/2 | Completed | 2026-03-24 |
-| 12. Confidence De-bias and Quality Prior | 0/2 | Planned | - |
+| 12. Confidence De-bias and Quality Prior | 2/2 | Completed | 2026-03-25 |
 | 13. No-vig Comparison, Market Coverage, and Test Baseline | 0/0 | Planned | - |
 
 ## Next Step
 
-Run `/gsd-plan-phase 12` to create confidence de-bias and quality-prior plans.
+Run `/gsd-plan-phase 13` to create no-vig comparison, market-coverage, and test-baseline plans.
 
 ---
-*Last updated: 2026-03-24 after phase 11 execution completion*
+*Last updated: 2026-03-25 after phase 12 execution completion*

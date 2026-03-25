@@ -31,7 +31,7 @@ from coletar_odds import (
     atualizar_contadores_provider_health,
 )
 from atualizar_stats import carregar_medias, atualizar_todas_ligas
-from forma_recente import calcular_ajuste_forma, calcular_confianca_dados
+from forma_recente import calcular_ajuste_forma, calcular_confianca_contexto
 from xg_understat import calcular_media_gols_com_xg
 from sos_ajuste import calcular_xg_com_sos
 from clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_fechar, buscar_odd_fechamento_pinnacle, atualizar_clv
@@ -215,6 +215,17 @@ def atualizar_excel(payload_dict):
         print(f"Erro update Excel: {e}")
 
 
+def calcular_ajuste_prior_ranking(prior_ranking):
+    try:
+        prior_num = float(prior_ranking)
+    except (TypeError, ValueError):
+        prior_num = 0.0
+
+    # Keep prior influence bounded so it informs ordering without dominating edge score.
+    ajuste = prior_num * 0.75
+    return max(-6.0, min(6.0, ajuste))
+
+
 def executar_preflight():
     log_event("startup", "preflight", "scheduler", "start")
     falhas = []
@@ -366,6 +377,11 @@ async def processar_jogos(dry_run=False):
         "invalid_input": 0,
         "fallback_used": 0,
     }
+    prior_context_counts = {
+        "ok": 0,
+        "baixa_amostra": 0,
+        "sem_sinal": 0,
+    }
 
     for liga_key in LIGAS:
         fetch_result = buscar_jogos_com_odds_com_status(liga_key)
@@ -383,18 +399,26 @@ async def processar_jogos(dry_run=False):
                 away = jogo["away_team"]
                 media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
                 ajuste_casa, ajuste_fora = calcular_ajuste_forma(home, away)
-                confianca = calcular_confianca_dados(home, away)
-
-                if "xG" in fonte_dados:
-                    confianca = min(100, confianca + 10)
-                if "SOS" in fonte_dados:
-                    confianca = min(100, confianca + 5)
 
                 primeiro_mercado = True
                 for mercado, odd_key in [
                     ("1x2_casa", "casa"),
                     ("over_2.5", "over_2.5"),
                 ]:
+                    contexto_confianca = calcular_confianca_contexto(home, away, jogo["liga"], mercado)
+                    confianca = int(contexto_confianca.get("confianca", 50))
+
+                    if "xG" in fonte_dados:
+                        confianca = min(100, confianca + 10)
+                    if "SOS" in fonte_dados:
+                        confianca = min(100, confianca + 5)
+
+                    qualidade_prior = contexto_confianca.get("qualidade_prior", "sem_sinal")
+                    if qualidade_prior not in prior_context_counts:
+                        qualidade_prior = "sem_sinal"
+                    prior_context_counts[qualidade_prior] += 1
+                    ajuste_prior = calcular_ajuste_prior_ranking(contexto_confianca.get("prior_ranking", 0.0))
+
                     odd = jogo["odds"].get(odd_key, 0)
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
@@ -472,12 +496,17 @@ async def processar_jogos(dry_run=False):
                                 "origem_escalacao": origem_escalacao,
                                 "sinais_hoje_gate": sinais_hoje_gate,
                                 "variacao_odd": variacao_odd_gate,
+                                "qualidade_prior": qualidade_prior,
+                                "amostra_prior": contexto_confianca.get("amostra_prior", 0),
+                                "prior_ranking": contexto_confianca.get("prior_ranking", 0.0),
+                                "ajuste_prior": round(ajuste_prior, 4),
                             },
                         )
                         continue
 
                     penalizacao = filtro.get("penalizacao_score", 0)
                     edge_score_final = min(100, analise["edge_score"] + steam_bonus + penalizacao)
+                    score_prior = edge_score_final + ajuste_prior
                     analise["edge_score"] = edge_score_final
                     analise["steam_bonus"] = steam_bonus
                     analise["fonte_dados"] = fonte_dados
@@ -488,8 +517,13 @@ async def processar_jogos(dry_run=False):
                             "jogo": jogo,
                             "mercado": mercado,
                             "score": edge_score_final,
+                            "score_prior": round(score_prior, 4),
                             "fonte": fonte_dados,
                             "confianca": confianca,
+                            "qualidade_prior": qualidade_prior,
+                            "amostra_prior": contexto_confianca.get("amostra_prior", 0),
+                            "prior_ranking": contexto_confianca.get("prior_ranking", 0.0),
+                            "ajuste_prior": round(ajuste_prior, 4),
                             "liga_key": liga_key,
                             "dados_odds": dados_odds
                         })
@@ -498,7 +532,14 @@ async def processar_jogos(dry_run=False):
                 provider_health["connection_error"] += 1
                 print(f"Erro ao processar {jogo['jogo']}: {e}")
 
-    candidatos.sort(key=lambda x: x["score"], reverse=True)
+    candidatos.sort(
+        key=lambda x: (
+            x.get("score_prior", x.get("score", 0)),
+            x.get("score", 0),
+            x.get("confianca", 0),
+        ),
+        reverse=True,
+    )
     vagas_restantes = MAX_SINAIS_DIA - sinais_hoje
     selecionados = candidatos[:vagas_restantes]
 
@@ -661,6 +702,7 @@ async def processar_jogos(dry_run=False):
             "enviados": sinais_enviados,
             "max_diario": MAX_SINAIS_DIA,
             "provider_health": provider_health,
+            "prior_context_counts": prior_context_counts,
         },
     )
 

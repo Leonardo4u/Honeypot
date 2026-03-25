@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.2
 milestone_name: milestone
-status: v1.2 phase-11 completed
-last_updated: "2026-03-24T23:59:30.000Z"
+status: v1.2 phase-12 completed
+last_updated: "2026-03-25T22:00:00.000Z"
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # STATE
@@ -16,16 +16,16 @@ progress:
 ## Status
 
 - Milestone: v1.2 - Win Rate Integrity and Runtime Quality
-- Current phase: phase 11 completed (plans 01 and 02 done)
-- Current command: /gsd-plan-phase 12
-- Overall progress: milestone initialized, phases 10 and 11 completed
+- Current phase: phase 12 completed (plans 01 and 02 done)
+- Current command: /gsd-plan-phase 13
+- Overall progress: milestone initialized, phases 10-12 completed
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-24)
+See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Plan and execute highest-impact win-rate integrity fixes
+**Current focus:** Plan and execute phase 13 for no-vig comparison, market coverage, and reproducible baseline tests
 
 ## Artifacts
 
@@ -62,10 +62,13 @@ See: .planning/PROJECT.md (updated 2026-03-24)
 - 2026-03-24: Phase 11 planning artifacts created (11-RESEARCH, 11-01-PLAN, 11-02-PLAN) for settlement label integrity.
 - 2026-03-24: Phase 11 plan 01 executed and summary created (deterministic fixture resolution and fixture identity persistence).
 - 2026-03-24: Phase 11 plan 02 executed and summary created (cross-day scheduler settlement integration with fixture-id reuse).
+- 2026-03-24: Phase 12 planning artifacts created (12-RESEARCH, 12-01-PLAN, 12-02-PLAN) for confidence de-bias and quality-prior integration.
+- 2026-03-25: Phase 12 plan 01 executed and summary created (debiased confidence foundation and quality-prior contract).
+- 2026-03-25: Phase 12 plan 02 executed and summary created (prior-aware runtime ranking and dry-run telemetry compatibility).
 
 ## Next Step
 
-Run `/gsd-plan-phase 12` to define confidence de-bias and quality-prior execution plans.
+Run `/gsd-plan-phase 13` to define no-vig comparison, market coverage, and reproducible test-baseline execution plans.
 
 ---
-*Last updated: 2026-03-24 after phase 11 execution completion*
+*Last updated: 2026-03-25 after phase 12 execution completion*
