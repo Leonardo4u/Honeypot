@@ -66,6 +66,40 @@ class TestFiltrosGate(unittest.TestCase):
         self.assertEqual(resultado["reason_code"], REJECT_CODE_PASSED)
         self.assertIn("detalhes", resultado)
 
+    def test_gate1_usa_no_vig_quando_odd_oponente_disponivel(self):
+        resultado = aplicar_triple_gate(
+            {
+                "ev": 0.08,
+                "odd": 1.80,
+                "odd_oponente_mercado": 2.00,
+                "mercado": "over_2.5",
+                "prob_modelo": 0.73,
+                "escalacao_confirmada": True,
+                "variacao_odd": 0.0,
+            },
+            sinais_hoje=0,
+        )
+
+        self.assertFalse(resultado["aprovado"])
+        self.assertEqual(resultado["bloqueado_em"], "Gate 1")
+        self.assertEqual(resultado["reason_code"], REJECT_REASON_CODES["gate1_ev"])
+
+    def test_gate1_fallback_legado_sem_odd_oponente(self):
+        resultado = aplicar_triple_gate(
+            {
+                "ev": 0.08,
+                "odd": 1.80,
+                "mercado": "over_2.5",
+                "prob_modelo": 0.73,
+                "escalacao_confirmada": True,
+                "variacao_odd": 0.0,
+            },
+            sinais_hoje=0,
+        )
+
+        self.assertTrue(resultado["aprovado"])
+        self.assertEqual(resultado["reason_code"], REJECT_CODE_PASSED)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -29,7 +29,7 @@ v1.2 Win Rate Integrity and Runtime Quality
 - [x] **Phase 10: Runtime Gate Integrity and Provider Health** - Restore effective gate inputs and complete health telemetry coverage.
 - [x] **Phase 11: Settlement Label Integrity** - Make pending-signal closure deterministic and date-safe.
 - [x] **Phase 12: Confidence De-bias and Quality Prior** - Remove confidence selection bias and apply market/league quality prior at runtime.
-- [ ] **Phase 13: No-vig Comparison, Market Coverage, and Test Baseline** - Upgrade market probability comparison, expand coverage, and lock reproducible tests.
+- [x] **Phase 13: No-vig Comparison, Market Coverage, and Test Baseline** - Upgrade market probability comparison, expand coverage, and lock reproducible tests.
 
 ## Phase Details
 
@@ -70,9 +70,9 @@ Plans:
 **Requirements**: [WR-07, WR-08, WR-10]
 **Plans:** 3 plans
 Plans:
-- [ ] 13-01-PLAN.md - No-vig model-vs-market divergence in Gate 1 with regression tests.
-- [ ] 13-02-PLAN.md - Runtime market coverage expansion with guardrails and deterministic ranking checks.
-- [ ] 13-03-PLAN.md - Pinned dependencies and one-command reproducible test baseline.
+- [x] 13-01-PLAN.md - No-vig model-vs-market divergence in Gate 1 with regression tests.
+- [x] 13-02-PLAN.md - Runtime market coverage expansion with guardrails and deterministic ranking checks.
+- [x] 13-03-PLAN.md - Pinned dependencies and one-command reproducible test baseline.
 **Success Criteria**:
 	1. Divergence checks use no-vig market probabilities.
 	2. Runtime supports additional market paths under hit-rate guardrails.
@@ -85,11 +85,11 @@ Plans:
 | 10. Runtime Gate Integrity and Provider Health | 2/2 | Completed | 2026-03-24 |
 | 11. Settlement Label Integrity | 2/2 | Completed | 2026-03-24 |
 | 12. Confidence De-bias and Quality Prior | 2/2 | Completed | 2026-03-25 |
-| 13. No-vig Comparison, Market Coverage, and Test Baseline | 0/3 | Planned | - |
+| 13. No-vig Comparison, Market Coverage, and Test Baseline | 3/3 | Completed | 2026-03-25 |
 
 ## Next Step
 
-Run `/gsd-plan-phase 13` to create no-vig comparison, market-coverage, and test-baseline plans.
+Run `/gsd-complete-milestone` to archive v1.2 after full phase completion.
 
 ---
-*Last updated: 2026-03-25 after phase 12 execution completion*
+*Last updated: 2026-03-25 after phase 13 execution completion*

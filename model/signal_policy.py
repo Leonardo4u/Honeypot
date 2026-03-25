@@ -7,7 +7,14 @@ EV_MIN_DEFAULT = 0.06
 
 EV_MINIMO_POR_MERCADO = {
     "1x2_casa": 0.06,
+    "1x2_fora": 0.06,
     "over_2.5": 0.06,
+    "under_2.5": 0.06,
+    "over_1.5": 0.08,
+    "btts_sim": 0.07,
+    "dupla_chance_1x": 0.05,
+    "dupla_chance_x2": 0.05,
+    "dupla_chance_12": 0.05,
 }
 
 REJECT_CODE_EV_LOW = "ev_low"

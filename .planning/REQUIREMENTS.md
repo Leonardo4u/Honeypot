@@ -23,13 +23,13 @@
 
 ### Market Probability and Coverage
 
-- [ ] **WR-07**: Model-vs-market divergence must use no-vig market probability rather than raw 1/odd.
-- [ ] **WR-08**: Runtime market coverage must expand beyond current pair with guardrails focused on hit-rate quality.
+- [x] **WR-07**: Model-vs-market divergence must use no-vig market probability rather than raw 1/odd.
+- [x] **WR-08**: Runtime market coverage must expand beyond current pair with guardrails focused on hit-rate quality.
 
 ### Operational Reliability for Iteration
 
 - [x] **WR-09**: Provider-health counters must categorize timeout/http/connection/empty payload consistently in cycle telemetry.
-- [ ] **WR-10**: Test baseline must be reproducible with pinned dependencies and a single local test command.
+- [x] **WR-10**: Test baseline must be reproducible with pinned dependencies and a single local test command.
 
 ## v2 Requirements
 
@@ -57,10 +57,10 @@
 | WR-04 | Phase 11 | Completed |
 | WR-05 | Phase 12 | Completed |
 | WR-06 | Phase 12 | Completed |
-| WR-07 | Phase 13 | Planned |
-| WR-08 | Phase 13 | Planned |
+| WR-07 | Phase 13 | Completed |
+| WR-08 | Phase 13 | Completed |
 | WR-09 | Phase 10 | Completed |
-| WR-10 | Phase 13 | Planned |
+| WR-10 | Phase 13 | Completed |
 
 **Coverage:**
 - v1 requirements: 10 total
@@ -69,4 +69,4 @@
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-25 after phase 12 execution completion*
+*Last updated: 2026-03-25 after phase 13 execution completion*
