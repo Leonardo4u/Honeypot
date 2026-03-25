@@ -1,6 +1,7 @@
 import unittest
-from datetime import datetime, date
+from datetime import UTC, datetime, date
 import os
+import tempfile
 import sys
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -8,7 +9,7 @@ MODEL_DIR = os.path.join(ROOT, "model")
 if MODEL_DIR not in sys.path:
     sys.path.insert(0, MODEL_DIR)
 
-from module_01_sharp_money import SharpMoneyDetector, MarketLine, OddsSnapshot
+from module_01_sharp_money import CLVTracker, SharpMoneyDetector, MarketLine, OddsSnapshot
 from module_02_elo_xg import XGWeightedELO, MatchResult
 from module_03_home_away import HomeAwayDecomposer, Stadium, TravelInfo
 from module_04_hierarchical_bayes import HierarchicalBayesianModel
@@ -24,12 +25,31 @@ class TestAdvancedPipelineModules(unittest.TestCase):
             market="home",
             selection="home",
             snapshots=[
-                OddsSnapshot(timestamp=datetime.utcnow(), odd=2.10),
-                OddsSnapshot(timestamp=datetime.utcnow(), odd=2.00),
+                OddsSnapshot(timestamp=datetime.now(UTC), odd=2.10),
+                OddsSnapshot(timestamp=datetime.now(UTC), odd=2.00),
             ],
         )
         score = detector.sharp_score(line, our_odd=2.05)
         self.assertIn("sharp_score", score)
+
+    def test_sharp_money_overround_dinamico(self):
+        detector = SharpMoneyDetector()
+        open_odds = {"home": 2.10, "draw": 3.30, "away": 3.60}
+        close_odds = {"home": 2.00, "draw": 3.20, "away": 4.00}
+        over_open = detector.estimate_overround(open_odds)
+        over_close = detector.estimate_overround(close_odds)
+        clv = detector.closing_line_value(2.10, 2.00, over_open, over_close)
+        self.assertGreaterEqual(over_open, 1.0)
+        self.assertGreaterEqual(over_close, 1.0)
+        self.assertIsInstance(clv, float)
+
+    def test_clv_tracker_summary_vazio_e_record(self):
+        tracker = CLVTracker()
+        self.assertEqual(tracker.summary(), {})
+        tracker.record("b1", bet_odd=2.10, close_odd=2.00, stake=2.0)
+        summary = tracker.summary()
+        self.assertEqual(summary.get("n_bets"), 1)
+        self.assertIn("mean_clv", summary)
 
     def test_elo_update_and_probs(self):
         elo = XGWeightedELO()
@@ -88,6 +108,125 @@ class TestAdvancedPipelineModules(unittest.TestCase):
             market_odds={"home": 2.0, "away": 3.4, "over_2.5": 1.9, "under_2.5": 1.95},
         )
         self.assertIn("model_probs", result)
+
+    def test_pipeline_integrador_graceful_degradation(self):
+        class BrokenMC:
+            def run(self, lambda_home, lambda_away):
+                raise RuntimeError("sim error")
+
+        pipe = BettingPipeline(mc=BrokenMC())
+        result = pipe.analyze_match(
+            match_id="m4",
+            home_team="A",
+            away_team="B",
+            division="Premier League",
+            country="England",
+            market_odds={"home": 2.0, "away": 3.4},
+        )
+        self.assertIn("model_probs", result)
+        self.assertIn("top_scores", result)
+
+    def test_pipeline_integrador_diagnostic_hook_called(self):
+        called = []
+
+        def hook(payload):
+            called.append(payload)
+
+        pipe = BettingPipeline(mc_simulations=100, diagnostic_hook=hook)
+        result = pipe.analyze_match(
+            match_id="m5",
+            home_team="A",
+            away_team="B",
+            division="Premier League",
+            country="England",
+            market_odds={"home": 2.1, "away": 3.2},
+        )
+        self.assertIn("model_probs", result)
+        self.assertGreaterEqual(len(called), 1)
+        self.assertEqual(called[0]["match_id"], "m5")
+
+    def test_pipeline_integrador_diagnostic_hook_failure_no_propagate(self):
+        def broken_hook(_payload):
+            raise RuntimeError("broken hook")
+
+        pipe = BettingPipeline(mc_simulations=100, diagnostic_hook=broken_hook)
+        result = pipe.analyze_match(
+            match_id="m6",
+            home_team="A",
+            away_team="B",
+            division="Premier League",
+            country="England",
+            market_odds={"home": 2.1, "away": 3.2},
+        )
+        self.assertIn("model_probs", result)
+
+    def test_pipeline_integrador_inclui_kelly_stake(self):
+        pipe = BettingPipeline(mc_simulations=100)
+        result = pipe.analyze_match(
+            match_id="m7",
+            home_team="A",
+            away_team="B",
+            division="Premier League",
+            country="England",
+            market_odds={"home": 10.0, "away": 10.0, "under_2.5": 10.0},
+        )
+        if result["opportunities"]:
+            op = result["opportunities"][0]
+            self.assertTrue(hasattr(op, "stake_fraction"))
+            self.assertTrue(hasattr(op, "stake_units"))
+
+    def test_pipeline_integrador_alert_hook_on_lambda_fallback(self):
+        class BrokenHBM:
+            def predict_lambdas(self, *_args, **_kwargs):
+                raise RuntimeError("hbm fail")
+
+        captured = []
+
+        def alert_hook(severidade, codigo, detalhes=None):
+            captured.append((severidade, codigo, detalhes))
+
+        pipe = BettingPipeline(hbm=BrokenHBM(), alert_hook=alert_hook)
+        result = pipe.analyze_match(
+            match_id="m8",
+            home_team="A",
+            away_team="B",
+            division="Premier League",
+            country="England",
+            market_odds={"home": 2.0, "away": 3.4},
+        )
+        self.assertIn("model_probs", result)
+        self.assertEqual(len(captured), 1)
+        self.assertEqual(captured[0][0], "high")
+        self.assertEqual(captured[0][1], "advanced_pipeline_lambda_fallback")
+
+    def test_model_state_persistence_roundtrip(self):
+        elo = XGWeightedELO()
+        elo.update(
+            MatchResult(
+                match_id="m8",
+                date=date.today(),
+                home_team="A",
+                away_team="B",
+                home_goals=1,
+                away_goals=0,
+                home_xg=1.2,
+                away_xg=0.7,
+                competition="premier_league",
+            )
+        )
+        hbm = HierarchicalBayesianModel()
+        hbm.update("A", "B", 1, 0, 1.2, 0.7, "Premier League", "England")
+
+        with tempfile.TemporaryDirectory(prefix="model-state-") as tmp:
+            elo_path = os.path.join(tmp, "elo.json")
+            hbm_path = os.path.join(tmp, "hbm.json")
+            elo.save(elo_path)
+            hbm.save(hbm_path)
+            elo_loaded = XGWeightedELO.load(elo_path)
+            hbm_loaded = HierarchicalBayesianModel.load(hbm_path)
+
+        self.assertIn("A", elo_loaded.ratings)
+        self.assertIn("A", hbm_loaded.teams)
 
 
 if __name__ == "__main__":

@@ -3,6 +3,7 @@ import shutil
 import sqlite3
 import tempfile
 import unittest
+from datetime import UTC, datetime, timedelta
 
 from data import database
 
@@ -126,6 +127,44 @@ class TestDatabaseIntegration(unittest.TestCase):
 
         self.assertEqual(row[0], "123456")
         self.assertEqual(row[1], "2026-03-20")
+
+    def test_validar_coluna_sinais_allowlist(self):
+        self.assertTrue(database._validar_coluna_sinais("fixture_id_api", "TEXT"))
+        self.assertFalse(database._validar_coluna_sinais("coluna_invalida", "TEXT"))
+
+    def test_adicionar_coluna_segura_bloqueia_fora_allowlist(self):
+        with database.get_conn() as conn:
+            c = conn.cursor()
+            with self.assertRaises(ValueError):
+                database._adicionar_coluna_segura(c, "sinais", "coluna_invalida", "TEXT")
+
+    def test_calcular_exposicao_pendente_timezone_utc(self):
+        dentro_janela = (datetime.now(UTC) + timedelta(minutes=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        fora_janela = (datetime.now(UTC) + timedelta(hours=4)).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+        database.inserir_sinal(
+            liga="Premier League",
+            jogo="A vs B",
+            mercado="1x2_casa",
+            odd=2.0,
+            ev=0.05,
+            score=70,
+            stake=2.5,
+            horario=dentro_janela,
+        )
+        database.inserir_sinal(
+            liga="Premier League",
+            jogo="C vs D",
+            mercado="1x2_fora",
+            odd=2.2,
+            ev=0.04,
+            score=68,
+            stake=4.0,
+            horario=fora_janela,
+        )
+
+        exposicao = database.calcular_exposicao_pendente_unidades(janela_horas=1)
+        self.assertAlmostEqual(exposicao, 2.5, places=4)
 
 
 if __name__ == "__main__":

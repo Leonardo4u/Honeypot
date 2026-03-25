@@ -48,12 +48,21 @@ class SharpMoneyDetector:
         self,
         bet_odd: float,
         close_odd: float,
-        overround_open: float = 1.05,
-        overround_close: float = 1.04,
+        overround_open: Optional[float] = None,
+        overround_close: Optional[float] = None,
     ) -> float:
+        overround_open = float(overround_open) if overround_open and overround_open > 0 else 1.0
+        overround_close = float(overround_close) if overround_close and overround_close > 0 else 1.0
         p_bet = (1.0 / max(bet_odd, 1e-9)) / max(overround_open, 1e-9)
         p_close = (1.0 / max(close_odd, 1e-9)) / max(overround_close, 1e-9)
         return p_close - p_bet
+
+    @staticmethod
+    def estimate_overround(odds: dict[str, float]) -> float:
+        valid = [float(o) for o in odds.values() if float(o) > 1.0]
+        if not valid:
+            return 1.0
+        return max(1.0, sum(1.0 / o for o in valid))
 
     def line_movement_pct(self, line: MarketLine) -> float:
         if not line.open_odd or not line.close_odd:

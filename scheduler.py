@@ -100,7 +100,15 @@ ADVANCED_PIPELINE = None
 ADVANCED_SHARP = SharpMoneyDetector()
 if ADVANCED_PIPELINE_ENABLED:
     try:
-        ADVANCED_PIPELINE = BettingPipeline(mc_simulations=ADVANCED_PIPELINE_MC_SIMS)
+        ADVANCED_PIPELINE = BettingPipeline(
+            mc_simulations=ADVANCED_PIPELINE_MC_SIMS,
+            alert_hook=lambda severidade, codigo, detalhes=None: registrar_alerta_operacional(
+                severidade,
+                codigo,
+                playbook_id="advanced_pipeline_fallback",
+                detalhes=detalhes,
+            ),
+        )
     except Exception:
         ADVANCED_PIPELINE = None
 

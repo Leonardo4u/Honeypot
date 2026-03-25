@@ -1,14 +1,57 @@
 import sqlite3
 import os
 import json
+import logging
+from contextlib import contextmanager
 from datetime import datetime, UTC
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")
+logger = logging.getLogger(__name__)
+_WAL_CONFIGURED_PATHS = set()
+
+COLUNAS_SINAIS_ALLOWLIST = {
+    "message_id_vip": "INTEGER",
+    "message_id_free": "INTEGER",
+    "horario": "TEXT",
+    "fonte": "TEXT DEFAULT 'bot'",
+    "fixture_id_api": "TEXT",
+    "fixture_data_api": "TEXT",
+    "app_version": "TEXT DEFAULT 'dev'",
+}
+
+
+def _validar_coluna_sinais(coluna, tipo):
+    tipo_esperado = COLUNAS_SINAIS_ALLOWLIST.get(coluna)
+    return tipo_esperado is not None and tipo_esperado == tipo
+
+
+def _adicionar_coluna_segura(cursor, tabela, coluna, tipo):
+    if tabela != "sinais" or not _validar_coluna_sinais(coluna, tipo):
+        raise ValueError(f"DDL nao permitido para coluna '{coluna}'")
+    cursor.execute(f"ALTER TABLE {tabela} ADD COLUMN {coluna} {tipo}")
+
+
+@contextmanager
+def get_conn(db_path=None):
+    path = db_path or DB_PATH
+    conn = sqlite3.connect(path)
+    conn.row_factory = sqlite3.Row
+    try:
+        if path not in _WAL_CONFIGURED_PATHS:
+            conn.execute("PRAGMA journal_mode=WAL")
+            _WAL_CONFIGURED_PATHS.add(path)
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
 
 def criar_banco():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute('''
         CREATE TABLE IF NOT EXISTS sinais (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             data TEXT NOT NULL,
@@ -31,7 +74,7 @@ def criar_banco():
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    c.execute('''
+        c.execute('''
         CREATE TABLE IF NOT EXISTS banca (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             data TEXT NOT NULL,
@@ -44,7 +87,7 @@ def criar_banco():
             atualizado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
-    c.execute('''
+        c.execute('''
         CREATE TABLE IF NOT EXISTS job_execucoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             job_nome TEXT NOT NULL,
@@ -57,7 +100,7 @@ def criar_banco():
             UNIQUE(job_nome, janela_chave)
         )
     ''')
-    c.execute('''
+        c.execute('''
         CREATE TABLE IF NOT EXISTS operation_audit (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ocorrido_em TEXT NOT NULL,
@@ -67,7 +110,7 @@ def criar_banco():
             detalhes_json TEXT
         )
     ''')
-    c.execute('''
+        c.execute('''
         CREATE TABLE IF NOT EXISTS operation_alerts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             ocorrido_em TEXT NOT NULL,
@@ -77,70 +120,53 @@ def criar_banco():
             detalhes_json TEXT
         )
     ''')
-    conn.commit()
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
     garantir_tabelas_operacionais()
-    conn.close()
     print("Banco de dados criado com sucesso.")
 
 
 def garantir_colunas_sinais():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("PRAGMA table_info(sinais)")
-    colunas_existentes = {row[1] for row in c.fetchall()}
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("PRAGMA table_info(sinais)")
+        colunas_existentes = {row[1] for row in c.fetchall()}
 
-    colunas_requeridas = {
-        "message_id_vip": "INTEGER",
-        "message_id_free": "INTEGER",
-        "horario": "TEXT",
-        "fonte": "TEXT DEFAULT 'bot'",
-        "fixture_id_api": "TEXT",
-        "fixture_data_api": "TEXT",
-        "app_version": "TEXT DEFAULT 'dev'",
-    }
+        colunas_requeridas = COLUNAS_SINAIS_ALLOWLIST
 
-    for coluna, tipo in colunas_requeridas.items():
-        if coluna not in colunas_existentes:
-            c.execute(f"ALTER TABLE sinais ADD COLUMN {coluna} {tipo}")
-
-    conn.commit()
-    conn.close()
+        for coluna, tipo in colunas_requeridas.items():
+            if coluna not in colunas_existentes:
+                _adicionar_coluna_segura(c, "sinais", coluna, tipo)
 
 
 def garantir_schema_historico_sinais(db_path=None):
     path = db_path or DB_PATH
-    conn = sqlite3.connect(path)
-    c = conn.cursor()
+    with get_conn(path) as conn:
+        c = conn.cursor()
 
-    c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sinais'")
-    if not c.fetchone():
-        conn.close()
-        return
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sinais'")
+        if not c.fetchone():
+            return
 
-    c.execute("PRAGMA table_info(sinais)")
-    colunas = {row[1] for row in c.fetchall()}
-    if "fonte" not in colunas:
-        c.execute("ALTER TABLE sinais ADD COLUMN fonte TEXT DEFAULT 'bot'")
+        c.execute("PRAGMA table_info(sinais)")
+        colunas = {row[1] for row in c.fetchall()}
+        if "fonte" not in colunas:
+            c.execute("ALTER TABLE sinais ADD COLUMN fonte TEXT DEFAULT 'bot'")
 
-    # Idempotencia: garante unicidade apenas para linhas historicas.
-    c.execute(
-        '''
-        CREATE UNIQUE INDEX IF NOT EXISTS idx_sinais_historico_unico
-        ON sinais(data, liga, jogo, mercado, odd)
-        WHERE fonte = 'historico'
-        '''
-    )
-
-    conn.commit()
-    conn.close()
+        # Idempotencia: garante unicidade apenas para linhas historicas.
+        c.execute(
+            '''
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_sinais_historico_unico
+            ON sinais(data, liga, jogo, mercado, odd)
+            WHERE fonte = 'historico'
+            '''
+        )
 
 
 def garantir_tabela_execucoes():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute('''
         CREATE TABLE IF NOT EXISTS job_execucoes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             job_nome TEXT NOT NULL,
@@ -153,14 +179,13 @@ def garantir_tabela_execucoes():
             UNIQUE(job_nome, janela_chave)
         )
     ''')
-    conn.commit()
-    conn.close()
+
 
 
 def garantir_tabelas_operacionais():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
         '''
         CREATE TABLE IF NOT EXISTS operation_audit (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -172,7 +197,7 @@ def garantir_tabelas_operacionais():
         )
         '''
     )
-    c.execute(
+        c.execute(
         '''
         CREATE TABLE IF NOT EXISTS operation_alerts (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -184,7 +209,7 @@ def garantir_tabelas_operacionais():
         )
         '''
     )
-    c.execute(
+        c.execute(
         '''
         CREATE TABLE IF NOT EXISTS model_diagnostics (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -201,8 +226,7 @@ def garantir_tabelas_operacionais():
         )
         '''
     )
-    conn.commit()
-    conn.close()
+
 
 
 def garantir_schema_minimo():
@@ -220,26 +244,23 @@ def validar_schema_minimo(tabelas_criticas=None):
     if tabelas_criticas is None:
         tabelas_criticas = ["sinais", "job_execucoes"]
 
-    conn = None
     try:
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
-        c.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
-        tabelas_existentes = {row[0] for row in c.fetchall()}
-        faltantes = [nome for nome in tabelas_criticas if nome not in tabelas_existentes]
-        return len(faltantes) == 0, faltantes
-    except Exception as e:
+        with get_conn() as conn:
+            c = conn.cursor()
+            c.execute("SELECT name FROM sqlite_master WHERE type = 'table'")
+            tabelas_existentes = {row[0] for row in c.fetchall()}
+            faltantes = [nome for nome in tabelas_criticas if nome not in tabelas_existentes]
+            return len(faltantes) == 0, faltantes
+    except sqlite3.DatabaseError as e:
+        logger.exception("falha_validar_schema_minimo")
         return False, [f"db_error:{str(e)}"]
-    finally:
-        if conn:
-            conn.close()
+    except Exception as e:
+        logger.exception("falha_inesperada_validar_schema_minimo")
+        return False, [f"db_error:{str(e)}"]
 
 
-def buscar_execucao_job(job_nome, janela_chave):
-    garantir_tabela_execucoes()
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
+def _select_execucao_job(cursor, job_nome, janela_chave):
+    cursor.execute(
         '''
         SELECT id, job_nome, janela_chave, status, started_at, finished_at, reason_code, detalhes_json
         FROM job_execucoes
@@ -248,8 +269,17 @@ def buscar_execucao_job(job_nome, janela_chave):
         ''',
         (job_nome, janela_chave),
     )
-    row = c.fetchone()
-    conn.close()
+    return _row_para_execucao(cursor.fetchone())
+
+
+def buscar_execucao_job(job_nome, janela_chave):
+    garantir_tabela_execucoes()
+    with get_conn() as conn:
+        c = conn.cursor()
+        return _select_execucao_job(c, job_nome, janela_chave)
+
+
+def _row_para_execucao(row):
     if not row:
         return None
 
@@ -274,49 +304,47 @@ def buscar_execucao_job(job_nome, janela_chave):
 
 def iniciar_execucao_job(job_nome, janela_chave):
     garantir_tabela_execucoes()
-    existente = buscar_execucao_job(job_nome, janela_chave)
-    if existente:
-        if existente["status"] in ("running", "ok", "degraded"):
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("BEGIN IMMEDIATE")
+        started_at = datetime.now(UTC).isoformat()
+
+        c.execute(
+            '''
+            INSERT OR IGNORE INTO job_execucoes (job_nome, janela_chave, status, started_at)
+            VALUES (?, ?, ?, ?)
+            ''',
+            (job_nome, janela_chave, "running", started_at),
+        )
+
+        if c.rowcount == 1:
+            return {
+                "iniciado": True,
+                "reason_code": "started",
+                "execucao": _select_execucao_job(c, job_nome, janela_chave),
+            }
+
+        existente = _select_execucao_job(c, job_nome, janela_chave)
+        if existente and existente["status"] in ("running", "ok", "degraded"):
             return {
                 "iniciado": False,
                 "reason_code": "idempotent_skip",
                 "execucao": existente,
             }
 
-        conn = sqlite3.connect(DB_PATH)
-        c = conn.cursor()
         c.execute(
             '''
             UPDATE job_execucoes
             SET status = ?, started_at = ?, finished_at = NULL, reason_code = NULL, detalhes_json = NULL
             WHERE job_nome = ? AND janela_chave = ?
             ''',
-            ("running", datetime.now().isoformat(), job_nome, janela_chave),
+            ("running", started_at, job_nome, janela_chave),
         )
-        conn.commit()
-        conn.close()
         return {
             "iniciado": True,
             "reason_code": "restarted_previous_failure",
-            "execucao": buscar_execucao_job(job_nome, janela_chave),
+            "execucao": _select_execucao_job(c, job_nome, janela_chave),
         }
-
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        INSERT INTO job_execucoes (job_nome, janela_chave, status, started_at)
-        VALUES (?, ?, ?, ?)
-        ''',
-        (job_nome, janela_chave, "running", datetime.now().isoformat()),
-    )
-    conn.commit()
-    conn.close()
-    return {
-        "iniciado": True,
-        "reason_code": "started",
-        "execucao": buscar_execucao_job(job_nome, janela_chave),
-    }
 
 
 def finalizar_execucao_job(job_nome, janela_chave, status, reason_code=None, detalhes_json=None):
@@ -328,116 +356,99 @@ def finalizar_execucao_job(job_nome, janela_chave, status, reason_code=None, det
         else:
             detalhes_serializado = json.dumps(detalhes_json, ensure_ascii=False)
 
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        UPDATE job_execucoes
-        SET status = ?, finished_at = ?, reason_code = ?, detalhes_json = ?
-        WHERE job_nome = ? AND janela_chave = ?
-        ''',
-        (status, datetime.now().isoformat(), reason_code, detalhes_serializado, job_nome, janela_chave),
-    )
-    conn.commit()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            UPDATE job_execucoes
+            SET status = ?, finished_at = ?, reason_code = ?, detalhes_json = ?
+            WHERE job_nome = ? AND janela_chave = ?
+            ''',
+            (status, datetime.now(UTC).isoformat(), reason_code, detalhes_serializado, job_nome, janela_chave),
+        )
     return buscar_execucao_job(job_nome, janela_chave)
 
 def inserir_sinal(liga, jogo, mercado, odd, ev, score, stake, message_id_vip=None, message_id_free=None, horario=None):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    from datetime import date
-    c.execute('''
-        INSERT INTO sinais (data, liga, jogo, mercado, odd, ev_estimado, edge_score, stake_unidades, message_id_vip, message_id_free, horario, app_version)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (str(date.today()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario, os.getenv("EDGE_VERSION", "dev")))
-    conn.commit()
-    sinal_id = c.lastrowid
-    conn.close()
-    return sinal_id
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO sinais (data, liga, jogo, mercado, odd, ev_estimado, edge_score, stake_unidades, message_id_vip, message_id_free, horario, app_version)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ((datetime.now(UTC).date().isoformat()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario, os.getenv("EDGE_VERSION", "dev")))
+        return c.lastrowid
 
 def atualizar_resultado(sinal_id, resultado, lucro):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        UPDATE sinais SET status = 'finalizado', resultado = ?, lucro_unidades = ?
-        WHERE id = ?
-    ''', (resultado, lucro, sinal_id))
-    conn.commit()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute('''
+            UPDATE sinais SET status = 'finalizado', resultado = ?, lucro_unidades = ?
+            WHERE id = ?
+        ''', (resultado, lucro, sinal_id))
 
 
 def atualizar_fixture_referencia(sinal_id, fixture_id_api=None, fixture_data_api=None):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        UPDATE sinais
-        SET fixture_id_api = COALESCE(?, fixture_id_api),
-            fixture_data_api = COALESCE(?, fixture_data_api)
-        WHERE id = ?
-        ''',
-        (fixture_id_api, fixture_data_api, sinal_id),
-    )
-    conn.commit()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            UPDATE sinais
+            SET fixture_id_api = COALESCE(?, fixture_id_api),
+                fixture_data_api = COALESCE(?, fixture_data_api)
+            WHERE id = ?
+            ''',
+            (fixture_id_api, fixture_data_api, sinal_id),
+        )
 
 def sinal_existe(sinal_id):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute("SELECT 1 FROM sinais WHERE id = ? LIMIT 1", (sinal_id,))
-    existe = c.fetchone() is not None
-    conn.close()
-    return existe
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("SELECT 1 FROM sinais WHERE id = ? LIMIT 1", (sinal_id,))
+        return c.fetchone() is not None
 
 def buscar_sinais_hoje():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    from datetime import date
-    c.execute("SELECT * FROM sinais WHERE data = ?", (str(date.today()),))
-    rows = c.fetchall()
-    conn.close()
-    return rows
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("SELECT * FROM sinais WHERE data = ?", (datetime.now(UTC).date().isoformat(),))
+        return c.fetchall()
 
 
 def calcular_perda_diaria_unidades(data_ref=None):
-    data_alvo = data_ref or datetime.now().strftime("%Y-%m-%d")
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        SELECT SUM(CASE WHEN lucro_unidades < 0 THEN lucro_unidades ELSE 0 END)
-        FROM sinais
-        WHERE data = ?
-          AND status = 'finalizado'
-        ''',
-        (data_alvo,),
-    )
-    row = c.fetchone()
-    conn.close()
-    return float(row[0] or 0.0)
+    data_alvo = data_ref or datetime.now(UTC).strftime("%Y-%m-%d")
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT SUM(CASE WHEN lucro_unidades < 0 THEN lucro_unidades ELSE 0 END)
+            FROM sinais
+            WHERE data = ?
+              AND status = 'finalizado'
+            ''',
+            (data_alvo,),
+        )
+        row = c.fetchone()
+        return float(row[0] or 0.0)
 
 
 def calcular_exposicao_pendente_unidades(janela_horas=6):
-    agora = datetime.utcnow()
+    agora = datetime.now(UTC)
     limite = agora.timestamp() + max(1, int(janela_horas)) * 3600
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        SELECT horario, stake_unidades
-        FROM sinais
-        WHERE status = 'pendente'
-          AND horario IS NOT NULL
-          AND stake_unidades IS NOT NULL
-        '''
-    )
-    rows = c.fetchall()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT horario, stake_unidades
+            FROM sinais
+            WHERE status = 'pendente'
+              AND horario IS NOT NULL
+              AND stake_unidades IS NOT NULL
+            '''
+        )
+        rows = c.fetchall()
 
     total = 0.0
     for horario, stake in rows:
         try:
-            ts = datetime.strptime(horario, "%Y-%m-%dT%H:%M:%SZ").timestamp()
+            ts = datetime.strptime(horario, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC).timestamp()
             if agora.timestamp() <= ts <= limite:
                 total += float(stake or 0.0)
         except Exception:
@@ -447,56 +458,51 @@ def calcular_exposicao_pendente_unidades(janela_horas=6):
 
 def registrar_auditoria_acao(actor, acao, efeito, detalhes=None):
     garantir_tabelas_operacionais()
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
     detalhes_json = None
     if detalhes is not None:
         detalhes_json = json.dumps(detalhes, ensure_ascii=False)
-    c.execute(
-        '''
-        INSERT INTO operation_audit (ocorrido_em, actor, acao, efeito, detalhes_json)
-        VALUES (?, ?, ?, ?, ?)
-        ''',
-        (datetime.now(UTC).isoformat(), actor, acao, efeito, detalhes_json),
-    )
-    conn.commit()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO operation_audit (ocorrido_em, actor, acao, efeito, detalhes_json)
+            VALUES (?, ?, ?, ?, ?)
+            ''',
+            (datetime.now(UTC).isoformat(), actor, acao, efeito, detalhes_json),
+        )
 
 
 def registrar_alerta_operacional(severidade, codigo, playbook_id=None, detalhes=None):
     garantir_tabelas_operacionais()
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
     detalhes_json = None
     if detalhes is not None:
         detalhes_json = json.dumps(detalhes, ensure_ascii=False)
-    c.execute(
-        '''
-        INSERT INTO operation_alerts (ocorrido_em, severidade, codigo, playbook_id, detalhes_json)
-        VALUES (?, ?, ?, ?, ?)
-        ''',
-        (datetime.now(UTC).isoformat(), severidade, codigo, playbook_id, detalhes_json),
-    )
-    conn.commit()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO operation_alerts (ocorrido_em, severidade, codigo, playbook_id, detalhes_json)
+            VALUES (?, ?, ?, ?, ?)
+            ''',
+            (datetime.now(UTC).isoformat(), severidade, codigo, playbook_id, detalhes_json),
+        )
 
 
 def obter_slo_disponibilidade_ciclo(dias=7):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        SELECT COUNT(*) AS total,
-               SUM(CASE WHEN status IN ('ok', 'degraded') THEN 1 ELSE 0 END) AS saudaveis
-        FROM job_execucoes
-        WHERE started_at >= datetime('now', ?)
-        ''',
-        (f'-{int(max(1, dias))} day',),
-    )
-    total, saudaveis = c.fetchone() or (0, 0)
-    conn.close()
-    total = int(total or 0)
-    saudaveis = int(saudaveis or 0)
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN status IN ('ok', 'degraded') THEN 1 ELSE 0 END) AS saudaveis
+            FROM job_execucoes
+            WHERE started_at >= datetime('now', ?)
+            ''',
+            (f'-{int(max(1, dias))} day',),
+        )
+        row = c.fetchone() or (0, 0)
+        total = int(row[0] or 0)
+        saudaveis = int(row[1] or 0)
     disponibilidade = (saudaveis / total) if total > 0 else 1.0
     return {
         "total": total,
@@ -517,74 +523,68 @@ def registrar_diagnostico_modelo(
     detalhes=None,
 ):
     garantir_tabelas_operacionais()
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
     detalhes_json = json.dumps(detalhes or {}, ensure_ascii=False)
-    c.execute(
-        '''
-        INSERT INTO model_diagnostics (
-            ocorrido_em,
-            match_id,
-            market,
-            lambda_home,
-            lambda_away,
-            sharp_score,
-            edge,
-            shrinkage_home,
-            shrinkage_away,
-            detalhes_json
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''',
-        (
-            datetime.now(UTC).isoformat(),
-            match_id,
-            market,
-            lambda_home,
-            lambda_away,
-            sharp_score,
-            edge,
-            shrinkage_home,
-            shrinkage_away,
-            detalhes_json,
-        ),
-    )
-    conn.commit()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO model_diagnostics (
+                ocorrido_em,
+                match_id,
+                market,
+                lambda_home,
+                lambda_away,
+                sharp_score,
+                edge,
+                shrinkage_home,
+                shrinkage_away,
+                detalhes_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                datetime.now(UTC).isoformat(),
+                match_id,
+                market,
+                lambda_home,
+                lambda_away,
+                sharp_score,
+                edge,
+                shrinkage_home,
+                shrinkage_away,
+                detalhes_json,
+            ),
+        )
 
 def resumo_mensal():
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute('''
-        SELECT 
-            COUNT(*) as total,
-            SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
-            SUM(CASE WHEN resultado = 'vermelho' THEN 1 ELSE 0 END) as derrotas,
-            SUM(lucro_unidades) as lucro_total
-        FROM sinais
-        WHERE status = 'finalizado'
-    ''')
-    row = c.fetchone()
-    conn.close()
-    return row
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute('''
+            SELECT 
+                COUNT(*) as total,
+                SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                SUM(CASE WHEN resultado = 'vermelho' THEN 1 ELSE 0 END) as derrotas,
+                SUM(lucro_unidades) as lucro_total
+            FROM sinais
+            WHERE status = 'finalizado'
+        ''')
+        return c.fetchone()
 
 
 def buscar_historico_time(time, ultimos=20):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''
-        SELECT jogo, mercado, odd, resultado, lucro_unidades,
-               ev_estimado, edge_score
-        FROM sinais
-        WHERE (jogo LIKE ? OR jogo LIKE ?)
-        AND status = 'finalizado'
-        ORDER BY criado_em DESC LIMIT ?
-        ''',
-        (f'{time} vs %', f'% vs {time}', ultimos),
-    )
-    rows = c.fetchall()
-    conn.close()
-    return rows
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT jogo, mercado, odd, resultado, lucro_unidades,
+                   ev_estimado, edge_score
+            FROM sinais
+            WHERE (jogo LIKE ? OR jogo LIKE ?)
+            AND status = 'finalizado'
+            ORDER BY criado_em DESC LIMIT ?
+            ''',
+            (f'{time} vs %', f'% vs {time}', ultimos),
+        )
+        return c.fetchall()
 
 
 def calcular_confianca_calibrada(time_casa, time_fora):
@@ -618,52 +618,50 @@ def buscar_metricas_qualidade_liga_mercado(liga, mercado, fonte_preferencial="hi
     Retorna agregados historicos para prior de qualidade por liga+mercado.
     Prioriza fonte historica quando disponivel; caso contrario, usa qualquer fonte.
     """
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
+    with get_conn() as conn:
+        c = conn.cursor()
 
-    def _query(fonte=None):
-        if fonte:
-            c.execute(
-                '''
-                SELECT
-                    COUNT(*) as total,
-                    SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
-                    SUM(COALESCE(lucro_unidades, 0)) as lucro_total
-                FROM sinais
-                WHERE status = 'finalizado'
-                  AND liga = ?
-                  AND mercado = ?
-                  AND fonte = ?
-                ''',
-                (liga, mercado, fonte),
-            )
-        else:
-            c.execute(
-                '''
-                SELECT
-                    COUNT(*) as total,
-                    SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
-                    SUM(COALESCE(lucro_unidades, 0)) as lucro_total
-                FROM sinais
-                WHERE status = 'finalizado'
-                  AND liga = ?
-                  AND mercado = ?
-                ''',
-                (liga, mercado),
-            )
-        row = c.fetchone() or (0, 0, 0)
-        total = int(row[0] or 0)
-        vitorias = int(row[1] or 0)
-        lucro_total = float(row[2] or 0.0)
-        return total, vitorias, lucro_total
+        def _query(fonte=None):
+            if fonte:
+                c.execute(
+                    '''
+                    SELECT
+                        COUNT(*) as total,
+                        SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                        SUM(COALESCE(lucro_unidades, 0)) as lucro_total
+                    FROM sinais
+                    WHERE status = 'finalizado'
+                      AND liga = ?
+                      AND mercado = ?
+                      AND fonte = ?
+                    ''',
+                    (liga, mercado, fonte),
+                )
+            else:
+                c.execute(
+                    '''
+                    SELECT
+                        COUNT(*) as total,
+                        SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
+                        SUM(COALESCE(lucro_unidades, 0)) as lucro_total
+                    FROM sinais
+                    WHERE status = 'finalizado'
+                      AND liga = ?
+                      AND mercado = ?
+                    ''',
+                    (liga, mercado),
+                )
+            row = c.fetchone() or (0, 0, 0)
+            total = int(row[0] or 0)
+            vitorias = int(row[1] or 0)
+            lucro_total = float(row[2] or 0.0)
+            return total, vitorias, lucro_total
 
-    total, vitorias, lucro_total = _query(fonte_preferencial)
-    fonte_usada = fonte_preferencial if total > 0 else "todas"
+        total, vitorias, lucro_total = _query(fonte_preferencial)
+        fonte_usada = fonte_preferencial if total > 0 else "todas"
 
-    if total == 0:
-        total, vitorias, lucro_total = _query()
-
-    conn.close()
+        if total == 0:
+            total, vitorias, lucro_total = _query()
 
     win_rate = (vitorias / total) if total > 0 else 0.0
     roi_pct = ((lucro_total / total) * 100.0) if total > 0 else 0.0
@@ -681,16 +679,15 @@ def buscar_metricas_qualidade_liga_mercado(liga, mercado, fonte_preferencial="hi
 
 
 def resumo_calibracao(n_minimo=50):
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        '''SELECT COUNT(*),
-           SUM(CASE WHEN resultado='verde' THEN 1 ELSE 0 END),
-           AVG(ev_estimado), AVG(edge_score)
-           FROM sinais WHERE status='finalizado' '''
-    )
-    row = c.fetchone()
-    conn.close()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''SELECT COUNT(*),
+               SUM(CASE WHEN resultado='verde' THEN 1 ELSE 0 END),
+               AVG(ev_estimado), AVG(edge_score)
+               FROM sinais WHERE status='finalizado' '''
+        )
+        row = c.fetchone()
 
     total = row[0] or 0
     if total < n_minimo:

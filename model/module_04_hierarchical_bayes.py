@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 import statistics
 from dataclasses import dataclass, field
@@ -161,3 +162,86 @@ class HierarchicalBayesianModel:
             "shrinkage_away": round(shrink_away, 3),
             "note": "HIGH_UNCERTAINTY" if shrink_home < 0.3 or shrink_away < 0.3 else "RELIABLE",
         }
+
+    def to_dict(self) -> dict:
+        return {
+            "global_attack": {"mean": self.global_attack.mean, "variance": self.global_attack.variance},
+            "global_defence": {"mean": self.global_defence.mean, "variance": self.global_defence.variance},
+            "home_advantage": self.home_advantage,
+            "min_matches": self.min_matches,
+            "use_xg": self.use_xg,
+            "countries": {
+                k: {
+                    "name": v.name,
+                    "attack": {"mean": v.attack_hyperprior.mean, "variance": v.attack_hyperprior.variance},
+                    "defence": {"mean": v.defence_hyperprior.mean, "variance": v.defence_hyperprior.variance},
+                }
+                for k, v in self.countries.items()
+            },
+            "divisions": {
+                k: {
+                    "name": v.name,
+                    "attack": {"mean": v.attack_hyperprior.mean, "variance": v.attack_hyperprior.variance},
+                    "defence": {"mean": v.defence_hyperprior.mean, "variance": v.defence_hyperprior.variance},
+                }
+                for k, v in self.divisions.items()
+            },
+            "teams": {
+                k: {
+                    "team": v.team,
+                    "division": v.division,
+                    "country": v.country,
+                    "attack": {"mean": v.attack_prior.mean, "variance": v.attack_prior.variance},
+                    "defence": {"mean": v.defence_prior.mean, "variance": v.defence_prior.variance},
+                    "n_matches": v.n_matches,
+                }
+                for k, v in self.teams.items()
+            },
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict) -> "HierarchicalBayesianModel":
+        model = cls(
+            home_advantage=float(payload.get("home_advantage", 0.20)),
+            min_matches_full_trust=int(payload.get("min_matches", 30)),
+            use_xg_as_observation=bool(payload.get("use_xg", True)),
+        )
+        raw_ga = payload.get("global_attack", {})
+        raw_gd = payload.get("global_defence", {})
+        model.global_attack = Prior(float(raw_ga.get("mean", 0.0)), float(raw_ga.get("variance", 0.5)))
+        model.global_defence = Prior(float(raw_gd.get("mean", 0.0)), float(raw_gd.get("variance", 0.5)))
+
+        for k, v in (payload.get("countries") or {}).items():
+            model.countries[k] = HierarchyLevel(
+                name=str(v.get("name", k)),
+                attack_hyperprior=Prior(float(v.get("attack", {}).get("mean", 0.0)), float(v.get("attack", {}).get("variance", 0.5))),
+                defence_hyperprior=Prior(float(v.get("defence", {}).get("mean", 0.0)), float(v.get("defence", {}).get("variance", 0.5))),
+            )
+
+        for k, v in (payload.get("divisions") or {}).items():
+            model.divisions[k] = HierarchyLevel(
+                name=str(v.get("name", k)),
+                attack_hyperprior=Prior(float(v.get("attack", {}).get("mean", 0.0)), float(v.get("attack", {}).get("variance", 0.5))),
+                defence_hyperprior=Prior(float(v.get("defence", {}).get("mean", 0.0)), float(v.get("defence", {}).get("variance", 0.5))),
+            )
+
+        for k, v in (payload.get("teams") or {}).items():
+            model.teams[k] = TeamParams(
+                team=str(v.get("team", k)),
+                division=str(v.get("division", "")),
+                country=str(v.get("country", "")),
+                attack_prior=Prior(float(v.get("attack", {}).get("mean", 0.0)), float(v.get("attack", {}).get("variance", 0.3))),
+                defence_prior=Prior(float(v.get("defence", {}).get("mean", 0.0)), float(v.get("defence", {}).get("variance", 0.3))),
+                n_matches=int(v.get("n_matches", 0)),
+            )
+        return model
+
+    def save(self, file_path: str) -> None:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, ensure_ascii=False)
+
+    @classmethod
+    def load(cls, file_path: str) -> "HierarchicalBayesianModel":
+        with open(file_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        return cls.from_dict(payload)

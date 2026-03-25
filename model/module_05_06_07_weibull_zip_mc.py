@@ -5,6 +5,11 @@ import random
 from dataclasses import dataclass
 from typing import Optional
 
+try:
+    import numpy as np
+except Exception:  # pragma: no cover - optional dependency fallback
+    np = None
+
 
 @dataclass
 class WeibullGoalModel:
@@ -63,7 +68,11 @@ class ZIPModel:
     def pmf(self, k: int, lam: float, pi: float) -> float:
         if k < 0:
             return 0.0
-        poisson_pmf = math.exp(-lam) * (lam ** k) / math.factorial(k)
+        if lam <= 0:
+            poisson_pmf = 1.0 if k == 0 else 0.0
+        else:
+            poisson_log_pmf = -lam + (k * math.log(max(lam, 1e-12))) - math.lgamma(k + 1)
+            poisson_pmf = math.exp(poisson_log_pmf)
         if k == 0:
             return pi + (1 - pi) * poisson_pmf
         return (1 - pi) * poisson_pmf
@@ -102,6 +111,9 @@ class MonteCarloSimulator:
     def __init__(self, n_simulations: int = 50000, random_seed: Optional[int] = 42, weibull_shape: float = 1.3, dc_correction: bool = True) -> None:
         self.n_sims = n_simulations
         self.rng = random.Random(random_seed)
+        self.rng_np = None
+        if np is not None and hasattr(np, "random") and hasattr(np.random, "default_rng"):
+            self.rng_np = np.random.default_rng(random_seed)
         self.shape = weibull_shape
         self.dc = dc_correction
 
@@ -144,6 +156,9 @@ class MonteCarloSimulator:
         }
 
     def run(self, lambda_home: float, lambda_away: float) -> dict:
+        if self.rng_np is not None:
+            return self._run_vectorized(lambda_home, lambda_away)
+
         results = [self._simulate_one_match(lambda_home, lambda_away) for _ in range(self.n_sims)]
         total_weight = sum(r["dc_weight"] for r in results)
 
@@ -164,4 +179,51 @@ class MonteCarloSimulator:
             "p_over_2_5": round(weighted_prob(lambda r: r["home_goals"] + r["away_goals"] > 2), 4),
             "p_under_2_5": round(weighted_prob(lambda r: r["home_goals"] + r["away_goals"] <= 2), 4),
             "top_scores": [(f"{h}-{a}", round(v / max(total_weight, 1e-9), 4)) for (h, a), v in top_scores],
+        }
+
+    def _run_vectorized(self, lambda_home: float, lambda_away: float, minutes: int = 90) -> dict:
+        weibull = WeibullGoalModel.from_poisson_lambdas(lambda_home, lambda_away, self.shape, minutes)
+        t = np.arange(1.0, float(minutes) + 1.0)
+
+        rates_home = np.clip(np.array([weibull.hazard_rate(float(x), True) for x in t]), 0.0, 1.0)
+        rates_away = np.clip(np.array([weibull.hazard_rate(float(x), False) for x in t]), 0.0, 1.0)
+
+        home_goals = (self.rng_np.random((self.n_sims, minutes)) < rates_home).sum(axis=1).astype(int)
+        away_goals = (self.rng_np.random((self.n_sims, minutes)) < rates_away).sum(axis=1).astype(int)
+
+        if self.dc:
+            rho = -0.13
+            dc_weights = np.ones(self.n_sims, dtype=float)
+            mask_00 = (home_goals == 0) & (away_goals == 0)
+            mask_10 = (home_goals == 1) & (away_goals == 0)
+            mask_01 = (home_goals == 0) & (away_goals == 1)
+            mask_11 = (home_goals == 1) & (away_goals == 1)
+            dc_weights[mask_00 | mask_11] -= rho
+            dc_weights[mask_10 | mask_01] += rho
+        else:
+            dc_weights = np.ones(self.n_sims, dtype=float)
+
+        total_weight = float(dc_weights.sum())
+        denom = max(total_weight, 1e-9)
+
+        def weighted_prob(mask):
+            return float(dc_weights[mask].sum() / denom)
+
+        pairs = np.column_stack((home_goals, away_goals))
+        unique_pairs, inverse = np.unique(pairs, axis=0, return_inverse=True)
+        weighted_counts = np.bincount(inverse, weights=dc_weights)
+        order = np.argsort(weighted_counts)[::-1][:10]
+        top_scores = [
+            (f"{int(unique_pairs[i, 0])}-{int(unique_pairs[i, 1])}", round(float(weighted_counts[i] / denom), 4))
+            for i in order
+        ]
+
+        return {
+            "p_home_win": round(weighted_prob(home_goals > away_goals), 4),
+            "p_draw": round(weighted_prob(home_goals == away_goals), 4),
+            "p_away_win": round(weighted_prob(home_goals < away_goals), 4),
+            "p_btts": round(weighted_prob((home_goals > 0) & (away_goals > 0)), 4),
+            "p_over_2_5": round(weighted_prob((home_goals + away_goals) > 2), 4),
+            "p_under_2_5": round(weighted_prob((home_goals + away_goals) <= 2), 4),
+            "top_scores": top_scores,
         }

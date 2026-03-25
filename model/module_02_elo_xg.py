@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import math
 from dataclasses import dataclass
 from datetime import date
@@ -140,3 +141,56 @@ class XGWeightedELO:
         }
         self.history.append(payload)
         return payload
+
+    def to_dict(self) -> dict:
+        return {
+            "k_base": self.k_base,
+            "home_adv": self.home_adv,
+            "xg_blend": self.xg_blend,
+            "recency_decay": self.recency_decay,
+            "initial_rating": self.initial_rating,
+            "competition_weights": self.competition_weights,
+            "ratings": {
+                team: {
+                    "team": rating.team,
+                    "overall": rating.overall,
+                    "home_bonus": rating.home_bonus,
+                    "away_penalty": rating.away_penalty,
+                    "n_matches": rating.n_matches,
+                }
+                for team, rating in self.ratings.items()
+            },
+            "history": self.history,
+        }
+
+    @classmethod
+    def from_dict(cls, payload: dict) -> "XGWeightedELO":
+        model = cls(
+            k_base=float(payload.get("k_base", 30.0)),
+            home_advantage=float(payload.get("home_adv", 65.0)),
+            xg_blend=float(payload.get("xg_blend", 0.35)),
+            recency_decay_days=float(payload.get("recency_decay", 365.0)),
+            competition_weights=payload.get("competition_weights") or None,
+            initial_rating=float(payload.get("initial_rating", 1500.0)),
+        )
+        ratings = payload.get("ratings", {})
+        for team, raw in ratings.items():
+            model.ratings[team] = TeamRating(
+                team=str(raw.get("team", team)),
+                overall=float(raw.get("overall", model.initial_rating)),
+                home_bonus=float(raw.get("home_bonus", 0.0)),
+                away_penalty=float(raw.get("away_penalty", 0.0)),
+                n_matches=int(raw.get("n_matches", 0)),
+            )
+        model.history = list(payload.get("history", []))
+        return model
+
+    def save(self, file_path: str) -> None:
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(self.to_dict(), f, ensure_ascii=False)
+
+    @classmethod
+    def load(cls, file_path: str) -> "XGWeightedELO":
+        with open(file_path, "r", encoding="utf-8") as f:
+            payload = json.load(f)
+        return cls.from_dict(payload)
