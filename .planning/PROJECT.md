@@ -25,6 +25,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - ✓ Market divergence uses no-vig comparison, runtime market coverage was expanded, and reproducible one-command test baseline is established (validated in Phase 13: No-vig Comparison, Market Coverage, and Test Baseline).
 - ✓ Runtime calibration now auto-applies league rho/home-advantage and over/under uses Dixon-Coles consistency with dedicated regressions (validated in Phase 14: Calibration Automation and League Home Advantage).
 - ✓ xG now uses recency-weighted decay, confidence sem_sinal uses bounded proxy fallback, and SOS caps adapt to source quality (validated in Phase 15: Recency-Weighted xG and Confidence Fallbacks).
+- ✓ Gate robustness now includes persistent standings cache, source-aware no-vig/divergence baseline checks, steam maturity window, per-match ranking cap, and minimal drift/fallback telemetry alerts (validated in Phase 16: Gate Robustness and Steam Noise Filtering).
 
 ### Active
 

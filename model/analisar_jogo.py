@@ -13,7 +13,7 @@ from edge_score import (
     decisao_sinal
 )
 
-def analisar_jogo(dados):
+def analisar_jogo(dados, log_dc=True):
     """
     Recebe um dicionário com os dados do jogo e retorna
     a análise completa com EDGE Score e decisão.
@@ -99,7 +99,7 @@ def analisar_jogo(dados):
     stake   = calcular_stake(edge_score, dados.get("banca", 1000))
 
     # ── Log Dixon-Coles quando ajuste for relevante (>2%) ──────────
-    if abs(probs_1x2["dc_delta_empate"]) >= 2.0:
+    if log_dc and abs(probs_1x2["dc_delta_empate"]) >= 2.0:
         jogo_nome = dados.get("jogo", "?")
         log_comparacao(jogo_nome, casa, fora, probs_1x2)
 
@@ -110,6 +110,7 @@ def analisar_jogo(dados):
         "horario":         dados.get("horario", ""),
         "mercado":         mercado,
         "odd":             odd,
+        "prob_modelo_base": prob_base,
         "prob_modelo":     prob_ajustada,
         "prob_implicita":  round(1 / odd, 4),
         "ev":              round(ev, 4),

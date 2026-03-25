@@ -394,6 +394,28 @@ class TestSchedulerQualityPriorRanking(unittest.TestCase):
         self.assertIn("amostra_prior", detalhes)
         self.assertIn("ajuste_prior", detalhes)
 
+    def test_cap_por_jogo_limita_concentracao(self):
+        candidatos = [
+            {"jogo": {"jogo": "A vs B"}, "mercado": "1x2_casa", "score": 90},
+            {"jogo": {"jogo": "A vs B"}, "mercado": "1x2_fora", "score": 89},
+            {"jogo": {"jogo": "A vs B"}, "mercado": "over_2.5", "score": 88},
+            {"jogo": {"jogo": "C vs D"}, "mercado": "1x2_casa", "score": 87},
+        ]
+
+        selecionados = scheduler.aplicar_cap_por_jogo(candidatos, max_por_jogo=2)
+        jogos_ab = [c for c in selecionados if c.get("jogo", {}).get("jogo") == "A vs B"]
+
+        self.assertEqual(len(jogos_ab), 2)
+        self.assertEqual(len(selecionados), 3)
+
+    def test_alerta_drift_minimo_dispara_por_taxa_fallback(self):
+        provider_health = {"fallback_used": 8}
+        alerta = scheduler.avaliar_alerta_drift_minimo(provider_health, total_avaliacoes=20, limiar=0.35)
+
+        self.assertTrue(alerta)
+        self.assertEqual(alerta["metrica"], "fallback_rate")
+        self.assertGreaterEqual(alerta["valor"], 0.35)
+
 
 if __name__ == "__main__":
     unittest.main()

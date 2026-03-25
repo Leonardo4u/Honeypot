@@ -50,6 +50,8 @@ CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
 
 MAX_SINAIS_DIA = 10
+MAX_MERCADOS_POR_JOGO = 2
+DRIFT_MIN_FALLBACK_LIMIAR = 0.35
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
 
@@ -209,6 +211,37 @@ def validar_entrada_analise(jogo, odd):
 
 def listar_mercados_runtime():
     return list(MARKET_RUNTIME_CONFIG)
+
+
+def aplicar_cap_por_jogo(candidatos, max_por_jogo=MAX_MERCADOS_POR_JOGO):
+    selecionados = []
+    por_jogo = {}
+    for candidato in candidatos:
+        jogo = candidato.get("jogo", {}).get("jogo")
+        if not jogo:
+            continue
+        atual = por_jogo.get(jogo, 0)
+        if atual >= max_por_jogo:
+            continue
+        por_jogo[jogo] = atual + 1
+        selecionados.append(candidato)
+    return selecionados
+
+
+def avaliar_alerta_drift_minimo(provider_health, total_avaliacoes, limiar=DRIFT_MIN_FALLBACK_LIMIAR):
+    if total_avaliacoes <= 0:
+        return None
+
+    fallback_count = provider_health.get("fallback_used", 0)
+    taxa_fallback = fallback_count / float(total_avaliacoes)
+    if taxa_fallback >= limiar:
+        return {
+            "alerta": True,
+            "metrica": "fallback_rate",
+            "valor": round(taxa_fallback, 4),
+            "limiar": limiar,
+        }
+    return None
 
 def obter_media_gols(time_casa, time_fora, liga_key="soccer_epl"):
     xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
@@ -395,6 +428,7 @@ async def processar_jogos(dry_run=False):
         "baixa_amostra": 0,
         "sem_sinal": 0,
     }
+    total_avaliacoes_mercado = 0
 
     for liga_key in LIGAS:
         fetch_result = buscar_jogos_com_odds_com_status(liga_key)
@@ -418,6 +452,7 @@ async def processar_jogos(dry_run=False):
                     mercado = market_cfg["mercado"]
                     odd_key = market_cfg["odd_key"]
                     odd_oponente_key = market_cfg["odd_oponente_key"]
+                    total_avaliacoes_mercado += 1
                     contexto_confianca = calcular_confianca_contexto(home, away, jogo["liga"], mercado)
                     confianca = int(contexto_confianca.get("confianca", 50))
 
@@ -434,6 +469,7 @@ async def processar_jogos(dry_run=False):
 
                     odd = jogo["odds"].get(odd_key, 0)
                     odd_oponente_mercado = jogo["odds"].get(odd_oponente_key, 0)
+                    source_quality = jogo.get("source_quality", {}).get(mercado, "fallback")
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
                         provider_health["invalid_input"] += 1
@@ -482,6 +518,12 @@ async def processar_jogos(dry_run=False):
                     if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
                         provider_health["fallback_used"] += 1
 
+                    if odd_oponente_mercado <= 0:
+                        provider_health["missing_odd_oponente"] = provider_health.get("missing_odd_oponente", 0) + 1
+                        provider_health["fallback_used"] += 1
+                    elif source_quality != "sharp":
+                        provider_health["source_quality_low"] = provider_health.get("source_quality_low", 0) + 1
+
                     escalacao_confirmada, origem_escalacao = inferir_escalacao_confirmada(jogo)
                     variacao_odd_gate = calcular_variacao_odd_gate(steam_data)
                     sinais_hoje_gate = calcular_sinais_hoje_gate(sinais_hoje, len(candidatos))
@@ -493,6 +535,8 @@ async def processar_jogos(dry_run=False):
                         "mercado": mercado,
                         "escalacao_confirmada": escalacao_confirmada,
                         "variacao_odd": variacao_odd_gate,
+                        "no_vig_source_quality": source_quality,
+                        "prob_modelo_base": analise.get("prob_modelo_base", analise.get("prob_modelo", None)),
                         "prob_modelo": analise.get("prob_modelo", None),
                         "liga": jogo["liga"],
                         "time_casa": home,
@@ -555,6 +599,7 @@ async def processar_jogos(dry_run=False):
         ),
         reverse=True,
     )
+    candidatos = aplicar_cap_por_jogo(candidatos)
     vagas_restantes = MAX_SINAIS_DIA - sinais_hoje
     selecionados = candidatos[:vagas_restantes]
 
@@ -704,8 +749,20 @@ async def processar_jogos(dry_run=False):
         f"empty_payload={provider_health['empty_payload']} "
         f"unknown_error={provider_health['unknown_error']} "
         f"invalid_input={provider_health['invalid_input']} "
-        f"fallback_used={provider_health['fallback_used']}"
+        f"fallback_used={provider_health['fallback_used']} "
+        f"missing_odd_oponente={provider_health.get('missing_odd_oponente', 0)} "
+        f"source_quality_low={provider_health.get('source_quality_low', 0)}"
     )
+    drift_alert = avaliar_alerta_drift_minimo(provider_health, total_avaliacoes_mercado)
+    if drift_alert:
+        log_event(
+            "runtime",
+            "drift",
+            "fallback_rate",
+            "alert",
+            "drift_min_threshold_exceeded",
+            drift_alert,
+        )
     log_event(
         "scheduler",
         "cycle_totals",

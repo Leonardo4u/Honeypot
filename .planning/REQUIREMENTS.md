@@ -20,10 +20,10 @@
 
 ### Gate and Market Signal Robustness
 
-- [ ] **GATE-01**: Motivation gate standings data must use persistent cache between scheduler cycles/restarts with controlled TTL.
-- [ ] **GATE-02**: No-vig normalization must validate source quality (sharp/liquid bookmaker source) before applying opponent-odd normalization.
-- [ ] **GATE-03**: Divergence gate must compare base Poisson probability (pre-contextual adjustment) against market implied probability.
-- [ ] **STEAM-01**: Steam bonus must require minimum elapsed market-open window before bonus can be applied.
+- [x] **GATE-01**: Motivation gate standings data must use persistent cache between scheduler cycles/restarts with controlled TTL.
+- [x] **GATE-02**: No-vig normalization must validate source quality (sharp/liquid bookmaker source) before applying opponent-odd normalization.
+- [x] **GATE-03**: Divergence gate must compare base Poisson probability (pre-contextual adjustment) against market implied probability.
+- [x] **STEAM-01**: Steam bonus must require minimum elapsed market-open window before bonus can be applied.
 
 ### Portfolio Correlation Risk
 
@@ -61,10 +61,10 @@
 | XGF-01 | Phase 15 | Completed |
 | CONF-01 | Phase 15 | Completed |
 | MODEL-01 | Phase 15 | Completed |
-| GATE-01 | Phase 16 | Pending |
-| GATE-02 | Phase 16 | Pending |
-| GATE-03 | Phase 16 | Pending |
-| STEAM-01 | Phase 16 | Pending |
+| GATE-01 | Phase 16 | Completed |
+| GATE-02 | Phase 16 | Completed |
+| GATE-03 | Phase 16 | Completed |
+| STEAM-01 | Phase 16 | Completed |
 | RISK-01 | Phase 17 | Pending |
 | RISK-02 | Phase 17 | Pending |
 | OBS-01 | Phase 18 | Pending |
