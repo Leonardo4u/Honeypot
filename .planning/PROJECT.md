@@ -31,7 +31,7 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ### Active
 
-- [ ] Evaluate v1.3 milestone closure and identify the next highest-impact backlog slice.
+- [ ] Define next milestone scope from post-v1.3 telemetry, settlement, and drift learnings.
 
 ### Out of Scope
 
@@ -50,16 +50,20 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 - Milestone v1.0 (Reliability and Signal Quality Hardening) is shipped and archived.
 - Milestone v1.1 (Calibracao Estatistica e Backtesting Operacional) is shipped and archived.
 - Milestone v1.2 (Win Rate Integrity and Runtime Quality) is shipped and archived.
+- Milestone v1.3 (Calibration Freshness and Portfolio Risk Controls) is shipped and archived.
 - Existing runtime safety baseline remains the quality floor for all new changes.
-- Milestone v1.3 is active for model calibration and portfolio risk controls.
+- No active milestone; next cycle starts after backlog prioritization.
 
-## Current Milestone: v1.3 Calibration Freshness and Portfolio Risk Controls
+## Last Shipped Milestone: v1.3 Calibration Freshness and Portfolio Risk Controls
 
-**Goal:** Improve signal quality consistency by making calibration outputs operational, reducing stale priors, and controlling portfolio correlation risk.
+**Goal achieved:** Improve signal quality consistency by operationalizing calibration freshness, hardening gate quality, and reducing portfolio correlation exposure.
 
-**Target features:**
-- Consolidate v1.3 evidence chain and close milestone with verification artifacts.
-- Define next milestone priorities using telemetry/settlement/drift learnings from production cycles.
+**Delivered features:**
+- Automatic league-aware calibration runtime consumption (rho + home advantage) with Dixon-Coles O/U consistency.
+- Recency-weighted xG aggregation and stronger confidence fallback behavior for low-sample contexts.
+- Persistent standings cache, source-aware no-vig checks, and steam maturity window safeguards.
+- Correlation-aware ranking and same-match Kelly stake reducer integrated into scheduler context.
+- Weekly persisted quality telemetry, competition-profile settlement windows, and rolling drift alert escalation.
 
 ## Last Shipped Milestone: v1.2 Win Rate Integrity and Runtime Quality
 
@@ -84,7 +88,8 @@ Generate fewer but higher-confidence betting signals with disciplined risk manag
 
 ## Next Milestone Goals
 
-- Deliver phased implementation of calibration freshness, gate hardening, and portfolio-risk controls.
+- Define the next highest-impact backlog slice using post-v1.3 telemetry and settlement evidence.
+- Convert prioritized opportunities into a new phased milestone with explicit requirement traceability.
 - Keep v1.2 verification baseline as mandatory non-regression floor.
 - Add observability loops that detect degradation before bankroll impact compounds.
 
@@ -123,4 +128,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after phase 18 completion*
+*Last updated: 2026-03-25 after v1.3 milestone closure*

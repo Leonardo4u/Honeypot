@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.3
 milestone_name: Calibration Freshness and Portfolio Risk Controls
-status: Phase 18 Completed
-last_updated: "2026-03-25T23:59:00.000Z"
+status: Milestone v1.3 Completed
+last_updated: "2026-03-25T23:59:59.000Z"
 progress:
   total_phases: 5
   completed_phases: 5
@@ -16,16 +16,16 @@ progress:
 ## Status
 
 - Milestone: v1.3 - Calibration Freshness and Portfolio Risk Controls
-- Current phase: phase 18 completed (plans 01 and 02 executed)
-- Current command: /gsd-complete-milestone v1.3
-- Overall progress: phases 14-18 complete
+- Current phase: none (milestone shipped)
+- Current command: /gsd-new-milestone
+- Overall progress: phases 14-18 complete; milestone closure archived
 
 ## Project Reference
 
 See: .planning/PROJECT.md (updated 2026-03-25)
 
 **Core value:** Generate fewer but higher-confidence betting signals with disciplined risk management and measurable post-result feedback.
-**Current focus:** Milestone v1.3 closure and post-milestone prioritization
+**Current focus:** Post-v1.3 backlog prioritization and next milestone definition
 
 ## Artifacts
 
@@ -34,8 +34,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - Roadmap archive: .planning/milestones/v1.0-ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.1-ROADMAP.md
 - Roadmap archive: .planning/milestones/v1.2-ROADMAP.md
+- Roadmap archive: .planning/milestones/v1.3-ROADMAP.md
 - Requirements archive: .planning/milestones/v1.1-REQUIREMENTS.md
 - Requirements archive: .planning/milestones/v1.2-REQUIREMENTS.md
+- Requirements archive: .planning/milestones/v1.3-REQUIREMENTS.md
+- Milestone audit: .planning/milestones/v1.3-MILESTONE-AUDIT.md
 - Current requirements: .planning/REQUIREMENTS.md
 - Codebase map: .planning/codebase/
 - Research context: .planning/research/SUMMARY.md
@@ -81,10 +84,11 @@ See: .planning/PROJECT.md (updated 2026-03-25)
 - 2026-03-25: Phase 17 executed (17-01 and 17-02), ranking correlation penalty and same-match Kelly reducer integrated with scheduler propagation; baseline tests passed.
 - 2026-03-25: Phase 18 planned with two executable plans for weekly quality telemetry persistence, configurable settlement windows, and rolling drift alerting.
 - 2026-03-25: Phase 18 executed (18-01 and 18-02), weekly telemetry persistence, competition-profile settlement windows, and rolling drift alerting delivered; baseline tests passed.
+- 2026-03-25: Milestone v1.3 archived with roadmap/requirements snapshots and milestone register update.
 
 ## Next Step
 
-Run `/gsd-complete-milestone v1.3` to finalize milestone archive and transition state.
+Run `/gsd-new-milestone` after backlog prioritization to initialize the next cycle.
 
 ---
-*Last updated: 2026-03-25 after phase 18 execution*
+*Last updated: 2026-03-25 after v1.3 milestone closure*

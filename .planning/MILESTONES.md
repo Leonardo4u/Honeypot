@@ -1,5 +1,28 @@
 # Milestones
 
+## v1.3 Calibration Freshness and Portfolio Risk Controls (Shipped: 2026-03-25)
+
+**Phases completed:** 5 phases, 10 plans
+
+**Git range:** `a5960ad..9f82d17`
+
+**Change size:** 128 files changed, 12489 insertions(+), 522 deletions(-)
+
+**Key accomplishments:**
+
+- Operationalized league-aware calibration freshness with automatic rho/home-advantage runtime consumption.
+- Aligned over/under behavior with Dixon-Coles low-score consistency and added dedicated regression safety.
+- Added recency-weighted xG and stronger confidence fallback controls for low-sample contexts.
+- Hardened gate robustness with persistent standings cache, source-aware no-vig checks, and steam maturation safeguards.
+- Reduced concentration risk with correlation-aware ranking penalties and same-match Kelly stake reduction.
+- Expanded operations telemetry with weekly persisted trends, configurable settlement windows, and rolling drift alerts.
+
+**Known technical debt (non-blocking):**
+
+- Continue monitoring weekly drift segments through at least one full settlement cycle before tightening alert thresholds.
+
+---
+
 ## v1.2 Win Rate Integrity and Runtime Quality (Shipped: 2026-03-25)
 
 **Phases completed:** 4 phases, 9 plans
