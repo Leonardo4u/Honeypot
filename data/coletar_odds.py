@@ -1,5 +1,6 @@
 import requests
 import os
+from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
 from ingestion_resilience import request_with_retry
 
@@ -33,7 +34,11 @@ def atualizar_contadores_provider_health(provider_health, status):
 
 def buscar_jogos_com_odds_com_status(liga, mercados="h2h,totals"):
     if not API_KEY:
-        print("ODDS_API_KEY não configurada. Usando dados simulados.")
+        # BUG-01 FIX: aviso explícito quando modo simulado é ativado
+        print(
+            "[AVISO] ODDS_API_KEY não configurada. "
+            "Usando dados simulados — análise real indisponível."
+        )
         return {
             "ok": True,
             "status": "simulated",
@@ -71,12 +76,15 @@ def buscar_jogos_com_odds_com_status(liga, mercados="h2h,totals"):
             "error": None,
         }
 
+    # BUG-07 FIX: mascarar API key no log de erro
+    erro_raw = str(result.get("error", ""))
+    erro_seguro = erro_raw.replace(API_KEY, "***") if API_KEY else erro_raw
     print(
         "Erro API odds "
         f"[{result.get('status')}] "
         f"status_code={result.get('status_code')} "
         f"attempts={result.get('attempts_used')} "
-        f"error={result.get('error')}"
+        f"error={erro_seguro}"
     )
     return {
         "ok": False,
@@ -178,13 +186,18 @@ def formatar_jogos(dados_api):
     return jogos
 
 def _dados_simulados():
+    # BUG-01 FIX: data dinâmica para que formatar_jogos() não filtre o fixture
+    horario_simulado = (
+        datetime.now(timezone.utc) + timedelta(hours=2)
+    ).strftime("%Y-%m-%dT%H:%M:%SZ")
+
     return [
         {
             "id": "sim_001",
             "sport_title": "Premier League",
             "home_team": "Arsenal",
             "away_team": "Chelsea",
-            "commence_time": "2025-03-18T17:30:00Z",
+            "commence_time": horario_simulado,
             "bookmakers": [
                 {
                     "key": "pinnacle",

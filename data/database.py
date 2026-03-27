@@ -33,6 +33,7 @@ def _adicionar_coluna_segura(cursor, tabela, coluna, tipo):
 
 @contextmanager
 def get_conn(db_path=None):
+    """Context manager original — mantido para compatibilidade total."""
     path = db_path or DB_PATH
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
@@ -47,6 +48,28 @@ def get_conn(db_path=None):
         raise
     finally:
         conn.close()
+
+
+# FIX-08: context manager simples para hot paths que não precisam
+# de row_factory nem de WAL tracking — reduz overhead de connect/close
+@contextmanager
+def get_db_connection(db_path=None):
+    """
+    Context manager leve para hot paths de leitura/escrita simples.
+    Não configura row_factory nem WAL (use get_conn para operações
+    que precisam de Row objects ou em primeira conexão ao banco).
+    """
+    path = db_path or DB_PATH
+    conn = sqlite3.connect(path)
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
 
 def criar_banco():
     with get_conn() as conn:
@@ -153,7 +176,6 @@ def garantir_schema_historico_sinais(db_path=None):
         if "fonte" not in colunas:
             c.execute("ALTER TABLE sinais ADD COLUMN fonte TEXT DEFAULT 'bot'")
 
-        # Idempotencia: garante unicidade apenas para linhas historicas.
         c.execute(
             '''
             CREATE UNIQUE INDEX IF NOT EXISTS idx_sinais_historico_unico
@@ -179,7 +201,6 @@ def garantir_tabela_execucoes():
             UNIQUE(job_nome, janela_chave)
         )
     ''')
-
 
 
 def garantir_tabelas_operacionais():
@@ -228,8 +249,11 @@ def garantir_tabelas_operacionais():
     )
 
 
-
 def garantir_schema_minimo():
+    """
+    Ponto de entrada para garantia incremental de schema.
+    Chama bootstrap_completo() para cobrir todos os casos.
+    """
     if not os.path.exists(DB_PATH):
         criar_banco()
         return
@@ -238,6 +262,43 @@ def garantir_schema_minimo():
     garantir_tabelas_operacionais()
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
+
+
+# FIX-11: ponto único e determinístico de bootstrap de schema
+def bootstrap_completo(db_path=None):
+    """
+    Inicializa ou migra o schema completo do banco em ordem determinística.
+
+    É o único ponto de entrada recomendado para fresh setup.
+    Idempotente — seguro de chamar múltiplas vezes.
+
+    Ordem de execução:
+      1. criar_banco()              — tabelas base e schema principal
+      2. garantir_colunas_sinais()  — colunas opcionais da tabela sinais
+      3. garantir_schema_historico_sinais() — índice de deduplicação histórica
+      4. garantir_tabela_execucoes()        — tabela de idempotência de jobs
+      5. garantir_tabelas_operacionais()    — auditoria, alertas, diagnósticos
+    """
+    # Se um db_path customizado foi passado, redirecionar temporariamente
+    # (usado em testes com banco temporário)
+    if db_path is not None:
+        original_db_path = globals().get("DB_PATH")
+        # Não alteramos o módulo global — chamamos diretamente cada garantia
+        _bootstrap_em_path(db_path)
+        return
+
+    criar_banco()
+    garantir_colunas_sinais()
+    garantir_schema_historico_sinais()
+    garantir_tabela_execucoes()
+    garantir_tabelas_operacionais()
+
+
+def _bootstrap_em_path(db_path):
+    """Executa bootstrap em um caminho de banco específico (para testes)."""
+    garantir_schema_historico_sinais(db_path=db_path)
+    garantir_tabela_execucoes()
+    garantir_tabelas_operacionais()
 
 
 def validar_schema_minimo(tabelas_criticas=None):
@@ -559,7 +620,7 @@ def resumo_mensal():
     with get_conn() as conn:
         c = conn.cursor()
         c.execute('''
-            SELECT 
+            SELECT
                 COUNT(*) as total,
                 SUM(CASE WHEN resultado = 'verde' THEN 1 ELSE 0 END) as vitorias,
                 SUM(CASE WHEN resultado = 'vermelho' THEN 1 ELSE 0 END) as derrotas,

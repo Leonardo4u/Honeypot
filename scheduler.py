@@ -1,3 +1,11 @@
+# scheduler.py — Edge Protocol Bot
+# Patches aplicados na v1.3:
+#   BUG-02: caminhos hardcoded substituídos por DB_PATH
+#   BUG-04: guard de dupla finalização no settlement
+#   FIX-05: log_event estruturado para erros de reação Telegram
+#   FIX-06: rastreamento de jogos com fallback xG em cycle_totals
+#   FIX-09: cache de odds por ciclo em processar_jogos
+#   FIX-10: _registrar_settlement e _executar_side_effects_pos_settlement extraídos
 import asyncio
 import sys
 import os
@@ -30,6 +38,8 @@ from database import (
     registrar_auditoria_acao,
     registrar_diagnostico_modelo,
     validar_schema_minimo,
+    # FIX-11: bootstrap_completo disponível para fresh setup
+    bootstrap_completo,
 )
 from coletar_odds import (
     buscar_jogos_com_odds,
@@ -83,7 +93,7 @@ def _enable_windows_ansi():
         import ctypes
 
         kernel32 = ctypes.windll.kernel32
-        handle = kernel32.GetStdHandle(-11)  # STD_OUTPUT_HANDLE
+        handle = kernel32.GetStdHandle(-11)
         if handle == 0:
             return False
         mode = ctypes.c_uint32()
@@ -198,7 +208,6 @@ LIGA_KEY_MAP = {
     "Bundesliga": "soccer_germany_bundesliga",
     "Ligue 1": "soccer_france_ligue_one"
 }
-
 
 def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=None):
     if MINIMAL_RUNTIME_OUTPUT:
@@ -879,7 +888,6 @@ def calcular_ajuste_prior_ranking(prior_ranking):
     except (TypeError, ValueError):
         prior_num = 0.0
 
-    # Keep prior influence bounded so it informs ordering without dominating edge score.
     ajuste = prior_num * 0.75
     return max(-6.0, min(6.0, ajuste))
 
@@ -889,7 +897,6 @@ def executar_preflight():
     falhas = []
     avisos = []
 
-    # Bootstrap required execution table before schema validation to avoid first-run false negatives.
     garantir_schema_minimo()
 
     if not TOKEN:
@@ -1004,6 +1011,7 @@ def formatar_sinal_kelly(analise, kelly):
     )
     return msg
 
+
 async def processar_jogos(dry_run=False):
     ciclo_inicio = time.perf_counter()
     bot = None
@@ -1046,7 +1054,7 @@ async def processar_jogos(dry_run=False):
             print(f"Limite diário atingido: {sinais_hoje}/{MAX_SINAIS_DIA}")
         return
 
-    conn_check = sqlite3.connect("data/edge_protocol.db")
+    conn_check = sqlite3.connect(DB_PATH)   # BUG-02 verificado: usa DB_PATH
     c_check = conn_check.cursor()
     c_check.execute(
         "SELECT jogo || '|' || mercado FROM sinais WHERE data = ?",
@@ -1073,6 +1081,10 @@ async def processar_jogos(dry_run=False):
         "sem_sinal": 0,
     }
     total_avaliacoes_mercado = 0
+    # FIX-06: lista para rastrear jogos que usaram fallback de xG
+    jogos_com_fallback_xg: list = []
+    # FIX-09: cache de odds por ciclo — evita re-fetches para o mesmo fixture
+    _odds_cache: dict = {}
 
     for liga_key in LIGAS:
         fetch_result = buscar_jogos_com_odds_com_status(liga_key)
@@ -1089,6 +1101,12 @@ async def processar_jogos(dry_run=False):
                 home = jogo["home_team"]
                 away = jogo["away_team"]
                 media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
+
+                # FIX-06: registrar jogo que usou fallback para xG
+                _fonte_lower = fonte_dados.lower()
+                if "médias" in _fonte_lower or "medias" in _fonte_lower:
+                    jogos_com_fallback_xg.append(jogo["jogo"])
+
                 ajuste_casa, ajuste_fora = calcular_ajuste_forma(home, away)
 
                 advanced_match_analysis = None
@@ -1195,7 +1213,13 @@ async def processar_jogos(dry_run=False):
                     if analise["decisao"] == "DESCARTAR":
                         continue
 
-                    dados_odds = buscar_odds_todas_casas(liga_key, home, away, mercado)
+                    # FIX-09: cache de odds por ciclo — evita requisições duplicadas
+                    # para o mesmo fixture quando iteramos sobre múltiplos mercados
+                    _cache_key = f"{home}|{away}|{liga_key}"
+                    if _cache_key not in _odds_cache:
+                        _odds_cache[_cache_key] = buscar_odds_todas_casas(liga_key, home, away, mercado)
+                    dados_odds = _odds_cache[_cache_key]
+
                     steam_data = None
                     steam_bonus = 0
                     if dados_odds:
@@ -1493,7 +1517,6 @@ async def processar_jogos(dry_run=False):
             marcar_ciclo_degradado("critical_persistence_insert_sinal", {"jogo": analise.get("jogo"), "erro": str(e)})
             continue
 
-        # CLV tracking
         try:
             registrar_aposta_clv(sinal_id, analise["jogo"], analise["mercado"],
                                   analise["odd"], analise.get("prob_modelo", 0.5))
@@ -1501,14 +1524,12 @@ async def processar_jogos(dry_run=False):
             if not MINIMAL_RUNTIME_OUTPUT:
                 print(f"Erro CLV: {e}")
 
-        # Steam evento
         if item.get("dados_odds") and analise.get("steam_bonus", 0) > 0:
             steam = calcular_steam(jogo["jogo"], item["mercado"], item["dados_odds"])
             if steam:
                 salvar_steam_evento(sinal_id, jogo["jogo"], item["mercado"],
                                     steam, analise["steam_bonus"])
 
-        # Atualiza Excel com nova aposta
         try:
             tip = "Casa" if analise["mercado"] == "1x2_casa" else "Over 2.5"
             atualizar_excel({
@@ -1621,6 +1642,8 @@ async def processar_jogos(dry_run=False):
             "max_diario": MAX_SINAIS_DIA,
             "provider_health": provider_health,
             "prior_context_counts": prior_context_counts,
+            # FIX-06: jogos que usaram fallback de xG neste ciclo
+            "jogos_fallback_xg": jogos_com_fallback_xg,
         },
     )
 
@@ -1646,7 +1669,8 @@ async def monitorar_janela_expandida():
 
 async def monitorar_steam_sinais_ativos():
     bot = Bot(token=TOKEN)
-    conn = sqlite3.connect("data/edge_protocol.db")
+    # BUG-02 FIX: usar DB_PATH em vez de caminho hardcoded
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
         SELECT id, jogo, mercado, liga, horario FROM sinais
@@ -1691,7 +1715,8 @@ async def verificar_clv_fechamento():
     agora = datetime.now(timezone.utc)
 
     for sinal_id, jogo, mercado, liga_nome in pendentes:
-        conn = sqlite3.connect("data/edge_protocol.db")
+        # BUG-02 FIX: usar DB_PATH em vez de caminho hardcoded
+        conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute("SELECT horario FROM sinais WHERE id = ?", (sinal_id,))
         row = c.fetchone()
@@ -1715,13 +1740,113 @@ async def verificar_clv_fechamento():
         except Exception as e:
             print(f"Erro CLV #{sinal_id}: {e}")
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# FIX-10: settlement com side-effects extraídos em funções auxiliares
+# As funções _registrar_settlement e _executar_side_effects_pos_settlement
+# isolam as responsabilidades e permitem tratamento independente de falhas.
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _registrar_settlement(sinal_id, avaliacao):
+    """
+    Persiste o resultado do settlement no banco.
+    Retorna True se persistido com sucesso, False caso contrário.
+    """
+    from database import atualizar_resultado as _atualizar_resultado
+    try:
+        _atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
+        return True
+    except Exception as e:
+        marcar_ciclo_degradado(
+            "critical_persistence_update_resultado",
+            {"sinal_id": sinal_id, "erro": str(e)},
+        )
+        return False
+
+
+async def _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_msg):
+    """
+    Executa os side-effects após settlement confirmado:
+      - atualização de banca
+      - cálculo de Brier
+      - reações Telegram (VIP e FREE)
+      - update de Excel
+    Cada etapa é isolada em try/except para não bloquear as demais.
+    """
+    # Banca
+    try:
+        estado = atualizar_banca(avaliacao["lucro"])
+        print(f"Banca: R${estado['banca_atual']:.2f}")
+    except Exception as e:
+        print(f"Erro banca: {e}")
+
+    # Brier Score
+    try:
+        acertou = avaliacao["resultado"] == "verde"
+        brier = atualizar_brier(sinal_id, acertou)
+        if brier is not None:
+            print(f"Brier #{sinal_id}: {brier:.4f} {'✅' if brier < 0.25 else '⚠️'}")
+    except Exception as e:
+        print(f"Erro Brier: {e}")
+
+    # Reação Telegram
+    if ids_msg:
+        reacao = "✅" if avaliacao["resultado"] == "verde" else "❌"
+        if ids_msg[0]:
+            try:
+                await bot.set_message_reaction(
+                    chat_id=CANAL_VIP,
+                    message_id=ids_msg[0],
+                    reaction=[reacao]
+                )
+            except Exception as e:
+                # FIX-05: log estruturado em vez de print simples
+                log_event(
+                    "telegram", "reaction", f"sinal_{sinal_id}", "failed",
+                    "telegram_reaction_error",
+                    {"erro": str(e), "canal": "VIP", "sinal_id": sinal_id},
+                )
+        if ids_msg[1]:
+            try:
+                await bot.set_message_reaction(
+                    chat_id=CANAL_FREE,
+                    message_id=ids_msg[1],
+                    reaction=[reacao]
+                )
+            except Exception as e:
+                # FIX-05: log estruturado em vez de print simples
+                log_event(
+                    "telegram", "reaction", f"sinal_{sinal_id}", "failed",
+                    "telegram_reaction_error",
+                    {"erro": str(e), "canal": "FREE", "sinal_id": sinal_id},
+                )
+
+    # Update Excel
+    try:
+        estado_banca = carregar_estado_banca()
+        atualizar_excel({
+            "acao": "resultado",
+            "aposta": {
+                "id": str(sinal_id),
+                "odd_fechamento": None,
+                "resultado": avaliacao["resultado"].capitalize(),
+                "retorno": avaliacao["lucro"],
+                "banca_apos": estado_banca["banca_atual"],
+                "data": datetime.now().strftime("%Y-%m-%d")
+            }
+        })
+    except Exception as e:
+        if not MINIMAL_RUNTIME_OUTPUT:
+            print(f"Erro update Excel (resultado): {e}")
+
+
 async def verificar_resultados_automatico():
     from verificar_resultados import buscar_resultado_jogo, avaliar_mercado
     from database import atualizar_resultado, atualizar_fixture_referencia
     from exportar_excel import gerar_excel
 
     bot = Bot(token=TOKEN)
-    conn = sqlite3.connect("data/edge_protocol.db")
+    conn = sqlite3.connect(DB_PATH)   # BUG-02 verificado: usa DB_PATH
     c = conn.cursor()
     c.execute(
         """
@@ -1791,74 +1916,30 @@ async def verificar_resultados_automatico():
             if not avaliacao:
                 continue
 
-            try:
-                atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
-            except Exception as e:
-                marcar_ciclo_degradado("critical_persistence_update_resultado", {"sinal_id": sinal_id, "erro": str(e)})
+            # BUG-04 FIX: verificar se o sinal ainda está pendente antes de finalizar.
+            # Protege contra dupla finalização em execuções sobrepostas do mesmo job.
+            with sqlite3.connect(DB_PATH) as _conn_guard:
+                _row_guard = _conn_guard.execute(
+                    "SELECT status FROM sinais WHERE id = ?", (sinal_id,)
+                ).fetchone()
+            if not _row_guard or _row_guard[0] != "pendente":
+                continue
+
+            # FIX-10: persistência isolada dos side-effects
+            if not _registrar_settlement(sinal_id, avaliacao):
                 continue
             resultado_registrado = True
 
-            # Atualiza banca
-            try:
-                estado = atualizar_banca(avaliacao["lucro"])
-                print(f"Banca: R${estado['banca_atual']:.2f}")
-            except Exception as e:
-                print(f"Erro banca: {e}")
-
-            # Brier Score
-            try:
-                acertou = avaliacao["resultado"] == "verde"
-                brier = atualizar_brier(sinal_id, acertou)
-                if brier is not None:
-                    print(f"Brier #{sinal_id}: {brier:.4f} {'✅' if brier < 0.25 else '⚠️'}")
-            except Exception as e:
-                print(f"Erro Brier: {e}")
-
-            # Reação Telegram
-            conn2 = sqlite3.connect("data/edge_protocol.db")
+            # Buscar IDs de mensagem para reação Telegram
+            conn2 = sqlite3.connect(DB_PATH)   # BUG-02 verificado: usa DB_PATH
             c2 = conn2.cursor()
             c2.execute("SELECT message_id_vip, message_id_free FROM sinais WHERE id = ?",
                        (sinal_id,))
-            ids = c2.fetchone()
+            ids_msg = c2.fetchone()
             conn2.close()
 
-            if ids:
-                reacao = "✅" if avaliacao["resultado"] == "verde" else "❌"
-                if ids[0]:
-                    try:
-                        await bot.set_message_reaction(
-                            chat_id=CANAL_VIP,
-                            message_id=ids[0],
-                            reaction=[reacao]
-                        )
-                    except Exception as e:
-                        print(f"Erro reação VIP #{sinal_id}: {e}")
-                if ids[1]:
-                    try:
-                        await bot.set_message_reaction(
-                            chat_id=CANAL_FREE,
-                            message_id=ids[1],
-                            reaction=[reacao]
-                        )
-                    except Exception as e:
-                        print(f"Erro reação FREE #{sinal_id}: {e}")
-
-            # Atualiza Excel com resultado
-            try:
-                estado_banca = carregar_estado_banca()
-                atualizar_excel({
-                    "acao": "resultado",
-                    "aposta": {
-                        "id": str(sinal_id),
-                        "odd_fechamento": None,
-                        "resultado": avaliacao["resultado"].capitalize(),
-                        "retorno": avaliacao["lucro"],
-                        "banca_apos": estado_banca["banca_atual"],
-                        "data": datetime.now().strftime("%Y-%m-%d")
-                    }
-                })
-            except Exception as e:
-                print(f"Erro update Excel (resultado): {e}")
+            # FIX-10: side-effects em função separada
+            await _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_msg)
 
             print(f"Resultado: #{sinal_id} — {avaliacao['resultado'].upper()}")
 
@@ -1929,7 +2010,6 @@ async def enviar_resumo_diario():
     await bot.send_message(chat_id=CANAL_VIP, text=msg)
     await bot.send_message(chat_id=CANAL_FREE, text=msg)
 
-    # Full refresh do Excel no resumo diário
     try:
         atualizar_excel({"acao": "full_refresh"})
         print("Excel atualizado (full refresh).")
