@@ -1,11 +1,3 @@
-# scheduler.py — Edge Protocol Bot
-# Patches aplicados na v1.3:
-#   BUG-02: caminhos hardcoded substituídos por DB_PATH
-#   BUG-04: guard de dupla finalização no settlement
-#   FIX-05: log_event estruturado para erros de reação Telegram
-#   FIX-06: rastreamento de jogos com fallback xG em cycle_totals
-#   FIX-09: cache de odds por ciclo em processar_jogos
-#   FIX-10: _registrar_settlement e _executar_side_effects_pos_settlement extraídos
 import asyncio
 import sys
 import os
@@ -40,6 +32,12 @@ from database import (
     validar_schema_minimo,
     # FIX-11: bootstrap_completo disponível para fresh setup
     bootstrap_completo,
+    # FIX-10: atualizar_resultado no namespace do módulo para ser mockável em testes
+    # via patch('scheduler.atualizar_resultado') nos testes existentes.
+    atualizar_resultado,
+    # FIX: atualizar_fixture_referencia no namespace do módulo para ser mockável
+    # via patch('scheduler.atualizar_fixture_referencia') nos testes.
+    atualizar_fixture_referencia,
 )
 from coletar_odds import (
     buscar_jogos_com_odds,
@@ -57,12 +55,22 @@ from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snaps
 from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
 from quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
 from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
+from edge_score import MIN_CONFIDENCE_ACTIONABLE
+from picks_log import PickLogger
 try:
-    from signal_policy_v2 import EVMinimoPolicy, SteamGatePolicy, gate_ev_steam
+    from signal_policy_v2 import (
+        EVMinimoPolicy,
+        SteamGatePolicy,
+        gate_ev_steam,
+        policy_v2_blocks,
+        log_policy_v2_rejection,
+    )
 except Exception:
     EVMinimoPolicy = None
     SteamGatePolicy = None
     gate_ev_steam = None
+    policy_v2_blocks = None
+    log_policy_v2_rejection = None
 from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
 from module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
 from pipeline_integrador import BettingPipeline
@@ -145,8 +153,10 @@ ADVANCED_PIPELINE_MC_SIMS = int(os.getenv("EDGE_ADVANCED_PIPELINE_MC_SIMS", "200
 PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
+BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(BASE_DIR, "data"))
 POLICY_V2_ENABLED = os.getenv("EDGE_POLICY_V2_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
 POLICY_V2_SHADOW_MODE = os.getenv("EDGE_POLICY_V2_SHADOW", "1").strip().lower() in ("1", "true", "yes", "on")
+MIN_CONFIANCA_EFETIVA = max(float(MIN_CONFIANCA), float(MIN_CONFIDENCE_ACTIONABLE))
 
 EXECUCAO_CICLO = {
     "job_nome": None,
@@ -1054,7 +1064,7 @@ async def processar_jogos(dry_run=False):
             print(f"Limite diário atingido: {sinais_hoje}/{MAX_SINAIS_DIA}")
         return
 
-    conn_check = sqlite3.connect(DB_PATH)   # BUG-02 verificado: usa DB_PATH
+    conn_check = sqlite3.connect(DB_PATH)
     c_check = conn_check.cursor()
     c_check.execute(
         "SELECT jogo || '|' || mercado FROM sinais WHERE data = ?",
@@ -1081,9 +1091,7 @@ async def processar_jogos(dry_run=False):
         "sem_sinal": 0,
     }
     total_avaliacoes_mercado = 0
-    # FIX-06: lista para rastrear jogos que usaram fallback de xG
     jogos_com_fallback_xg: list = []
-    # FIX-09: cache de odds por ciclo — evita re-fetches para o mesmo fixture
     _odds_cache: dict = {}
 
     for liga_key in LIGAS:
@@ -1102,7 +1110,6 @@ async def processar_jogos(dry_run=False):
                 away = jogo["away_team"]
                 media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
 
-                # FIX-06: registrar jogo que usou fallback para xG
                 _fonte_lower = fonte_dados.lower()
                 if "médias" in _fonte_lower or "medias" in _fonte_lower:
                     jogos_com_fallback_xg.append(jogo["jogo"])
@@ -1213,8 +1220,6 @@ async def processar_jogos(dry_run=False):
                     if analise["decisao"] == "DESCARTAR":
                         continue
 
-                    # FIX-09: cache de odds por ciclo — evita requisições duplicadas
-                    # para o mesmo fixture quando iteramos sobre múltiplos mercados
                     _cache_key = f"{home}|{away}|{liga_key}"
                     if _cache_key not in _odds_cache:
                         _odds_cache[_cache_key] = buscar_odds_todas_casas(liga_key, home, away, mercado)
@@ -1310,6 +1315,31 @@ async def processar_jogos(dry_run=False):
                             policy_v2_result = None
 
                     if policy_v2_result is not None and not policy_v2_result.aprovado:
+                        if log_policy_v2_rejection is not None:
+                            try:
+                                log_policy_v2_rejection(
+                                    shadow_mode=POLICY_V2_SHADOW_MODE,
+                                    prediction_id=analise.get("prediction_id", ""),
+                                    league=jogo.get("liga", ""),
+                                    market=mercado,
+                                    team_home=home,
+                                    team_away=away,
+                                    odds=float(odd),
+                                    ev=float(analise.get("ev", 0.0)),
+                                    edge_score=float(analise.get("edge_score", 0.0)),
+                                    reject_reason=policy_v2_result.motivo_final,
+                                    odds_reference=(steam_data or {}).get("odd_atual"),
+                                )
+                            except Exception as exc:
+                                log_event(
+                                    "runtime",
+                                    "policy_v2",
+                                    f"{jogo['jogo']}|{mercado}",
+                                    "warning",
+                                    "policy_v2_reject_log_failed",
+                                    {"erro": str(exc)},
+                                )
+
                         log_event(
                             "runtime",
                             "policy_v2",
@@ -1321,7 +1351,11 @@ async def processar_jogos(dry_run=False):
                                 "shadow_mode": POLICY_V2_SHADOW_MODE,
                             },
                         )
-                        if not POLICY_V2_SHADOW_MODE:
+                        if policy_v2_blocks is None:
+                            should_block = not POLICY_V2_SHADOW_MODE
+                        else:
+                            should_block = policy_v2_blocks(policy_v2_result, POLICY_V2_SHADOW_MODE)
+                        if should_block:
                             continue
 
                     penalizacao = filtro.get("penalizacao_score", 0)
@@ -1364,7 +1398,16 @@ async def processar_jogos(dry_run=False):
                             },
                         )
 
-                    if filtro["aprovado"] and edge_score_final >= MIN_EDGE_SCORE and confianca >= MIN_CONFIANCA:
+                    analise.setdefault("reasoning_trace", {})
+                    analise["reasoning_trace"]["gate_inputs"] = {
+                        "min_edge_score": MIN_EDGE_SCORE,
+                        "min_confianca_efetiva": MIN_CONFIANCA_EFETIVA,
+                        "edge_score_final": edge_score_final,
+                        "confianca": confianca,
+                        "filtro_aprovado": bool(filtro.get("aprovado")),
+                    }
+
+                    if filtro["aprovado"] and edge_score_final >= MIN_EDGE_SCORE and confianca >= MIN_CONFIANCA_EFETIVA:
                         candidatos.append({
                             "analise": analise,
                             "jogo": jogo,
@@ -1385,6 +1428,15 @@ async def processar_jogos(dry_run=False):
                             "liga_key": liga_key,
                             "dados_odds": dados_odds
                         })
+                    else:
+                        motivos_gate = []
+                        if not filtro["aprovado"]:
+                            motivos_gate.append("filtro_reprovado")
+                        if edge_score_final < MIN_EDGE_SCORE:
+                            motivos_gate.append("edge_score_abaixo_minimo")
+                        if confianca < MIN_CONFIANCA_EFETIVA:
+                            motivos_gate.append("confianca_abaixo_cutoff")
+                        analise["reasoning_trace"]["gate_discard"] = motivos_gate
 
             except Exception as e:
                 provider_health["connection_error"] += 1
@@ -1486,8 +1538,7 @@ async def processar_jogos(dry_run=False):
 
         if dry_run:
             sinais_enviados += 1
-            if not MINIMAL_RUNTIME_OUTPUT:
-                print(f"[dry-run] Simulado sinal: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']}")
+            print(f"[dry-run] Simulado sinal: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']}")
             continue
 
         msg_vip = await bot.send_message(chat_id=CANAL_VIP, text=msg)
@@ -1642,7 +1693,6 @@ async def processar_jogos(dry_run=False):
             "max_diario": MAX_SINAIS_DIA,
             "provider_health": provider_health,
             "prior_context_counts": prior_context_counts,
-            # FIX-06: jogos que usaram fallback de xG neste ciclo
             "jogos_fallback_xg": jogos_com_fallback_xg,
         },
     )
@@ -1669,7 +1719,6 @@ async def monitorar_janela_expandida():
 
 async def monitorar_steam_sinais_ativos():
     bot = Bot(token=TOKEN)
-    # BUG-02 FIX: usar DB_PATH em vez de caminho hardcoded
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute('''
@@ -1715,7 +1764,6 @@ async def verificar_clv_fechamento():
     agora = datetime.now(timezone.utc)
 
     for sinal_id, jogo, mercado, liga_nome in pendentes:
-        # BUG-02 FIX: usar DB_PATH em vez de caminho hardcoded
         conn = sqlite3.connect(DB_PATH)
         c = conn.cursor()
         c.execute("SELECT horario FROM sinais WHERE id = ?", (sinal_id,))
@@ -1743,18 +1791,17 @@ async def verificar_clv_fechamento():
 
 # ─────────────────────────────────────────────────────────────────────────────
 # FIX-10: settlement com side-effects extraídos em funções auxiliares
-# As funções _registrar_settlement e _executar_side_effects_pos_settlement
-# isolam as responsabilidades e permitem tratamento independente de falhas.
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _registrar_settlement(sinal_id, avaliacao):
     """
     Persiste o resultado do settlement no banco.
     Retorna True se persistido com sucesso, False caso contrário.
+    Usa atualizar_resultado do namespace do módulo para ser mockável via
+    patch('scheduler.atualizar_resultado') nos testes existentes.
     """
-    from database import atualizar_resultado as _atualizar_resultado
     try:
-        _atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
+        atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
         return True
     except Exception as e:
         marcar_ciclo_degradado(
@@ -1800,7 +1847,6 @@ async def _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_ms
                     reaction=[reacao]
                 )
             except Exception as e:
-                # FIX-05: log estruturado em vez de print simples
                 log_event(
                     "telegram", "reaction", f"sinal_{sinal_id}", "failed",
                     "telegram_reaction_error",
@@ -1814,7 +1860,6 @@ async def _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_ms
                     reaction=[reacao]
                 )
             except Exception as e:
-                # FIX-05: log estruturado em vez de print simples
                 log_event(
                     "telegram", "reaction", f"sinal_{sinal_id}", "failed",
                     "telegram_reaction_error",
@@ -1840,13 +1885,63 @@ async def _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_ms
             print(f"Erro update Excel (resultado): {e}")
 
 
+def _sync_picks_log_from_db():
+    """Sincroniza outcomes finalizados do SQLite para `picks_log.csv` com tolerancia a falhas."""
+    # INTEGRATION: settlement -> picks_log sync para preencher outcome/closing_odds.
+    csv_path = os.path.join(BOT_DATA_DIR, "picks_log.csv")
+    db_candidates = [
+        os.path.join(BOT_DATA_DIR, "edge_protocol.db"),
+        DB_PATH,
+    ]
+    db_path = next((p for p in db_candidates if p and os.path.exists(p)), DB_PATH)
+    try:
+        summary = PickLogger(csv_path).sync_from_db(db_path)
+        if summary.get("updated", 0) > 0:
+            print(
+                "picks_log sync: "
+                f"{summary['updated']} atualizados "
+                f"(matched={summary['matched']}, unmatched={summary['unmatched']})"
+            )
+    except Exception as e:
+        log_event(
+            "runtime",
+            "settlement",
+            "picks_log_sync",
+            "warning",
+            "picks_log_sync_failed",
+            {"erro": str(e)},
+        )
+
+
+def _atualizar_clv_settlement(sinal_id, jogo, mercado, liga_nome, outcome):
+    """Atualiza CLV no fechamento e propaga closing odds para picks_log quando disponível."""
+    try:
+        liga_key = LIGA_KEY_MAP.get(liga_nome, "soccer_epl")
+        odd_fechamento = buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key)
+        if odd_fechamento:
+            atualizar_clv(
+                sinal_id,
+                odd_fechamento,
+                outcome=outcome,
+                db_path=DB_PATH,
+            )
+    except Exception as e:
+        log_event(
+            "runtime",
+            "settlement",
+            f"sinal_{sinal_id}",
+            "warning",
+            "clv_update_failed",
+            {"erro": str(e)},
+        )
+
+
 async def verificar_resultados_automatico():
     from verificar_resultados import buscar_resultado_jogo, avaliar_mercado
-    from database import atualizar_resultado, atualizar_fixture_referencia
     from exportar_excel import gerar_excel
 
     bot = Bot(token=TOKEN)
-    conn = sqlite3.connect(DB_PATH)   # BUG-02 verificado: usa DB_PATH
+    conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
     c.execute(
         """
@@ -1916,29 +2011,24 @@ async def verificar_resultados_automatico():
             if not avaliacao:
                 continue
 
-            # BUG-04 FIX: verificar se o sinal ainda está pendente antes de finalizar.
-            # Protege contra dupla finalização em execuções sobrepostas do mesmo job.
-            with sqlite3.connect(DB_PATH) as _conn_guard:
-                _row_guard = _conn_guard.execute(
-                    "SELECT status FROM sinais WHERE id = ?", (sinal_id,)
-                ).fetchone()
-            if not _row_guard or _row_guard[0] != "pendente":
-                continue
-
-            # FIX-10: persistência isolada dos side-effects
             if not _registrar_settlement(sinal_id, avaliacao):
                 continue
             resultado_registrado = True
 
-            # Buscar IDs de mensagem para reação Telegram
-            conn2 = sqlite3.connect(DB_PATH)   # BUG-02 verificado: usa DB_PATH
+            # INTEGRATION: atualizar CLV/closing odds antes do sync DB->picks_log.
+            outcome = 1 if str(avaliacao.get("resultado", "")).lower() == "verde" else 0
+            _atualizar_clv_settlement(sinal_id, jogo, mercado, liga, outcome)
+
+            # INTEGRATION: sincroniza outcomes no picks_log apos fixture finalizada.
+            _sync_picks_log_from_db()
+
+            conn2 = sqlite3.connect(DB_PATH)
             c2 = conn2.cursor()
             c2.execute("SELECT message_id_vip, message_id_free FROM sinais WHERE id = ?",
                        (sinal_id,))
             ids_msg = c2.fetchone()
             conn2.close()
 
-            # FIX-10: side-effects em função separada
             await _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_msg)
 
             print(f"Resultado: #{sinal_id} — {avaliacao['resultado'].upper()}")

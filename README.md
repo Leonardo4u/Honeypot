@@ -98,7 +98,16 @@ python criar_tabelas.py
 
 ## ⚙️ Variáveis de ambiente
 
-Configure um arquivo `.env` na raiz com:
+Use `.env.example` como fonte canônica de todas as variáveis disponíveis,
+incluindo tipo, valor padrão e descrição. Para começar:
+
+```bash
+copy .env.example .env
+```
+
+Depois, ajuste os segredos obrigatórios (`BOT_TOKEN`, `ODDS_API_KEY`, `API_FOOTBALL_KEY`, canais).
+
+Exemplo mínimo:
 
 ```env
 BOT_TOKEN=seu_token_telegram
@@ -128,6 +137,14 @@ SLO_FALLBACK_RATE_MAX=0.35
 SLO_CYCLE_LATENCY_MAX_SECONDS=120
 SLO_DRIFT_MAX_BRIER=0.25
 ```
+
+Também estão documentadas em `.env.example` as variáveis avançadas de runtime/UI e policy:
+`EDGE_MINIMAL_OUTPUT`, `EDGE_SHOW_STARTUP_BANNER`, `EDGE_FORCE_ANSI_COLOR`,
+`EDGE_IDLE_ASCII_ANIM`, `EDGE_IDLE_ASCII_FRAME_MS`, `EDGE_IDLE_ASCII_MAX_W`,
+`EDGE_IDLE_ASCII_MAX_H`, `EDGE_OPERATOR`, `EDGE_PROVIDER_ERROR_RATE_MAX`,
+`EDGE_ADVANCED_PIPELINE_ENABLED`, `EDGE_ADVANCED_PIPELINE_MC_SIMS`,
+`EDGE_PLAYBOOK_URL`, `EDGE_POLICY_V2_ENABLED`, `EDGE_POLICY_V2_SHADOW`,
+`BOT_DATA_DIR`.
 
 ### Variáveis usadas no projeto
 
@@ -207,6 +224,14 @@ Esse comando instala dependências, inicializa tabelas e executa sanity+smoke ch
 python scripts/backtest_moving_window.py
 python scripts/check_promotion_gate.py
 ```
+
+## Promoting policy_v2 to hard mode
+
+1. Run: `python scripts/analyze_shadow.py --min-picks 20`
+2. Confirm the verdict is `PROMOTE`
+3. Set `EDGE_POLICY_V2_SHADOW=0` in `.env`
+4. Restart scheduler
+5. Monitor `logs/policy_v2_reject.log` for the first 48h
 
 ### Painel SLO semanal/mensal
 

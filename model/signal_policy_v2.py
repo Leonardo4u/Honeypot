@@ -17,12 +17,37 @@ from __future__ import annotations
 
 import math
 import logging
+import json
+import os
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
 from typing import Optional
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_policy_v2_logs_dir() -> str:
+    """Resolve diretório de logs para policy v2 respeitando BOT_DATA_DIR."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    data_dir = os.getenv("BOT_DATA_DIR", os.path.join(root, "data"))
+    if os.path.basename(os.path.normpath(data_dir)).lower() == "data":
+        base = os.path.dirname(os.path.normpath(data_dir))
+    else:
+        base = data_dir
+    return os.path.join(base, "logs")
+
+
+def _estimate_clv(odds_at_pick: Optional[float], odds_reference: Optional[float]) -> Optional[float]:
+    """Estima CLV via log(odd_pick/odd_ref) quando ambas as odds são válidas."""
+    try:
+        odd_pick = float(odds_at_pick)
+        odd_ref = float(odds_reference)
+    except Exception:
+        return None
+    if odd_pick <= 1.0 or odd_ref <= 1.0:
+        return None
+    return round(math.log(odd_pick / odd_ref), 6)
 
 
 # ════════════════════════════════════════════════════════════════════════════
@@ -410,6 +435,54 @@ class GateCombinado:
     steam_decisao: Optional[SteamDecisao]
     motivo_final: str
     log_estruturado: dict
+
+
+def policy_v2_blocks(decisao: Optional[GateCombinado], shadow_mode: bool) -> bool:
+    """Retorna se uma decisao v2 deve bloquear o fluxo quando shadow mode esta ativo/inativo."""
+    if decisao is None:
+        return False
+    if decisao.aprovado:
+        return False
+    return not bool(shadow_mode)
+
+
+def log_policy_v2_rejection(
+    *,
+    shadow_mode: bool,
+    prediction_id: str,
+    league: str,
+    market: str,
+    team_home: str,
+    team_away: str,
+    odds: float,
+    ev: float,
+    edge_score: float,
+    reject_reason: str,
+    odds_reference: Optional[float] = None,
+):
+    """Registra rejeições da policy v2 em JSONL dedicado para shadow/hard mode."""
+    logs_dir = _resolve_policy_v2_logs_dir()
+    os.makedirs(logs_dir, exist_ok=True)
+    filename = "policy_v2_shadow.log" if shadow_mode else "policy_v2_reject.log"
+    path = os.path.join(logs_dir, filename)
+
+    payload = {
+        "timestamp": datetime.now().astimezone().isoformat(),
+        "prediction_id": str(prediction_id or ""),
+        "league": str(league or ""),
+        "market": str(market or ""),
+        "team_home": str(team_home or ""),
+        "team_away": str(team_away or ""),
+        "odds": float(odds),
+        "ev": float(ev),
+        "edge_score": float(edge_score),
+        "clv_estimate": _estimate_clv(odds, odds_reference),
+        "reject_reason": str(reject_reason or "policy_v2_reject"),
+        "would_have_blocked": bool(shadow_mode),
+    }
+
+    with open(path, "a", encoding="utf-8") as f:
+        f.write(json.dumps(payload, ensure_ascii=True) + "\n")
 
 
 def gate_ev_steam(
