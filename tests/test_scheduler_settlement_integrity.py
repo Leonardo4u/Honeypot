@@ -233,9 +233,11 @@ class TestSchedulerSettlementIntegrity(unittest.TestCase):
             },
             clear=False,
         ):
-            with patch("scheduler.sqlite3.connect", side_effect=[first_conn]), patch(
-                "scheduler.atualizar_banca", return_value={"banca_atual": 100.0}
-            ), patch("scheduler.atualizar_brier", return_value=0.2):
+            with patch("scheduler.sqlite3.connect", side_effect=[first_conn]), \
+                 patch("scheduler.atualizar_fixture_referencia", side_effect=_atualizar_fixture_referencia), \
+                 patch("scheduler.atualizar_resultado", side_effect=_atualizar_resultado), \
+                 patch("scheduler.atualizar_banca", return_value={"banca_atual": 100.0}), \
+                 patch("scheduler.atualizar_brier", return_value=0.2):
                 asyncio.run(scheduler.verificar_resultados_automatico())
 
         self.assertEqual(calls[0]["horario"], "2026-03-20T17:30:00Z")
@@ -307,11 +309,12 @@ class TestSchedulerSettlementIntegrity(unittest.TestCase):
             },
             clear=False,
         ):
-            with patch("scheduler.sqlite3.connect", side_effect=[first_conn, second_conn]), patch(
-                "scheduler.atualizar_banca", return_value={"banca_atual": 150.0}
-            ), patch("scheduler.atualizar_brier", return_value=0.12), patch(
-                "scheduler.atualizar_excel", return_value=None
-            ):
+            with patch("scheduler.sqlite3.connect", side_effect=[first_conn, second_conn]), \
+                 patch("scheduler.atualizar_fixture_referencia", side_effect=_atualizar_fixture_referencia), \
+                 patch("scheduler.atualizar_resultado", side_effect=_atualizar_resultado), \
+                 patch("scheduler.atualizar_banca", return_value={"banca_atual": 150.0}), \
+                 patch("scheduler.atualizar_brier", return_value=0.12), \
+                 patch("scheduler.atualizar_excel", return_value=None):
                 asyncio.run(scheduler.verificar_resultados_automatico())
 
         self.assertEqual(calls[0]["fixture_id"], "777")

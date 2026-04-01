@@ -9,7 +9,23 @@ from database import sinal_existe
 load_dotenv()
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")
+ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(ROOT_DIR, "data"))
+PICKS_LOG_PATH = os.path.join(BOT_DATA_DIR, "picks_log.csv")
 API_KEY = os.getenv("ODDS_API_KEY")
+
+
+def _sinal_existe_em_path(sinal_id, db_path=None):
+    """Valida existência de sinal no banco alvo, respeitando db_path opcional."""
+    if db_path is None:
+        return sinal_existe(sinal_id)
+    conn = sqlite3.connect(db_path)
+    try:
+        c = conn.cursor()
+        c.execute("SELECT 1 FROM sinais WHERE id = ? LIMIT 1", (sinal_id,))
+        return c.fetchone() is not None
+    finally:
+        conn.close()
 
 def criar_tabelas_validacao():
     conn = sqlite3.connect(DB_PATH)
@@ -118,13 +134,23 @@ def buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key):
         print(f"Erro ao buscar odd Pinnacle: {e}")
         return None
 
-def atualizar_clv(sinal_id, odd_fechamento):
-    if not sinal_existe(sinal_id):
+def atualizar_clv(sinal_id, odd_fechamento, outcome=None, db_path=None):
+    path = db_path or DB_PATH
+    if not _sinal_existe_em_path(sinal_id, db_path=path):
         print(f"[clv_link_invalid] sinal_id inexistente no fechamento: {sinal_id}")
         return None
 
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(path)
     c = conn.cursor()
+
+    c.execute("PRAGMA table_info(sinais)")
+    colunas_sinais = {str(r[1]) for r in c.fetchall()}
+    prediction_select = "prediction_id" if "prediction_id" in colunas_sinais else "NULL"
+    c.execute(
+        f"SELECT liga, jogo, horario, {prediction_select} FROM sinais WHERE id = ?",
+        (sinal_id,),
+    )
+    sinal_row = c.fetchone()
 
     c.execute("SELECT odd_entrada, status, odd_fechamento, clv_percentual FROM clv_tracking WHERE sinal_id = ?", (sinal_id,))
     row = c.fetchone()
@@ -150,6 +176,25 @@ def atualizar_clv(sinal_id, odd_fechamento):
 
     conn.commit()
     conn.close()
+
+    # INTEGRATION: persistir closing_odds no picks_log para CLV por pick no dashboard.
+    try:
+        if sinal_row:
+            liga, jogo, horario, prediction_id = sinal_row
+            from model.picks_log import PickLogger
+
+            pick_logger = PickLogger(PICKS_LOG_PATH)
+            pred_id = pick_logger.find_prediction_id(
+                league=liga or "",
+                jogo=jogo or "",
+                timestamp_ref=horario,
+                prediction_id=prediction_id,
+            )
+            if pred_id and outcome in (0, 1):
+                pick_logger.update_outcome(pred_id, outcome=int(outcome), closing_odds=odd_fechamento)
+    except Exception as e:
+        print(f"[WARN] atualizar_clv -> picks_log sync falhou para sinal_id={sinal_id}: {e}")
+
     return clv
 
 def atualizar_brier(sinal_id, acertou):
