@@ -93,6 +93,8 @@ IDLE_ASCII_FRAME_MS = int(os.getenv("EDGE_IDLE_ASCII_FRAME_MS", "120"))
 IDLE_ASCII_MAX_W = int(os.getenv("EDGE_IDLE_ASCII_MAX_W", "52"))
 IDLE_ASCII_MAX_H = int(os.getenv("EDGE_IDLE_ASCII_MAX_H", "18"))
 
+_DB_SCHEMA_READY = False
+
 
 def _enable_windows_ansi():
     if os.name != "nt":
@@ -449,6 +451,27 @@ def marcar_ciclo_falha(reason_code, detalhes=None):
     if reason_code not in EXECUCAO_CICLO["reason_codes"]:
         EXECUCAO_CICLO["reason_codes"].append(reason_code)
     log_event("runtime", "cycle", EXECUCAO_CICLO.get("job_nome", "desconhecido"), "failed", reason_code, detalhes)
+
+
+def _garantir_schema_db():
+    """Garante schema mínimo do SQLite para ambientes fresh (ex.: CI)."""
+    global _DB_SCHEMA_READY
+    if _DB_SCHEMA_READY:
+        return True
+    try:
+        bootstrap_completo()
+        _DB_SCHEMA_READY = True
+        return True
+    except Exception as exc:
+        log_event(
+            "runtime",
+            "db",
+            "bootstrap",
+            "critical",
+            "db_schema_bootstrap_failed",
+            {"erro": str(exc)},
+        )
+        return False
 
 
 def construir_janela_chave(job_nome, bucket_minutes):
@@ -1024,6 +1047,8 @@ def formatar_sinal_kelly(analise, kelly):
 
 async def processar_jogos(dry_run=False):
     ciclo_inicio = time.perf_counter()
+    if not _garantir_schema_db():
+        return
     bot = None
     if not dry_run:
         bot = Bot(token=TOKEN)
@@ -1939,6 +1964,9 @@ def _atualizar_clv_settlement(sinal_id, jogo, mercado, liga_nome, outcome):
 async def verificar_resultados_automatico():
     from verificar_resultados import buscar_resultado_jogo, avaliar_mercado
     from exportar_excel import gerar_excel
+
+    if not _garantir_schema_db():
+        return
 
     bot = Bot(token=TOKEN)
     conn = sqlite3.connect(DB_PATH)
