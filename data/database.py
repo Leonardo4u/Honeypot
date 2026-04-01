@@ -439,11 +439,17 @@ def inserir_sinal(liga, jogo, mercado, odd, ev, score, stake, message_id_vip=Non
         return c.lastrowid
 
 def atualizar_resultado(sinal_id, resultado, lucro):
+    """
+    Finaliza um sinal com resultado e lucro.
+    BUG-04: UPDATE condicional — só atualiza se status ainda é 'pendente'.
+    Torna a operação idempotente: chamadas duplicadas não sobrescrevem
+    um resultado já registrado por outra execução concorrente.
+    """
     with get_conn() as conn:
         c = conn.cursor()
         c.execute('''
             UPDATE sinais SET status = 'finalizado', resultado = ?, lucro_unidades = ?
-            WHERE id = ?
+            WHERE id = ? AND status = 'pendente'
         ''', (resultado, lucro, sinal_id))
 
 
@@ -465,6 +471,19 @@ def sinal_existe(sinal_id):
         c = conn.cursor()
         c.execute("SELECT 1 FROM sinais WHERE id = ? LIMIT 1", (sinal_id,))
         return c.fetchone() is not None
+
+
+def verificar_status_sinal(sinal_id):
+    """
+    Retorna o status atual do sinal ou None se não existir.
+    Usado pelo guard de dupla finalização no settlement (BUG-04).
+    Separado de sinal_existe() para permitir mock independente em testes.
+    """
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute("SELECT status FROM sinais WHERE id = ? LIMIT 1", (sinal_id,))
+        row = c.fetchone()
+        return row[0] if row else None
 
 def buscar_sinais_hoje():
     with get_conn() as conn:

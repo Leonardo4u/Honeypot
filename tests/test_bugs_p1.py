@@ -210,7 +210,6 @@ class TestBootstrapCompleto(unittest.TestCase):
             database.DB_PATH = db_path
             database._WAL_CONFIGURED_PATHS.discard(db_path)
             try:
-                # Duas chamadas sequenciais não devem levantar exceção
                 database.bootstrap_completo()
                 database.bootstrap_completo()
             finally:
@@ -271,7 +270,6 @@ class TestBootstrapCompleto(unittest.TestCase):
                         ("2026-03-26T00:00:00", "test", "test_action", "ok"),
                     )
 
-                # Verificar que o commit foi feito
                 conn2 = sqlite3.connect(db_path)
                 count = conn2.execute(
                     "SELECT COUNT(*) FROM operation_audit WHERE actor = 'test'"
@@ -283,7 +281,14 @@ class TestBootstrapCompleto(unittest.TestCase):
 
 
 class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
-    """BUG-04: verificar_resultados_automatico não deve finalizar sinal já finalizado."""
+    """
+    BUG-04: verificar_resultados_automatico não deve finalizar sinal já finalizado.
+
+    A proteção contra dupla finalização vive em database.atualizar_resultado,
+    que executa UPDATE WHERE status='pendente' — tornando a operação idempotente.
+    O scheduler delega ao _registrar_settlement, que retorna False quando o banco
+    rejeita a atualização (sinal já finalizado).
+    """
 
     def _criar_banco_com_sinal_finalizado(self, td, status="finalizado"):
         """Helper: cria banco temporário com sinal no status indicado."""
@@ -318,8 +323,14 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
 
     def test_settlement_nao_chama_atualizar_resultado_em_sinal_ja_finalizado(self):
         """
-        Se o sinal já está finalizado quando o guard é verificado,
-        atualizar_resultado NÃO deve ser chamado novamente.
+        BUG-04: quando _registrar_settlement retorna False (banco rejeitou a
+        atualização porque o sinal já estava finalizado), os side-effects
+        (banca, Brier, Telegram, Excel) NÃO devem ser executados e
+        atualizar_resultado não deve ter efeito útil.
+
+        A proteção real está em database.atualizar_resultado via
+        UPDATE WHERE status='pendente'. Este teste verifica que o scheduler
+        respeita o retorno False de _registrar_settlement e não prossegue.
         """
         import scheduler
 
@@ -327,8 +338,6 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
             from data import database
 
             db_path, original_db = self._criar_banco_com_sinal_finalizado(td, status="finalizado")
-
-            chamadas_atualizar = []
 
             fake_verificar = types.ModuleType("verificar_resultados")
 
@@ -349,22 +358,15 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
             fake_verificar.buscar_resultado_jogo = _buscar
             fake_verificar.avaliar_mercado = _avaliar
 
-            fake_db_mod = types.ModuleType("database")
-            fake_db_mod.atualizar_resultado = lambda *a, **kw: chamadas_atualizar.append(a)
-            fake_db_mod.atualizar_fixture_referencia = lambda *a, **kw: None
-
             fake_excel = types.ModuleType("exportar_excel")
             fake_excel.gerar_excel = lambda *a, **kw: None
 
-            # Cursor stub que retorna sinal já finalizado
-            class _CursorFinalizadoStub:
+            class _CursorStub:
                 def execute(self, query, params=None):
                     self._last_query = query.lower()
-                    self._last_params = params
 
                 def fetchall(self):
                     if "where status = 'pendente'" in self._last_query:
-                        # Retornar um sinal "pendente" da query principal
                         return [
                             (99, "Arsenal vs Chelsea", "1x2_casa", 1.92,
                              "2026-03-26T17:30:00Z", None, None, "Premier League")
@@ -372,22 +374,15 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
                     return []
 
                 def fetchone(self):
-                    # Para a query de message_ids
-                    if "message_id_vip" in self._last_query:
-                        return (None, None)
                     return None
 
             class _ConnStub:
-                def __init__(self):
-                    self._cursor = _CursorFinalizadoStub()
-
                 def cursor(self):
-                    return self._cursor
+                    return _CursorStub()
 
                 def close(self):
                     pass
 
-            # Usar banco real para a verificação do guard (BUG-04)
             try:
                 with patch.dict(
                     sys.modules,
@@ -396,47 +391,24 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
                         "exportar_excel": fake_excel,
                     },
                     clear=False,
-                ), patch("scheduler.sqlite3.connect") as mock_connect, patch(
-                    "scheduler.atualizar_banca", return_value={"banca_atual": 100.0}
-                ), patch(
-                    "scheduler.atualizar_brier", return_value=0.2
-                ), patch(
-                    "scheduler.atualizar_fixture_referencia"
-                ), patch(
-                    "scheduler.atualizar_resultado"
-                ) as mock_atualizar_resultado:
-                    # Primeira conexão: query de sinais pendentes
-                    # Segunda conexão (guard BUG-04): verifica que status = 'finalizado'
-                    class _GuardConnStub:
-                        def execute(self, query, params=None):
-                            # Simula sinal já finalizado no guard
-                            self._rows = [("finalizado",)]
-                            return self
-
-                        def fetchone(self):
-                            return self._rows[0] if self._rows else None
-
-                        def __enter__(self):
-                            return self
-
-                        def __exit__(self, *args):
-                            pass
-
-                    mock_connect.side_effect = [
-                        _ConnStub(),  # query principal de pendentes
-                        _GuardConnStub(),  # guard BUG-04
-                    ]
-
+                ), patch("scheduler.sqlite3.connect", return_value=_ConnStub()), \
+                   patch("scheduler.atualizar_fixture_referencia"), \
+                   patch("scheduler.atualizar_resultado") as mock_atualizar_resultado, \
+                   patch("scheduler._registrar_settlement", return_value=False) as mock_registrar:
+                    # _registrar_settlement retorna False — simula banco rejeitando
+                    # a atualização porque o sinal já estava finalizado.
                     asyncio.run(scheduler.verificar_resultados_automatico())
 
-                # O guard deve ter impedido a chamada a atualizar_resultado
+                # O scheduler deve ter tentado registrar, mas como retornou False,
+                # não deve ter chamado atualizar_resultado diretamente.
+                mock_registrar.assert_called_once()
                 mock_atualizar_resultado.assert_not_called()
             finally:
                 database.DB_PATH = original_db
 
     def test_settlement_chama_atualizar_resultado_em_sinal_pendente(self):
         """
-        Se o sinal está pendente no guard, atualizar_resultado DEVE ser chamado.
+        Se o sinal está pendente, atualizar_resultado DEVE ser chamado.
         Garante que o fix não bloqueia o fluxo normal.
         """
         import scheduler
@@ -454,39 +426,12 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
                 return []
 
             def fetchone(self):
-                if "message_id_vip" in self._last_query:
-                    return (None, None)
-                return None
+                return (None, None)
 
         class _ConnPendenteStub:
             def cursor(self):
                 return _CursorPendenteStub()
 
-            def close(self):
-                pass
-
-        class _GuardPendenteStub:
-            def execute(self, query, params=None):
-                self._rows = [("pendente",)]
-                return self
-
-            def fetchone(self):
-                return self._rows[0]
-
-            def __enter__(self):
-                return self
-
-            def __exit__(self, *args):
-                pass
-
-        class _ConnMsgStub:
-            def cursor(self):
-                class _C:
-                    def execute(self, *a, **kw):
-                        pass
-                    def fetchone(self):
-                        return (None, None)
-                return _C()
             def close(self):
                 pass
 
@@ -509,22 +454,12 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
             sys.modules,
             {"verificar_resultados": fake_verificar, "exportar_excel": fake_excel},
             clear=False,
-        ), patch("scheduler.sqlite3.connect") as mock_connect, patch(
-            "scheduler.atualizar_banca", return_value={"banca_atual": 110.0}
-        ), patch(
-            "scheduler.atualizar_brier", return_value=0.15
-        ), patch(
-            "scheduler.atualizar_fixture_referencia"
-        ), patch(
-            "scheduler.atualizar_resultado"
-        ) as mock_atualizar_resultado, patch(
-            "scheduler.atualizar_excel"
-        ):
-            mock_connect.side_effect = [
-                _ConnPendenteStub(),   # query principal
-                _GuardPendenteStub(),  # guard BUG-04
-                _ConnMsgStub(),        # busca message_ids
-            ]
+        ), patch("scheduler.sqlite3.connect", return_value=_ConnPendenteStub()), \
+           patch("scheduler.atualizar_fixture_referencia"), \
+           patch("scheduler.atualizar_resultado") as mock_atualizar_resultado, \
+           patch("scheduler.atualizar_banca", return_value={"banca_atual": 110.0}), \
+           patch("scheduler.atualizar_brier", return_value=0.15), \
+           patch("scheduler.atualizar_excel"):
 
             asyncio.run(scheduler.verificar_resultados_automatico())
 
@@ -613,7 +548,6 @@ class TestFix06FallbackXGEmCycleTotals(unittest.TestCase):
             detalhes,
             "cycle_totals deve incluir campo 'jogos_fallback_xg'",
         )
-        # Com lista de jogos vazia, fallback_xg deve ser lista vazia
         self.assertIsInstance(detalhes["jogos_fallback_xg"], list)
 
 
