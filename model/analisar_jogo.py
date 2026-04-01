@@ -1,17 +1,81 @@
+import os
+import uuid
+
 from poisson import (
     calcular_probabilidades,
     calcular_prob_over_under,
     calcular_prob_btts,
     ajuste_contextual,
-    log_comparacao
+    log_comparacao,
 )
 from edge_score import (
     calcular_ev,
     ev_para_score,
     calcular_edge_score,
     calcular_stake,
-    decisao_sinal
+    decisao_sinal,
+    classificar_recomendacao,
+    montar_reasoning_trace,
+    calcular_kelly_fracionado,
+    MIN_CONFIDENCE_ACTIONABLE,
 )
+from calibrator import BucketCalibrator
+from picks_log import PickLogger
+
+
+BOT_DATA_DIR = os.getenv(
+    "BOT_DATA_DIR",
+    os.path.join(os.path.dirname(os.path.dirname(__file__)), "data"),
+)
+
+# INTEGRATION: caminho central de calibracao de probabilidades via BOT_DATA_DIR.
+CALIBRACAO_PROB_PATH = os.path.join(BOT_DATA_DIR, "calibracao_prob.json")
+# INTEGRATION: caminho central de log por pick via BOT_DATA_DIR.
+PICKS_LOG_PATH = os.path.join(BOT_DATA_DIR, "picks_log.csv")
+
+
+def _carregar_calibrador_prob():
+    if os.path.exists(CALIBRACAO_PROB_PATH):
+        try:
+            return BucketCalibrator.load(CALIBRACAO_PROB_PATH)
+        except Exception:
+            # Fallback seguro: pass-through caso arquivo exista mas esteja inválido.
+            return BucketCalibrator()
+    return BucketCalibrator()
+
+
+PROB_CALIBRATOR = _carregar_calibrador_prob()
+# INTEGRATION: logger de picks para auditoria/ciclo de calibracao.
+PICK_LOGGER = PickLogger(PICKS_LOG_PATH)
+
+
+def _registrar_pick(result: dict, dados: dict):
+    """Registra o pick analisado no CSV de observabilidade."""
+    try:
+        PICK_LOGGER.append_pick(
+            prediction_id=result["prediction_id"],
+            league=result.get("liga", dados.get("liga", "")),
+            market=result.get("mercado", dados.get("mercado", "")),
+            match_name=result.get("jogo", dados.get("jogo", "")),
+            odds_at_pick=float(result.get("odd", dados.get("odd", 0.0) or 0.0)),
+            implied_prob=float(result.get("prob_implicita", 0.0) or 0.0),
+            raw_prob_model=float(result.get("prob_modelo_raw", result.get("prob_modelo", 0.0)) or 0.0),
+            calibrated_prob_model=float(result.get("prob_modelo", 0.0) or 0.0),
+            calibrator_fitted=bool((result.get("reasoning_trace") or {}).get("calibrator_fitted", False)),
+            confidence_dados=float(dados.get("confianca_dados", 70) or 70),
+            estabilidade_odd=float(dados.get("estabilidade_odd", 70) or 70),
+            contexto_jogo=float(dados.get("contexto_jogo", 70) or 70),
+            edge_score=float(result.get("edge_score", 0.0) or 0.0),
+            kelly_fraction=float(result.get("kelly_bruto_frac", 0.0) or 0.0),
+            kelly_stake=float(result.get("stake_reais", 0.0) or 0.0),
+            bank_used=float(dados.get("banca", 1000) or 1000),
+            recomendacao_acao=result.get("recomendacao_acao", "SKIP"),
+            reasoning_trace=result.get("reasoning_trace", {}),
+        )
+    except Exception:
+        # Falha de log nao deve quebrar ciclo principal de decisao.
+        return
+
 
 def analisar_jogo(dados, log_dc=True):
     """
@@ -41,9 +105,11 @@ def analisar_jogo(dados, log_dc=True):
     odd = dados["odd"]
     liga = dados.get("liga", None)
 
+    prediction_id = str(uuid.uuid4())
+
     # ── Poisson + Dixon-Coles (passa liga para rho correto por liga) ──
     probs_1x2 = calcular_probabilidades(casa, fora, liga=liga)
-    probs_ou  = calcular_prob_over_under(casa, fora, linha=2.5)
+    probs_ou = calcular_prob_over_under(casa, fora, linha=2.5)
     probs_btts = calcular_prob_btts(casa, fora)
 
     # ── Seleciona probabilidade base pelo mercado ──────────────────
@@ -62,18 +128,36 @@ def analisar_jogo(dados, log_dc=True):
 
     # ── Ajuste contextual (lesões, motivação, fadiga) ──────────────
     fator_total = (
-        dados.get("ajuste_lesoes", 0) +
-        dados.get("ajuste_motivacao", 0) +
-        dados.get("ajuste_fadiga", 0)
+        dados.get("ajuste_lesoes", 0)
+        + dados.get("ajuste_motivacao", 0)
+        + dados.get("ajuste_fadiga", 0)
     )
     prob_ajustada = ajuste_contextual(prob_base, fator_total)
+    prob_calibrada = PROB_CALIBRATOR.predict(prob_ajustada)
 
-    # ── EV ─────────────────────────────────────────────────────────
-    ev = calcular_ev(prob_ajustada, odd)
+    # ── EV usando probabilidade calibrada ──────────────────────────
+    ev = calcular_ev(prob_calibrada, odd)
 
     if ev < 0.04:
-        return {
+        prob_implicita = round(1 / odd, 4)
+        reasoning_trace = montar_reasoning_trace(
+            mercado=mercado,
+            odd=odd,
+            prob_modelo=prob_calibrada,
+            prob_implicita=prob_implicita,
+            ev=ev,
+            edge_score=0,
+            confianca=dados.get("confianca_dados", 70),
+            min_conf=MIN_CONFIDENCE_ACTIONABLE,
+        )
+        reasoning_trace["prob_modelo_raw"] = round(prob_ajustada, 4)
+        reasoning_trace["prob_modelo_calibrada"] = round(prob_calibrada, 4)
+        reasoning_trace["calibrator_fitted"] = bool(getattr(PROB_CALIBRATOR, "is_fitted", False))
+        reasoning_trace["effective_halflife"] = probs_1x2.get("recency_halflife_usado")
+        result = {
+            "prediction_id": prediction_id,
             "decisao": "DESCARTAR",
+            "recomendacao_acao": "AVOID",
             "motivo": f"EV insuficiente: {ev*100:.2f}% (mínimo 4%)",
             "jogo": dados["jogo"],
             "mercado": mercado,
@@ -81,55 +165,104 @@ def analisar_jogo(dados, log_dc=True):
             "ev": ev,
             "ev_percentual": f"{ev*100:.2f}%",
             "edge_score": 0,
+            "confidence_threshold": MIN_CONFIDENCE_ACTIONABLE,
+            "reasoning_trace": reasoning_trace,
+            "kelly_bruto_frac": 0.0,
+            "kelly_bruto_pct": 0.0,
+            "prob_modelo": prob_calibrada,
+            "prob_modelo_raw": prob_ajustada,
             # Dixon-Coles mesmo em descarte
             "rho_usado": probs_1x2["rho_usado"],
             "dc_delta_empate": probs_1x2["dc_delta_empate"],
         }
+        # INTEGRATION: registra todos os jogos analisados (inclusive descartes).
+        _registrar_pick(result, dados)
+        return result
 
     # ── EDGE Score ─────────────────────────────────────────────────
-    ev_score   = ev_para_score(ev)
+    ev_score = ev_para_score(ev)
     edge_score = calcular_edge_score(
         ev_score,
         dados.get("confianca_dados", 70),
         dados.get("estabilidade_odd", 70),
-        dados.get("contexto_jogo", 70)
+        dados.get("contexto_jogo", 70),
     )
 
     decisao = decisao_sinal(edge_score)
-    stake   = calcular_stake(edge_score, dados.get("banca", 1000))
+    stake = calcular_stake(edge_score, dados.get("banca", 1000))
+    recomendacao_acao = classificar_recomendacao(
+        edge_score=edge_score,
+        confianca=dados.get("confianca_dados", 70),
+        ev=ev,
+        min_conf=MIN_CONFIDENCE_ACTIONABLE,
+    )
+    prob_implicita = round(1 / odd, 4)
+    reasoning_trace = montar_reasoning_trace(
+        mercado=mercado,
+        odd=odd,
+        prob_modelo=prob_calibrada,
+        prob_implicita=prob_implicita,
+        ev=ev,
+        edge_score=edge_score,
+        confianca=dados.get("confianca_dados", 70),
+        min_conf=MIN_CONFIDENCE_ACTIONABLE,
+    )
+    reasoning_trace["prob_modelo_raw"] = round(prob_ajustada, 4)
+    reasoning_trace["prob_modelo_calibrada"] = round(prob_calibrada, 4)
+    reasoning_trace["calibrator_fitted"] = bool(getattr(PROB_CALIBRATOR, "is_fitted", False))
+    reasoning_trace["effective_halflife"] = probs_1x2.get("recency_halflife_usado")
+
+    # Kelly também usa probabilidade calibrada.
+    kelly_bruto_frac = calcular_kelly_fracionado(
+        prob_modelo=prob_calibrada,
+        odd=odd,
+        fracao=0.25,
+        teto=0.05,
+    )
 
     # ── Log Dixon-Coles quando ajuste for relevante (>2%) ──────────
     if log_dc and abs(probs_1x2["dc_delta_empate"]) >= 2.0:
         jogo_nome = dados.get("jogo", "?")
         log_comparacao(jogo_nome, casa, fora, probs_1x2)
 
-    return {
+    result = {
+        "prediction_id": prediction_id,
         # Campos originais
-        "liga":            dados["liga"],
-        "jogo":            dados["jogo"],
-        "horario":         dados.get("horario", ""),
-        "mercado":         mercado,
-        "odd":             odd,
+        "liga": dados["liga"],
+        "jogo": dados["jogo"],
+        "horario": dados.get("horario", ""),
+        "mercado": mercado,
+        "odd": odd,
         "prob_modelo_base": prob_base,
-        "prob_modelo":     prob_ajustada,
-        "prob_implicita":  round(1 / odd, 4),
-        "ev":              round(ev, 4),
-        "ev_percentual":   f"{ev*100:.2f}%",
-        "edge_score":      edge_score,
-        "decisao":         decisao,
-        "stake_unidades":  stake["unidades"],
-        "stake_reais":     stake["valor_reais"],
-        "unidade_reais":   stake["unidade_valor"],
+        "prob_modelo": prob_calibrada,
+        "prob_modelo_raw": prob_ajustada,
+        "prob_implicita": prob_implicita,
+        "ev": round(ev, 4),
+        "ev_percentual": f"{ev*100:.2f}%",
+        "edge_score": edge_score,
+        "decisao": decisao,
+        "recomendacao_acao": recomendacao_acao,
+        "stake_unidades": stake["unidades"],
+        "stake_reais": stake["valor_reais"],
+        "unidade_reais": stake["unidade_valor"],
+        "confidence_threshold": MIN_CONFIDENCE_ACTIONABLE,
+        "kelly_bruto_frac": kelly_bruto_frac,
+        "kelly_bruto_pct": round(kelly_bruto_frac * 100, 2),
+        "reasoning_trace": reasoning_trace,
         # Campos novos Dixon-Coles
-        "prob_casa_raw":    probs_1x2["prob_casa_raw"],
-        "prob_empate_raw":  probs_1x2["prob_empate_raw"],
-        "prob_fora_raw":    probs_1x2["prob_fora_raw"],
-        "prob_casa_dc":     probs_1x2["prob_casa"],
-        "prob_empate_dc":   probs_1x2["prob_empate"],
-        "prob_fora_dc":     probs_1x2["prob_fora"],
-        "dc_delta_empate":  probs_1x2["dc_delta_empate"],
-        "rho_usado":        probs_1x2["rho_usado"],
+        "prob_casa_raw": probs_1x2["prob_casa_raw"],
+        "prob_empate_raw": probs_1x2["prob_empate_raw"],
+        "prob_fora_raw": probs_1x2["prob_fora_raw"],
+        "prob_casa_dc": probs_1x2["prob_casa"],
+        "prob_empate_dc": probs_1x2["prob_empate"],
+        "prob_fora_dc": probs_1x2["prob_fora"],
+        "dc_delta_empate": probs_1x2["dc_delta_empate"],
+        "rho_usado": probs_1x2["rho_usado"],
     }
+    # INTEGRATION: registra todos os jogos analisados (BET/SKIP/AVOID).
+    _registrar_pick(result, dados)
+    return result
+
 
 def formatar_sinal(analise):
     """
@@ -141,18 +274,19 @@ def formatar_sinal(analise):
     emoji_decisao = "⚡" if analise["decisao"] == "PREMIUM" else "✅"
 
     mercados_legivel = {
-        "1x2_casa":  "Vitória do time da casa",
-        "1x2_fora":  "Vitória do time visitante",
-        "over_2.5":  "Mais de 2.5 gols na partida",
+        "1x2_casa": "Vitória do time da casa",
+        "1x2_fora": "Vitória do time visitante",
+        "over_2.5": "Mais de 2.5 gols na partida",
         "under_2.5": "Menos de 2.5 gols na partida",
-        "btts_sim":  "Ambas as equipes marcam",
-        "btts_nao":  "Pelo menos um time não marca",
+        "btts_sim": "Ambas as equipes marcam",
+        "btts_nao": "Pelo menos um time não marca",
     }
     mercado_texto = mercados_legivel.get(analise["mercado"], analise["mercado"])
 
     horario_raw = analise.get("horario", "")
     try:
         from datetime import datetime, timedelta
+
         dt = datetime.strptime(horario_raw, "%Y-%m-%dT%H:%M:%SZ")
         dt_brasil = dt - timedelta(hours=3)
         horario_formatado = dt_brasil.strftime("%d/%m/%Y — %H:%M")
@@ -175,6 +309,7 @@ def formatar_sinal(analise):
     )
     return msg
 
+
 if __name__ == "__main__":
     print("=== SIMULAÇÃO DE ANÁLISE + DIXON-COLES ===\n")
 
@@ -192,7 +327,7 @@ if __name__ == "__main__":
         "confianca_dados": 85,
         "estabilidade_odd": 80,
         "contexto_jogo": 75,
-        "banca": 1000
+        "banca": 1000,
     }
 
     resultado = analisar_jogo(jogo_teste)
@@ -206,9 +341,12 @@ if __name__ == "__main__":
     print(f"EDGE Score:  {resultado['edge_score']}/100")
     print(f"Decisão:     {resultado['decisao']}")
     print(f"Stake:       {resultado['stake_unidades']}u = R${resultado['stake_reais']:.2f}")
-    print(f"\nDixon-Coles:")
+    print("\nDixon-Coles:")
     print(f"  Casa:   {resultado['prob_casa_raw']*100:.1f}% → {resultado['prob_casa_dc']*100:.1f}%")
-    print(f"  Empate: {resultado['prob_empate_raw']*100:.1f}% → {resultado['prob_empate_dc']*100:.1f}%  (Δ{resultado['dc_delta_empate']:+.2f}%)")
+    print(
+        f"  Empate: {resultado['prob_empate_raw']*100:.1f}% → "
+        f"{resultado['prob_empate_dc']*100:.1f}%  (Δ{resultado['dc_delta_empate']:+.2f}%)"
+    )
     print(f"  Fora:   {resultado['prob_fora_raw']*100:.1f}% → {resultado['prob_fora_dc']*100:.1f}%")
 
     print("\n--- MENSAGEM FORMATADA ---\n")
@@ -221,4 +359,7 @@ if __name__ == "__main__":
     jogo_italy = {**jogo_teste, "liga": "Serie A", "jogo": "AC Milan vs Inter"}
     r2 = analisar_jogo(jogo_italy)
     print(f"ρ usado: {r2['rho_usado']}")
-    print(f"Empate: {r2['prob_empate_raw']*100:.1f}% → {r2['prob_empate_dc']*100:.1f}%  (Δ{r2['dc_delta_empate']:+.2f}%)")
+    print(
+        f"Empate: {r2['prob_empate_raw']*100:.1f}% → "
+        f"{r2['prob_empate_dc']*100:.1f}%  (Δ{r2['dc_delta_empate']:+.2f}%)"
+    )

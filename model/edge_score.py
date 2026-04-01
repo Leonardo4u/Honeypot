@@ -1,3 +1,9 @@
+import math
+
+
+MIN_CONFIDENCE_ACTIONABLE = 64.0
+
+
 def calcular_ev(prob_estimada, odd):
     """
     Calcula o Expected Value (EV) de uma aposta.
@@ -84,6 +90,87 @@ def decisao_sinal(edge_score):
         return "WATCHLIST"
     else:
         return "DESCARTAR"
+
+
+def calcular_kelly_fracionado(prob_modelo, odd, fracao=0.25, teto=0.05):
+    """
+    Calcula Kelly fracionado em escala 0-1.
+    Campo auxiliar para tornar a saída diretamente acionável,
+    sem substituir o módulo principal de banca.
+    """
+    try:
+        p = float(prob_modelo)
+        o = float(odd)
+        f = float(fracao)
+        cap = float(teto)
+    except (TypeError, ValueError):
+        return 0.0
+
+    if o <= 1.0 or p <= 0.0 or p >= 1.0 or f <= 0.0:
+        return 0.0
+
+    b = o - 1.0
+    k_full = (p * o - 1.0) / b
+    if not math.isfinite(k_full) or k_full <= 0.0:
+        return 0.0
+
+    return round(min(max(0.0, k_full * f), cap), 4)
+
+
+def classificar_recomendacao(edge_score, confianca, ev, min_conf=MIN_CONFIDENCE_ACTIONABLE):
+    """
+    Classificação assertiva para consumo operacional.
+    Mantém decisao_sinal legado intacto e adiciona rótulo BET/SKIP/AVOID.
+    """
+    try:
+        es = float(edge_score or 0.0)
+        cf = float(confianca or 0.0)
+        ev_v = float(ev or 0.0)
+        floor = float(min_conf)
+    except (TypeError, ValueError):
+        return "AVOID"
+
+    if ev_v <= 0 or cf < (floor - 8.0):
+        return "AVOID"
+    if es >= 80.0 and cf >= floor and ev_v >= 0.02:
+        return "BET"
+    return "SKIP"
+
+
+def montar_reasoning_trace(*, mercado, odd, prob_modelo, prob_implicita, ev, edge_score, confianca, min_conf):
+    """
+    Explica por que o sinal foi aceito/bloqueado e quais critérios pesaram.
+    """
+    fatores = [
+        f"mercado={mercado}",
+        f"odd={float(odd):.3f}",
+        f"prob_modelo={float(prob_modelo):.4f}",
+        f"prob_implicita={float(prob_implicita):.4f}",
+        f"ev={float(ev):.4f}",
+        f"edge_score={float(edge_score):.1f}",
+        f"confianca={float(confianca):.2f}",
+        f"min_conf={float(min_conf):.2f}",
+    ]
+
+    descartados = []
+    if float(confianca) < float(min_conf):
+        descartados.append("confianca_abaixo_cutoff")
+    if float(ev) <= 0:
+        descartados.append("ev_nao_positivo")
+    if float(edge_score) < 65.0:
+        descartados.append("edge_score_fraco")
+
+    justificativa = (
+        "Confiança e EV dentro do mínimo operacional"
+        if float(confianca) >= float(min_conf) and float(ev) > 0
+        else "Confiança/EV insuficientes para ação"
+    )
+
+    return {
+        "fatores_utilizados": fatores,
+        "fatores_descartados": descartados,
+        "justificativa": justificativa,
+    }
 
 if __name__ == "__main__":
     print("=== TESTE DO EDGE SCORE ===\n")
