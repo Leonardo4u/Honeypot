@@ -1,11 +1,17 @@
 import os
 import sys
 import sqlite3
+import argparse
 import requests
 import pandas as pd
 import numpy as np
 import json
+import time
+import random
+from io import StringIO
 from datetime import datetime, timezone
+
+from model.team_name_normalizer import normalize_df
 
 # Garante que os modulos do projeto sao encontrados
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -13,10 +19,14 @@ sys.path.insert(0, ROOT_DIR)
 sys.path.insert(0, os.path.join(ROOT_DIR, "data"))
 sys.path.insert(0, os.path.join(ROOT_DIR, "model"))
 
-DB_PATH = os.path.join(ROOT_DIR, "data", "edge_protocol.db")
-CALIBRACAO_LIGAS_PATH = os.path.join(ROOT_DIR, "data", "calibracao_ligas.json")
+BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(ROOT_DIR, "data"))
+HISTORICO_DIR = os.path.join(BOT_DATA_DIR, "historico")
+DB_PATH = os.path.join(BOT_DATA_DIR, "edge_protocol.db")
+CALIBRACAO_LIGAS_PATH = os.path.join(BOT_DATA_DIR, "calibracao_ligas.json")
+MEDIAS_GOLS_PATH = os.path.join(BOT_DATA_DIR, "medias_gols.json")
 
 LIGAS_FOOTBALL_DATA = {
+    # Brasileirao not available on football-data.co.uk - use API-Football source.
     "Premier League": "E0",
     "La Liga": "SP1",
     "Serie A": "I1",
@@ -24,10 +34,95 @@ LIGAS_FOOTBALL_DATA = {
     "Ligue 1": "F1",
 }
 
-# Brasileirao nao esta disponivel no Football-Data
-# Usar medias_gols.json como fallback para times brasileiros
-TEMPORADAS = ["2425", "2324", "2223", "2122", "2021"]
+LIGAS_API_FOOTBALL_HIST = {
+    "Brasileirao Serie A": "BRA1",
+    "Brasileirao Serie B": "BRA2",
+}
+
+KNOWN_TEAMS = {
+    "E0": {"Arsenal", "Chelsea", "Liverpool", "Man City", "Tottenham"},
+    "D1": {"Bayern Munich", "Dortmund", "Leverkusen", "RB Leipzig", "Stuttgart"},
+    "SP1": {"Barcelona", "Real Madrid", "Atletico Madrid", "Sevilla", "Valencia"},
+    "I1": {"Juventus", "Inter", "Milan", "Napoli", "Roma"},
+    "F1": {"Paris SG", "Marseille", "Lyon", "Monaco", "Lille"},
+    "BRA1": {"Flamengo", "Palmeiras", "Sao Paulo", "Corinthians", "Atletico-MG"},
+    "BRA2": {"Sport Recife", "Ceara", "Vitoria", "Coritiba", "Goias"},
+}
+
+TEAM_ALIASES = {
+    "ath madrid": "atletico madrid",
+    "man city": "man city",
+    "paris sg": "paris sg",
+    "inter": "inter",
+}
+
+HISTORICAL_SEASONS = int(os.getenv("EDGE_HISTORICAL_SEASONS", "3"))
 REQUEST_HEADERS = {"User-Agent": "edge-protocol-calibration/1.1"}
+
+
+def _all_leagues_map():
+    merged = {}
+    merged.update(LIGAS_FOOTBALL_DATA)
+    merged.update(LIGAS_API_FOOTBALL_HIST)
+    return merged
+
+
+def _cleanup_deprecated_brazil_files():
+    """Remove artefatos antigos do football-data mapeados incorretamente para Brasil."""
+    for fname in ("historico_B1.csv", "historico_B2.csv"):
+        path = os.path.join(BOT_DATA_DIR, fname)
+        if os.path.exists(path):
+            try:
+                os.remove(path)
+                print(f"[CLEANUP] removido arquivo legado: {path}")
+            except Exception as exc:
+                print(f"[WARN] falha removendo {path}: {exc}")
+
+
+def _validate_known_teams(df_norm, league_code, league_name, sample_size=5):
+    """Bloqueia datasets com equipes de liga incorreta para evitar corrupcao silenciosa."""
+    anchors = KNOWN_TEAMS.get(str(league_code), set())
+    if not anchors:
+        return True, None
+
+    teams = set()
+    for col in ("time_casa", "time_fora"):
+        if col in df_norm.columns:
+            teams.update(str(v).strip() for v in df_norm[col].dropna().unique().tolist() if str(v).strip())
+    if not teams:
+        return False, f"WRONG DATA: sem times validos para {league_name} ({league_code}) - skipping"
+
+    def _normalize_team_name(name):
+        key = " ".join(str(name).strip().lower().replace(".", "").replace("-", " ").split())
+        return TEAM_ALIASES.get(key, key)
+
+    anchors_norm = {_normalize_team_name(a) for a in anchors}
+    teams_norm = {_normalize_team_name(t) for t in teams}
+    if not (anchors_norm & teams_norm):
+        return (
+            False,
+            f"WRONG DATA: expected {league_name} but got different team universe - skipping",
+        )
+
+    sample_n = min(int(sample_size), len(teams))
+    sampled_acc = []
+    matched = False
+    teams_list = list(teams)
+    for seed in (42, 43, 44):
+        sampled = random.Random(seed).sample(teams_list, sample_n)
+        sampled_acc.extend(sampled)
+        sampled_norm = {_normalize_team_name(t) for t in sampled}
+        if anchors_norm & sampled_norm:
+            matched = True
+            break
+
+    if not matched:
+        return (
+            False,
+            f"WRONG DATA: expected {league_name} anchors {sorted(anchors)} but sampled {sampled_acc[:sample_n]} - skipping",
+        )
+
+    return True, None
 
 
 def salvar_calibracao_ligas(rho_calibrado, amostra_por_liga=None):
@@ -56,115 +151,242 @@ def salvar_calibracao_ligas(rho_calibrado, amostra_por_liga=None):
         return False
 
 
-def baixar_dados_historicos():
-    os.makedirs(os.path.join(ROOT_DIR, "data", "historico"), exist_ok=True)
-    total = 0
+def _escrever_calibracao_ligas(ligas_payload: dict):
+    """Escreve calibracao por liga no formato consumido pelo runtime do Poisson."""
+    os.makedirs(os.path.dirname(CALIBRACAO_LIGAS_PATH), exist_ok=True)
+    with open(CALIBRACAO_LIGAS_PATH, "w", encoding="utf-8") as f:
+        json.dump(ligas_payload, f, ensure_ascii=False, indent=2)
 
-    for liga, codigo in sorted(LIGAS_FOOTBALL_DATA.items(), key=lambda item: item[0]):
-        pasta_liga = os.path.join(ROOT_DIR, "data", "historico", liga)
-        os.makedirs(pasta_liga, exist_ok=True)
-        total_liga = 0
 
-        for temp in TEMPORADAS:
-            url = f"https://www.football-data.co.uk/mmz4281/{temp}/{codigo}.csv"
-            path = os.path.join(pasta_liga, f"{temp}.csv")
+def _normalizar_liga_payload(payload):
+    """Normaliza payload de calibracao para um dict de ligas -> params."""
+    if not isinstance(payload, dict):
+        return {}
+    if "ligas" in payload and isinstance(payload.get("ligas"), dict):
+        return payload["ligas"]
+    return payload
 
-            if os.path.exists(path):
-                try:
-                    df_existing = pd.read_csv(path, on_bad_lines="skip")
-                    jogos = len(df_existing)
-                    print(f"[CACHE] {liga} {temp}: {jogos} jogos")
-                    total += jogos
-                    total_liga += jogos
+
+def _season_codes(seasons_back=HISTORICAL_SEASONS):
+    """Gera códigos YYYY da temporada atual + N anteriores."""
+    now = datetime.now(timezone.utc)
+    start_year = (now.year % 100) if now.month >= 7 else ((now.year - 1) % 100)
+    out = []
+    for i in range(max(0, int(seasons_back)) + 1):
+        y0 = (start_year - i) % 100
+        y1 = (y0 + 1) % 100
+        out.append(f"{y0:02d}{y1:02d}")
+    return out
+
+
+def _download_csv_with_retry(url, attempts=3, backoff_seconds=0.8):
+    """Baixa CSV com retry/backoff e classificação de falhas sem derrubar o pipeline."""
+    last_error = None
+    for attempt in range(1, max(1, int(attempts)) + 1):
+        try:
+            response = requests.get(url, timeout=15, headers=REQUEST_HEADERS)
+            if response.status_code == 404:
+                return None, "not_found", None
+            if response.status_code in (429,) or 500 <= response.status_code <= 599:
+                if attempt < attempts:
+                    time.sleep(backoff_seconds * attempt)
                     continue
-                except Exception as e:
-                    print(f"[CACHE-ERRO] {liga} {temp}: {e} -> redownload")
+                return None, "http_error", f"http_{response.status_code}"
+            if response.status_code >= 400:
+                return None, "http_error", f"http_{response.status_code}"
 
+            text = response.content.decode("utf-8", errors="replace")
             try:
-                r = requests.get(url, timeout=15, headers=REQUEST_HEADERS)
-                if r.status_code == 200 and len(r.content) > 500:
-                    with open(path, "wb") as f:
-                        f.write(r.content)
-                    df = pd.read_csv(path, on_bad_lines="skip")
-                    jogos = len(df)
-                    total += jogos
-                    total_liga += jogos
-                    print(f"[OK] {liga} {temp}: {jogos} jogos")
-                else:
-                    print(f"[--] {liga} {temp}: nao encontrado")
-            except Exception as e:
-                print(f"[ERRO] {liga} {temp}: {e}")
+                df = pd.read_csv(StringIO(text), on_bad_lines="skip")
+            except Exception as exc:
+                return None, "malformed", str(exc)
+            if df is None or len(df) == 0:
+                return None, "empty", "empty_csv"
+            return df, "ok", None
+        except requests.Timeout as exc:
+            last_error = str(exc)
+            if attempt < attempts:
+                time.sleep(backoff_seconds * attempt)
                 continue
+            return None, "timeout", last_error
+        except requests.ConnectionError as exc:
+            last_error = str(exc)
+            if attempt < attempts:
+                time.sleep(backoff_seconds * attempt)
+                continue
+            return None, "connection_error", last_error
+        except Exception as exc:
+            return None, "unknown_error", str(exc)
+    return None, "unknown_error", last_error
 
-        print(f"[LIGA] {liga}: {total_liga} jogos acumulados")
 
-    print(f"\nTotal: {total} jogos disponiveis")
-    return total
+def _normalize_history_df(df_raw, liga_nome, temporada):
+    """Normaliza colunas do Football-Data para schema interno base."""
+    df = df_raw.copy()
+    rename = {
+        "HomeTeam": "time_casa",
+        "AwayTeam": "time_fora",
+        "FTHG": "gols_casa",
+        "FTAG": "gols_fora",
+        "PSH": "odd_pinn_casa",
+        "PSD": "odd_pinn_empate",
+        "PSA": "odd_pinn_fora",
+        "B365H": "odd_b365_casa",
+        "B365D": "odd_b365_empate",
+        "B365A": "odd_b365_fora",
+        "BbAv>2.5": "odd_over25",
+        "BbAv<2.5": "odd_under25",
+        "Date": "data_jogo",
+    }
+    df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
+    df["liga"] = liga_nome
+    df["temporada"] = temporada
+
+    required = ["time_casa", "time_fora", "gols_casa", "gols_fora"]
+    for col in required:
+        if col not in df.columns:
+            raise ValueError(f"coluna obrigatoria ausente: {col}")
+
+    cols_base = ["liga", "temporada", "time_casa", "time_fora", "gols_casa", "gols_fora", "data_jogo"]
+    cols_extra = [
+        "odd_pinn_casa",
+        "odd_pinn_empate",
+        "odd_pinn_fora",
+        "odd_b365_casa",
+        "odd_b365_empate",
+        "odd_b365_fora",
+        "odd_over25",
+        "odd_under25",
+    ]
+    keep = [c for c in (cols_base + cols_extra) if c in df.columns]
+    df = df[keep].dropna(subset=["time_casa", "time_fora", "gols_casa", "gols_fora"]).copy()
+    df["gols_casa"] = pd.to_numeric(df["gols_casa"], errors="coerce")
+    df["gols_fora"] = pd.to_numeric(df["gols_fora"], errors="coerce")
+    df = df.dropna(subset=["gols_casa", "gols_fora"])
+    df["gols_casa"] = df["gols_casa"].astype(int)
+    df["gols_fora"] = df["gols_fora"].astype(int)
+
+    if "data_jogo" in df.columns:
+        df["data_jogo"] = pd.to_datetime(df["data_jogo"], errors="coerce", dayfirst=True)
+        df["data_jogo"] = df["data_jogo"].dt.strftime("%Y-%m-%d")
+
+    return df
+
+
+def _team_counts(df_league):
+    """Conta partidas por time (casa+fora) para cobertura de amostra."""
+    counts = {}
+    for team in df_league.get("time_casa", []):
+        counts[str(team)] = counts.get(str(team), 0) + 1
+    for team in df_league.get("time_fora", []):
+        counts[str(team)] = counts.get(str(team), 0) + 1
+    return counts
+
+
+def fetch_history_multi_season(seasons_back=HISTORICAL_SEASONS, leagues_map=None):
+    """Baixa e consolida histórico multi-season por liga; salva `historico_<code>.csv`."""
+    os.makedirs(HISTORICO_DIR, exist_ok=True)
+    leagues = leagues_map or LIGAS_FOOTBALL_DATA
+    seasons = _season_codes(seasons_back)
+    merged_by_code = {}
+    report = {}
+
+    for liga_nome, code in sorted(leagues.items(), key=lambda x: x[0]):
+        per_season = []
+        fetched = []
+        warnings = []
+        liga_dir = os.path.join(HISTORICO_DIR, liga_nome)
+        os.makedirs(liga_dir, exist_ok=True)
+
+        for season in seasons:
+            url = f"https://www.football-data.co.uk/mmz4281/{season}/{code}.csv"
+            df_raw, status, err = _download_csv_with_retry(url)
+            time.sleep(1.0)
+            if status == "ok" and df_raw is not None:
+                try:
+                    df_norm = _normalize_history_df(df_raw, liga_nome, season)
+                    is_ok, reason = _validate_known_teams(df_norm, code, liga_nome)
+                    if not is_ok:
+                        warnings.append(f"{season}: {reason}")
+                        continue
+                    per_season.append(df_norm)
+                    fetched.append(season)
+                    raw_path = os.path.join(liga_dir, f"{season}.csv")
+                    df_raw.to_csv(raw_path, index=False)
+                except Exception as exc:
+                    warnings.append(f"{season}: malformed ({exc})")
+            elif status == "not_found":
+                warnings.append(f"{season}: 404")
+            else:
+                warnings.append(f"{season}: {status}{' - ' + str(err) if err else ''}")
+
+        if not per_season:
+            report[code] = {
+                "league": liga_nome,
+                "seasons_fetched": fetched,
+                "total_matches": 0,
+                "teams_found": 0,
+                "min_n": 0,
+                "max_n": 0,
+                "warnings": warnings,
+            }
+            continue
+
+        merged = pd.concat(per_season, ignore_index=True)
+        if "data_jogo" not in merged.columns:
+            merged["data_jogo"] = ""
+        merged = merged.drop_duplicates(subset=["time_casa", "time_fora", "data_jogo"], keep="first").reset_index(drop=True)
+        merged_path = os.path.join(BOT_DATA_DIR, f"historico_{code}.csv")
+        merged.to_csv(merged_path, index=False)
+        merged_by_code[code] = merged
+
+        counts = _team_counts(merged)
+        n_values = list(counts.values()) or [0]
+        report[code] = {
+            "league": liga_nome,
+            "seasons_fetched": fetched,
+            "total_matches": int(len(merged)),
+            "teams_found": int(len(counts)),
+            "min_n": int(min(n_values)),
+            "max_n": int(max(n_values)),
+            "warnings": warnings,
+        }
+
+    print("\n=== HISTORICAL FETCH SUMMARY ===")
+    for code, info in sorted(report.items(), key=lambda x: x[0]):
+        print(
+            f"{info['league']} ({code}) | seasons={info['seasons_fetched']} "
+            f"| matches={info['total_matches']} | teams={info['teams_found']} "
+            f"| n[min,max]=[{info['min_n']},{info['max_n']}]"
+        )
+        for w in info.get("warnings", []):
+            print(f"  [WARN] {w}")
+
+    return {"merged_by_code": merged_by_code, "report": report}
+
+
+def baixar_dados_historicos():
+    """Compat: mantém assinatura antiga e baixa janela padrão multi-season."""
+    result = fetch_history_multi_season(seasons_back=HISTORICAL_SEASONS)
+    return sum(info.get("total_matches", 0) for info in result["report"].values())
 
 
 def carregar_historico():
     dfs = []
-
-    for liga in LIGAS_FOOTBALL_DATA:
-        for temp in TEMPORADAS:
-            path = os.path.join(ROOT_DIR, "data", "historico", liga, f"{temp}.csv")
-            if not os.path.exists(path):
-                continue
-
-            try:
-                # copy() evita fragmentacao interna em CSVs com muitas colunas
-                # antes de adicionarmos colunas auxiliares como liga/temporada.
-                df = pd.read_csv(path, on_bad_lines="skip").copy()
+    for liga, code in _all_leagues_map().items():
+        merged_path = os.path.join(BOT_DATA_DIR, f"historico_{code}.csv")
+        if not os.path.exists(merged_path):
+            continue
+        try:
+            df = pd.read_csv(merged_path, on_bad_lines="skip")
+            if str(code).startswith("BRA"):
+                normalize_df(df, "time_casa")
+                normalize_df(df, "time_fora")
+            if "liga" not in df.columns:
                 df["liga"] = liga
-                df["temporada"] = temp
-
-                # Mapear colunas do Football-Data para nomes padrao internos
-                rename = {
-                    "HomeTeam": "time_casa",
-                    "AwayTeam": "time_fora",
-                    "FTHG": "gols_casa",
-                    "FTAG": "gols_fora",
-                    "PSH": "odd_pinn_casa",
-                    "PSD": "odd_pinn_empate",
-                    "PSA": "odd_pinn_fora",
-                    "B365H": "odd_b365_casa",
-                    "B365D": "odd_b365_empate",
-                    "B365A": "odd_b365_fora",
-                    "BbAv>2.5": "odd_over25",
-                    "BbAv<2.5": "odd_under25",
-                    "Date": "data_jogo",
-                }
-                df = df.rename(columns={k: v for k, v in rename.items() if k in df.columns})
-
-                cols_base = ["liga", "temporada", "time_casa", "time_fora", "gols_casa", "gols_fora"]
-                cols_extra = [
-                    "odd_pinn_casa",
-                    "odd_pinn_empate",
-                    "odd_pinn_fora",
-                    "odd_b365_casa",
-                    "odd_b365_empate",
-                    "odd_b365_fora",
-                    "odd_over25",
-                    "odd_under25",
-                    "data_jogo",
-                ]
-                cols = cols_base + [c for c in cols_extra if c in df.columns]
-
-                df = df[cols].dropna(subset=["gols_casa", "gols_fora", "time_casa", "time_fora"])
-                df["gols_casa"] = df["gols_casa"].astype(int)
-                df["gols_fora"] = df["gols_fora"].astype(int)
-
-                if "data_jogo" in df.columns:
-                    df["data_jogo"] = pd.to_datetime(
-                        df["data_jogo"],
-                        errors="coerce",
-                        dayfirst=True,
-                    )
-                    df["data_jogo"] = df["data_jogo"].dt.strftime("%Y-%m-%d")
-
-                dfs.append(df)
-            except Exception as e:
-                print(f"Erro {liga}/{temp}: {e}")
+            dfs.append(df)
+        except Exception as e:
+            print(f"Erro lendo {merged_path}: {e}")
 
     if not dfs:
         return None
@@ -177,6 +399,121 @@ def carregar_historico():
     print(f"Carregados: {len(df_total)} jogos")
     print(df_total.groupby("liga").size().rename("jogos").to_string())
     return df_total
+
+
+def build_coverage_report(merged_by_code=None, min_n=50):
+    """Calcula cobertura por liga/time e sinaliza times com n insuficiente."""
+    if merged_by_code is None:
+        merged_by_code = {}
+        for liga, code in _all_leagues_map().items():
+            path = os.path.join(BOT_DATA_DIR, f"historico_{code}.csv")
+            if os.path.exists(path):
+                try:
+                    merged_by_code[code] = pd.read_csv(path, on_bad_lines="skip")
+                except Exception:
+                    continue
+
+    per_league = {}
+    all_team_counts = []
+    leagues_with_n50 = []
+    for liga, code in _all_leagues_map().items():
+        df = merged_by_code.get(code)
+        if df is None or len(df) == 0:
+            continue
+        if str(code).startswith("BRA"):
+            normalize_df(df, "time_casa")
+            normalize_df(df, "time_fora")
+        counts = _team_counts(df)
+        for c in counts.values():
+            all_team_counts.append(c)
+        if counts and min(counts.values()) >= int(min_n):
+            leagues_with_n50.append(liga)
+        per_league[code] = {
+            "league": liga,
+            "teams": counts,
+            "mean_n": (sum(counts.values()) / len(counts)) if counts else 0.0,
+        }
+
+    return {
+        "per_league": per_league,
+        "mean_n_per_team": (sum(all_team_counts) / len(all_team_counts)) if all_team_counts else 0.0,
+        "leagues_all_teams_n50": leagues_with_n50,
+    }
+
+
+def print_coverage_report(coverage, min_n=50):
+    """Imprime cobertura por liga/time no formato de auditoria operacional."""
+    print("\n=== COVERAGE REPORT ===")
+    for code, payload in sorted(coverage.get("per_league", {}).items(), key=lambda x: x[0]):
+        print(f"[{payload['league']}|{code}] mean_n={payload['mean_n']:.2f}")
+        teams = payload.get("teams", {})
+        for team, n in sorted(teams.items(), key=lambda kv: (-kv[1], kv[0])):
+            status = "OK" if int(n) >= int(min_n) else "INSUFFICIENT"
+            print(f"  - {team}: n={int(n)} [{status}]")
+
+
+def rebuild_medias_from_history(merged_by_code=None):
+    """Recalcula medias_gols.json a partir do histórico consolidado multi-season."""
+    if merged_by_code is None:
+        merged_by_code = {}
+        for liga, code in _all_leagues_map().items():
+            path = os.path.join(BOT_DATA_DIR, f"historico_{code}.csv")
+            if os.path.exists(path):
+                try:
+                    merged_by_code[code] = pd.read_csv(path, on_bad_lines="skip")
+                except Exception:
+                    continue
+
+    stats = {}
+    for _code, df in merged_by_code.items():
+        if df is None or len(df) == 0:
+            continue
+        if str(_code).startswith("BRA"):
+            normalize_df(df, "time_casa")
+            normalize_df(df, "time_fora")
+        for _, row in df.iterrows():
+            tc = str(row.get("time_casa", "")).strip()
+            tf = str(row.get("time_fora", "")).strip()
+            gc = float(row.get("gols_casa", 0) or 0)
+            gf = float(row.get("gols_fora", 0) or 0)
+
+            if tc:
+                s = stats.setdefault(tc, {"gols_casa_for": 0.0, "gols_casa_against": 0.0, "jogos_casa": 0, "gols_fora_for": 0.0, "gols_fora_against": 0.0, "jogos_fora": 0})
+                s["gols_casa_for"] += gc
+                s["gols_casa_against"] += gf
+                s["jogos_casa"] += 1
+            if tf:
+                s = stats.setdefault(tf, {"gols_casa_for": 0.0, "gols_casa_against": 0.0, "jogos_casa": 0, "gols_fora_for": 0.0, "gols_fora_against": 0.0, "jogos_fora": 0})
+                s["gols_fora_for"] += gf
+                s["gols_fora_against"] += gc
+                s["jogos_fora"] += 1
+
+    medias = {}
+    for team, s in stats.items():
+        jc = max(1, int(s["jogos_casa"]))
+        jf = max(1, int(s["jogos_fora"]))
+        medias[team] = {
+            "casa": round(float(s["gols_casa_for"]) / jc, 2),
+            "fora": round(float(s["gols_fora_for"]) / jf, 2),
+            "gols_sofridos_casa": round(float(s["gols_casa_against"]) / jc, 2),
+            "gols_sofridos_fora": round(float(s["gols_fora_against"]) / jf, 2),
+        }
+
+    os.makedirs(os.path.dirname(MEDIAS_GOLS_PATH), exist_ok=True)
+    with open(MEDIAS_GOLS_PATH, "w", encoding="utf-8") as f:
+        json.dump(medias, f, ensure_ascii=False, indent=2)
+    print(f"medias_gols.json reconstruido em: {MEDIAS_GOLS_PATH} | teams={len(medias)}")
+    return medias
+
+
+def _print_coverage_comparison(before_cov, after_cov, min_n=50):
+    """Imprime comparação before/after de cobertura para auditoria de promoção."""
+    before_mean = before_cov.get("mean_n_per_team", 0.0)
+    after_mean = after_cov.get("mean_n_per_team", 0.0)
+    print("\n=== COVERAGE BEFORE/AFTER ===")
+    print(f"mean n per team: before={before_mean:.2f} -> after={after_mean:.2f}")
+    print("leagues with all teams n >= 50 (before):", before_cov.get("leagues_all_teams_n50", []))
+    print("leagues with all teams n >= 50 (after): ", after_cov.get("leagues_all_teams_n50", []))
 
 
 def calibrar_rho_por_liga(df):
@@ -193,7 +530,7 @@ def calibrar_rho_por_liga(df):
         df_l = df[df["liga"] == liga]
         dados = df_l[["gols_casa", "gols_fora"]].to_dict("records")
         amostra_por_liga[liga] = len(dados)
-        rho = estimar_rho(dados)
+        rho = estimar_rho(dados, league_name=liga, debug=True)
         rho_calibrado[liga] = rho
 
         atual = RHO_POR_LIGA.get(liga, -0.10)
@@ -204,6 +541,64 @@ def calibrar_rho_por_liga(df):
     salvar_calibracao_ligas(rho_calibrado, amostra_por_liga=amostra_por_liga)
     print("\nCalibracao runtime atualizada automaticamente.")
     return rho_calibrado
+
+
+def build_ligas_calibration(min_matches=50, recency_halflife=38, preloaded_df=None):
+    """Constroi `calibracao_ligas.json` com rho/home_advantage/recency_halflife por liga."""
+    print("=== BUILD CALIBRACAO POR LIGA ===")
+    if preloaded_df is None:
+        total = baixar_dados_historicos()
+        if total == 0:
+            print("Sem dados historicos para calibrar.")
+            return {}
+        df = carregar_historico()
+    else:
+        df = preloaded_df
+    if df is None or len(df) == 0:
+        print("Sem partidas validas para calibracao.")
+        return {}
+
+    from poisson import estimar_rho
+
+    ligas_payload = {}
+    summary_rows = []
+    ligas = sorted(df["liga"].dropna().unique().tolist())
+    for liga in ligas:
+        df_l = df[df["liga"] == liga].copy()
+        n_matches = int(len(df_l))
+        if n_matches < int(min_matches):
+            print(f"[SKIP] {liga}: n={n_matches} < min_matches={int(min_matches)}")
+            continue
+
+        dados = df_l[["gols_casa", "gols_fora"]].to_dict("records")
+        rho = float(estimar_rho(dados, recency_halflife=recency_halflife, league_name=liga, debug=True))
+
+        mean_home = float(df_l["gols_casa"].mean()) if n_matches > 0 else 1.0
+        mean_away = float(df_l["gols_fora"].mean()) if n_matches > 0 else 1.0
+        if mean_away <= 0:
+            home_advantage = 1.0
+        else:
+            home_advantage = max(0.5, min(1.5, mean_home / mean_away))
+
+        ligas_payload[liga] = {
+            "rho": round(rho, 4),
+            "home_advantage": round(float(home_advantage), 4),
+            "recency_halflife": int(recency_halflife),
+        }
+        summary_rows.append((liga, n_matches, rho, home_advantage))
+
+    first_run = (not os.path.exists(CALIBRACAO_LIGAS_PATH)) or (os.path.getsize(CALIBRACAO_LIGAS_PATH) == 0)
+    # INTEGRATION: arquivo consumido por model/poisson.py para rho/home_advantage/halflife por liga.
+    _escrever_calibracao_ligas(ligas_payload)
+    print(f"Calibracao por liga salva em: {CALIBRACAO_LIGAS_PATH}")
+
+    if first_run:
+        print("\nleague                      n_matches      rho   home_advantage")
+        print("---------------------------------------------------------------")
+        for liga, n_matches, rho, home_adv in summary_rows:
+            print(f"{liga:<26} {n_matches:>9d} {rho:>8.4f} {home_adv:>16.4f}")
+
+    return ligas_payload
 
 
 def calcular_brier_historico(df, n_amostras=1000, random_state=42):
@@ -478,6 +873,8 @@ def rodar_calibracao_completa():
     print("  CALIBRACAO EDGE PROTOCOL")
     print("=" * 55)
 
+    _cleanup_deprecated_brazil_files()
+
     print("\n[1/6] Baixando dados historicos (Football-Data.co.uk)...")
     total = baixar_dados_historicos()
     if total == 0:
@@ -521,5 +918,86 @@ def rodar_calibracao_completa():
     print("\nRODAR: python calibrar_modelo.py")
 
 
-if __name__ == "__main__":
+def parse_args(argv=None):
+    """Parseia argumentos da CLI de calibracao."""
+    parser = argparse.ArgumentParser(description="Calibracao de modelo e ligas")
+    parser.add_argument("--fetch-history", action="store_true", help="Baixa e consolida histórico multi-season")
+    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca histórico BR via API-Football (BRA1/BRA2)")
+    parser.add_argument("--seasons", type=int, default=HISTORICAL_SEASONS, help="Qtde de temporadas passadas além da atual")
+    parser.add_argument("--check-coverage", action="store_true", help="Mostra cobertura n por liga/time")
+    parser.add_argument("--build-ligas", action="store_true", help="Gera calibracao_ligas.json com rho/home_advantage")
+    parser.add_argument("--min-matches", type=int, default=50, help="Minimo de jogos por liga para calibrar")
+    return parser.parse_args(argv)
+
+
+def main(argv=None):
+    """Entrypoint CLI para calibracao completa ou build de ligas."""
+    args = parse_args(argv)
+    if args.fetch_history:
+        _cleanup_deprecated_brazil_files()
+        before_cov = build_coverage_report(min_n=args.min_matches)
+        fetched = fetch_history_multi_season(seasons_back=args.seasons)
+        if args.fetch_historico_br:
+            try:
+                from atualizar_stats import fetch_historico_br_ligas
+
+                br_payload = fetch_historico_br_ligas(seasons=args.seasons)
+                for code, br_rows in br_payload.items():
+                    if br_rows is not None and len(br_rows) >= int(args.min_matches):
+                        fetched["merged_by_code"][code] = pd.DataFrame(br_rows)
+            except Exception as exc:
+                print(f"[WARN] falha no fetch historico BR via API-Football: {exc}")
+
+        rebuild_medias_from_history()
+        after_cov = build_coverage_report(min_n=args.min_matches)
+        _print_coverage_comparison(before_cov, after_cov, min_n=args.min_matches)
+        print_coverage_report(after_cov, min_n=args.min_matches)
+        if args.build_ligas:
+            merged_df = carregar_historico()
+            build_ligas_calibration(
+                min_matches=args.min_matches,
+                recency_halflife=38,
+                preloaded_df=merged_df,
+            )
+        return 0
+
+    if args.fetch_historico_br:
+        try:
+            from atualizar_stats import fetch_historico_br_ligas
+
+            before_cov = build_coverage_report(min_n=args.min_matches)
+            br_payload = fetch_historico_br_ligas(seasons=args.seasons)
+            merged_by_code = {}
+            for code, br_rows in br_payload.items():
+                if br_rows is not None and len(br_rows) >= int(args.min_matches):
+                    merged_by_code[code] = pd.DataFrame(br_rows)
+            rebuild_medias_from_history()
+            after_cov = build_coverage_report(min_n=args.min_matches)
+            _print_coverage_comparison(before_cov, after_cov, min_n=args.min_matches)
+            print_coverage_report(after_cov, min_n=args.min_matches)
+            if args.build_ligas:
+                merged_df = carregar_historico()
+                build_ligas_calibration(
+                    min_matches=args.min_matches,
+                    recency_halflife=38,
+                    preloaded_df=merged_df,
+                )
+        except Exception as exc:
+            print(f"[WARN] falha no fetch historico BR via API-Football: {exc}")
+        return 0
+
+    if args.check_coverage:
+        cov = build_coverage_report(min_n=args.min_matches)
+        print_coverage_report(cov, min_n=args.min_matches)
+        return 0
+
+    if args.build_ligas:
+        build_ligas_calibration(min_matches=args.min_matches)
+        return 0
+
     rodar_calibracao_completa()
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
