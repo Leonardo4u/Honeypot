@@ -1,6 +1,6 @@
 @echo off
 setlocal
-cd /d C:\Users\Leo\edge_protocol
+cd /d %~dp0
 python scheduler.py
 set EXIT_CODE=%ERRORLEVEL%
 if not "%EXIT_CODE%"=="0" (

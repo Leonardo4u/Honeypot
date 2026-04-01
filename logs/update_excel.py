@@ -310,8 +310,6 @@ def main():
         elif acao == "full_refresh":
             log("full_refresh: regenerando arquivo completo...")
             try:
-                import sys
-
                 wb.close()
                 sys.path.insert(0, BASE_DIR)
                 sys.path.insert(0, os.path.join(BASE_DIR, "data"))
