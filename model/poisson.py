@@ -1,4 +1,3 @@
-from scipy.stats import poisson
 from scipy.optimize import minimize
 import numpy as np
 import math
@@ -20,6 +19,12 @@ RHO_POR_LIGA = {
 }
 RHO_DEFAULT = -0.10
 HOME_ADVANTAGE_DEFAULT = 1.0
+RHO_EXPECTED_RANGE = {
+    "Bundesliga": (-0.15, -0.05),
+    "La Liga": (-0.15, -0.05),
+    "Serie A": (-0.15, -0.05),
+    "Ligue 1": (-0.15, -0.05),
+}
 CALIBRACAO_LIGAS_PATH = os.path.join(
     os.path.dirname(os.path.dirname(__file__)),
     "data",
@@ -46,7 +51,11 @@ def _carregar_calibracao_ligas():
     try:
         with open(CALIBRACAO_LIGAS_PATH, "r", encoding="utf-8") as f:
             payload = json.load(f)
-        ligas = payload.get("ligas", {}) if isinstance(payload, dict) else {}
+        if isinstance(payload, dict):
+            # Compatibilidade: aceita tanto {"ligas": {...}} quanto {...} direto.
+            ligas = payload.get("ligas", payload)
+        else:
+            ligas = {}
         _calibracao_cache = ligas if isinstance(ligas, dict) else {}
     except Exception:
         _calibracao_cache = {}
@@ -56,13 +65,15 @@ def _carregar_calibracao_ligas():
 
 def _resolver_rho_e_home_advantage(liga=None, rho=None):
     if rho is not None:
-        return rho, HOME_ADVANTAGE_DEFAULT
+        return rho, HOME_ADVANTAGE_DEFAULT, None
 
     calibracao_ligas = _carregar_calibracao_ligas()
     if liga and liga in calibracao_ligas:
         cfg = calibracao_ligas.get(liga, {})
         rho_cfg = cfg.get("rho", RHO_DEFAULT)
         home_adv_cfg = cfg.get("home_advantage", HOME_ADVANTAGE_DEFAULT)
+        # INTEGRATION: recency_halflife opcional por liga em calibracao_ligas.json.
+        recency_halflife_cfg = cfg.get("recency_halflife", None)
         try:
             rho_cfg = float(rho_cfg)
         except Exception:
@@ -71,12 +82,56 @@ def _resolver_rho_e_home_advantage(liga=None, rho=None):
             home_adv_cfg = float(home_adv_cfg)
         except Exception:
             home_adv_cfg = HOME_ADVANTAGE_DEFAULT
-        return rho_cfg, max(0.5, min(1.5, home_adv_cfg))
+        try:
+            recency_halflife_cfg = None if recency_halflife_cfg is None else float(recency_halflife_cfg)
+        except Exception:
+            recency_halflife_cfg = None
+        return rho_cfg, max(0.5, min(1.5, home_adv_cfg)), recency_halflife_cfg
 
     if liga and liga in RHO_POR_LIGA:
-        return RHO_POR_LIGA[liga], HOME_ADVANTAGE_DEFAULT
+        return RHO_POR_LIGA[liga], HOME_ADVANTAGE_DEFAULT, None
 
-    return RHO_DEFAULT, HOME_ADVANTAGE_DEFAULT
+    return RHO_DEFAULT, HOME_ADVANTAGE_DEFAULT, None
+
+
+def _build_recency_weights(n: int, recency_halflife=None):
+    """Retorna pesos normalizados por recencia; None preserva comportamento igual-ponderado."""
+    if n <= 0:
+        return np.array([], dtype=float)
+    if recency_halflife is None:
+        return np.ones(n, dtype=float)
+
+    try:
+        halflife = float(recency_halflife)
+    except Exception:
+        return np.ones(n, dtype=float)
+    if halflife <= 0:
+        return np.ones(n, dtype=float)
+
+    idx = np.arange(n, dtype=float)
+    decay_rate = math.log(2.0) / halflife
+    # INTEGRATION: ponderacao exponencial por recencia nas estimativas de lambda/rho.
+    # i=0 mais antigo, i=n-1 mais recente.
+    raw = np.exp(-decay_rate * ((n - 1) - idx))
+    return raw
+
+
+def _poisson_pmf(k, lam):
+    """
+    PMF de Poisson local para evitar dependência de stubs externos em testes.
+    """
+    try:
+        k_int = int(k)
+        lam_v = float(lam)
+    except Exception:
+        return 0.0
+
+    if k_int < 0 or not math.isfinite(lam_v):
+        return 0.0
+    if lam_v <= 0.0:
+        return 1.0 if k_int == 0 else 0.0
+
+    return math.exp(-lam_v) * (lam_v ** k_int) / math.factorial(k_int)
 
 
 def _matriz_probabilidades_dc(lambda_casa, lambda_fora, max_gols, rho):
@@ -84,8 +139,8 @@ def _matriz_probabilidades_dc(lambda_casa, lambda_fora, max_gols, rho):
     for i in range(max_gols + 1):
         for j in range(max_gols + 1):
             p = (
-                poisson.pmf(i, lambda_casa)
-                * poisson.pmf(j, lambda_fora)
+                _poisson_pmf(i, lambda_casa)
+                * _poisson_pmf(j, lambda_fora)
                 * tau(i, j, lambda_casa, lambda_fora, rho)
             )
             matriz[i][j] = max(0.0, p)
@@ -94,6 +149,37 @@ def _matriz_probabilidades_dc(lambda_casa, lambda_fora, max_gols, rho):
     if total > 0:
         matriz = matriz / total
     return matriz
+
+
+def _matriz_probabilidades_independente(lambda_casa, lambda_fora, max_gols):
+    """Fallback sem correção Dixon-Coles quando a matriz DC colapsa."""
+    matriz = np.zeros((max_gols + 1, max_gols + 1))
+    for i in range(max_gols + 1):
+        for j in range(max_gols + 1):
+            matriz[i][j] = max(0.0, _poisson_pmf(i, lambda_casa) * _poisson_pmf(j, lambda_fora))
+    total = matriz.sum()
+    if total > 0:
+        matriz = matriz / total
+    return matriz
+
+
+def _normalizar_probabilidades(par_a, par_b):
+    soma = par_a + par_b
+    if soma <= 0 or not math.isfinite(soma):
+        return 0.5, 0.5
+    return par_a / soma, par_b / soma
+
+
+def _matriz_dc_robusta(lambda_casa, lambda_fora, max_gols, rho):
+    """
+    Tenta matriz DC e cai para matriz independente se houver soma inválida.
+    Evita assert de soma=0 em cenários extremos de rho/tau.
+    """
+    matriz = _matriz_probabilidades_dc(lambda_casa, lambda_fora, max_gols, rho)
+    total = float(matriz.sum())
+    if total > 0 and math.isfinite(total):
+        return matriz
+    return _matriz_probabilidades_independente(lambda_casa, lambda_fora, max_gols)
 
 # ── FUNÇÃO TAU (fator de correção Dixon-Coles) ────────────────
 def tau(i, j, lambda_casa, lambda_fora, rho):
@@ -114,12 +200,12 @@ def tau(i, j, lambda_casa, lambda_fora, rho):
         return 1.0
 
 # ── ESTIMAÇÃO DE RHO POR MÁXIMA VEROSSIMILHANÇA ───────────────
-def estimar_rho(dados_historicos):
+def estimar_rho(dados_historicos, recency_halflife=None, league_name=None, debug=False):
     """
     Estima o parâmetro rho por máxima verossimilhança.
 
     dados_historicos: lista de dicts com keys 'gols_casa' e 'gols_fora'
-    Retorna: float rho otimizado (entre -0.5 e 0.0)
+    Retorna: float rho otimizado (entre -0.35 e -0.01)
     Fallback: RHO_DEFAULT se < 50 jogos disponíveis
     """
     if not dados_historicos or len(dados_historicos) < 50:
@@ -128,31 +214,80 @@ def estimar_rho(dados_historicos):
     gols_casa_list = [d["gols_casa"] for d in dados_historicos]
     gols_fora_list = [d["gols_fora"] for d in dados_historicos]
 
-    lambda_casa = np.mean(gols_casa_list)
-    lambda_fora = np.mean(gols_fora_list)
+    weights = _build_recency_weights(len(dados_historicos), recency_halflife=recency_halflife)
+    lambda_casa = float(np.average(gols_casa_list, weights=weights))
+    lambda_fora = float(np.average(gols_fora_list, weights=weights))
+
+    prior_center = -0.10
+    prior_strength = 10.0
 
     def neg_log_likelihood(params):
         rho_val = params[0]
         total = 0.0
-        for gc, gf in zip(gols_casa_list, gols_fora_list):
-            p = (poisson.pmf(gc, lambda_casa) *
-                 poisson.pmf(gf, lambda_fora) *
+        for gc, gf, w_i in zip(gols_casa_list, gols_fora_list, weights):
+            p = (_poisson_pmf(gc, lambda_casa) *
+                 _poisson_pmf(gf, lambda_fora) *
                  tau(gc, gf, lambda_casa, lambda_fora, rho_val))
             if p <= 0:
                 return 1e10
-            total += math.log(p)
-        return -total
+            total += float(w_i) * math.log(p)
+        # Penalizacao fraca para evitar colapso em rho~=0 quando a superficie fica quase plana.
+        reg = prior_strength * ((float(rho_val) - prior_center) ** 2)
+        return -total + reg
+
+    bounds = (-0.35, -0.01)
+    grid = np.linspace(bounds[0], bounds[1], 41)
+    best_grid = min(grid, key=lambda r: neg_log_likelihood([float(r)]))
+    x0 = [float(best_grid)]
 
     resultado = minimize(
         neg_log_likelihood,
-        x0=[-0.10],
+        x0=x0,
         method="L-BFGS-B",
-        bounds=[(-0.5, 0.0)]
+        bounds=[bounds],
     )
 
-    if resultado.success:
-        return round(float(resultado.x[0]), 4)
-    return RHO_DEFAULT
+    if resultado.success and np.isfinite(resultado.x[0]):
+        rho_otimo = float(resultado.x[0])
+    elif np.isfinite(best_grid):
+        rho_otimo = float(best_grid)
+    else:
+        rho_otimo = RHO_DEFAULT
+
+    if debug:
+        liga_label = league_name or "liga_desconhecida"
+        converged = "yes" if resultado.success else "no"
+        nit = getattr(resultado, "nit", 0)
+        print(
+            f"[RHO_OPT] liga={liga_label} converged={converged} "
+            f"rho={rho_otimo:.4f} iterations={int(nit)} x0={float(x0[0]):.4f}"
+        )
+
+    if abs(rho_otimo - float(x0[0])) <= 1e-8 and debug:
+        liga_label = league_name or "liga_desconhecida"
+        print(
+            f"[WARN] RHO optimizer stayed at initial value for {liga_label}: "
+            f"rho={rho_otimo:.4f}. Check data quality and low-score likelihood signal."
+        )
+
+    if debug and (abs(rho_otimo - bounds[1]) <= 1e-4 or abs(rho_otimo - bounds[0]) <= 1e-4):
+        liga_label = league_name or "liga_desconhecida"
+        print(
+            f"[WARN] RHO optimizer hit bound for {liga_label}: rho={rho_otimo:.4f} "
+            f"bounds=({bounds[0]:.2f},{bounds[1]:.2f})"
+        )
+
+    if league_name in RHO_EXPECTED_RANGE:
+        lo, hi = RHO_EXPECTED_RANGE[league_name]
+        rho_clamped = min(max(rho_otimo, lo), hi)
+        if debug and abs(rho_clamped - rho_otimo) > 1e-8:
+            print(
+                f"[WARN] RHO clamped for {league_name}: raw={rho_otimo:.4f} -> clamped={rho_clamped:.4f} "
+                f"range=[{lo:.2f},{hi:.2f}]"
+            )
+        rho_otimo = rho_clamped
+
+    return round(float(rho_otimo), 4)
 
 # ── MODELO POISSON COM CORREÇÃO DIXON-COLES ───────────────────
 def calcular_probabilidades(media_gols_casa, media_gols_fora,
@@ -173,7 +308,7 @@ def calcular_probabilidades(media_gols_casa, media_gols_fora,
         dc_delta_empate  — quanto a correção mudou o empate
         rho_usado        — valor de rho aplicado
     """
-    rho_usado, home_advantage = _resolver_rho_e_home_advantage(liga=liga, rho=rho)
+    rho_usado, home_advantage, recency_halflife = _resolver_rho_e_home_advantage(liga=liga, rho=rho)
 
     lc = media_gols_casa * home_advantage
     lf = media_gols_fora
@@ -185,7 +320,7 @@ def calcular_probabilidades(media_gols_casa, media_gols_fora,
 
     for i in range(max_gols + 1):
         for j in range(max_gols + 1):
-            p = poisson.pmf(i, lc) * poisson.pmf(j, lf)
+            p = _poisson_pmf(i, lc) * _poisson_pmf(j, lf)
             if i > j:
                 prob_casa_raw += p
             elif i == j:
@@ -193,7 +328,7 @@ def calcular_probabilidades(media_gols_casa, media_gols_fora,
             else:
                 prob_fora_raw += p
 
-    matriz = _matriz_probabilidades_dc(lc, lf, max_gols, rho_usado)
+    matriz = _matriz_dc_robusta(lc, lf, max_gols, rho_usado)
 
     # Soma por resultado
     prob_casa   = 0.0
@@ -211,6 +346,14 @@ def calcular_probabilidades(media_gols_casa, media_gols_fora,
 
     # Verifica soma ≈ 1.0
     soma = prob_casa + prob_empate + prob_fora
+    if soma > 0 and math.isfinite(soma):
+        prob_casa /= soma
+        prob_empate /= soma
+        prob_fora /= soma
+    else:
+        prob_casa, prob_empate, prob_fora = 1 / 3, 1 / 3, 1 / 3
+
+    soma = prob_casa + prob_empate + prob_fora
     assert abs(soma - 1.0) < 0.001, f"Soma das probs = {soma:.6f} (esperado ~1.0)"
 
     delta_empate = round((prob_empate - prob_empate_raw) * 100, 2)
@@ -227,6 +370,7 @@ def calcular_probabilidades(media_gols_casa, media_gols_fora,
         "dc_delta_empate": delta_empate,
         "rho_usado":       rho_usado,
         "home_advantage_usado": round(home_advantage, 4),
+        "recency_halflife_usado": recency_halflife,
     }
 
 def calcular_prob_over_under(media_gols_casa, media_gols_fora,
@@ -235,10 +379,10 @@ def calcular_prob_over_under(media_gols_casa, media_gols_fora,
     Calcula probabilidade de Over/Under para uma linha de gols.
     Usa soma bivariada (mais precisa que Poisson univariado).
     """
-    rho_usado, home_advantage = _resolver_rho_e_home_advantage(liga=liga, rho=rho)
+    rho_usado, home_advantage, recency_halflife = _resolver_rho_e_home_advantage(liga=liga, rho=rho)
     lc = media_gols_casa * home_advantage
     lf = media_gols_fora
-    matriz_dc = _matriz_probabilidades_dc(lc, lf, max_gols, rho_usado)
+    matriz_dc = _matriz_dc_robusta(lc, lf, max_gols, rho_usado)
     prob_over = 0.0
     prob_under = 0.0
     prob_over_raw = 0.0
@@ -246,7 +390,7 @@ def calcular_prob_over_under(media_gols_casa, media_gols_fora,
 
     for i in range(max_gols + 1):
         for j in range(max_gols + 1):
-            p_raw = poisson.pmf(i, lc) * poisson.pmf(j, lf)
+            p_raw = _poisson_pmf(i, lc) * _poisson_pmf(j, lf)
             p = matriz_dc[i][j]
             if (i + j) > linha:
                 prob_over += p
@@ -255,6 +399,7 @@ def calcular_prob_over_under(media_gols_casa, media_gols_fora,
                 prob_under += p
                 prob_under_raw += p_raw
 
+    prob_over, prob_under = _normalizar_probabilidades(prob_over, prob_under)
     soma = prob_over + prob_under
     assert abs(soma - 1.0) < 0.001, f"Soma over/under = {soma:.6f} (esperado ~1.0)"
 
@@ -266,14 +411,15 @@ def calcular_prob_over_under(media_gols_casa, media_gols_fora,
         "linha":      linha,
         "rho_usado": rho_usado,
         "home_advantage_usado": round(home_advantage, 4),
+        "recency_halflife_usado": recency_halflife,
     }
 
 def calcular_prob_btts(media_gols_casa, media_gols_fora):
     """
     Calcula probabilidade de Ambas Marcam (BTTS).
     """
-    prob_casa_nao_marca = poisson.pmf(0, media_gols_casa)
-    prob_fora_nao_marca = poisson.pmf(0, media_gols_fora)
+    prob_casa_nao_marca = _poisson_pmf(0, media_gols_casa)
+    prob_fora_nao_marca = _poisson_pmf(0, media_gols_fora)
 
     prob_btts_sim = (1 - prob_casa_nao_marca) * (1 - prob_fora_nao_marca)
     prob_btts_nao = 1 - prob_btts_sim

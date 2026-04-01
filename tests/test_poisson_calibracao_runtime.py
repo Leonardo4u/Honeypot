@@ -3,6 +3,7 @@ import os
 import tempfile
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 import pandas as pd
 
@@ -96,6 +97,32 @@ class TestPoissonCalibracaoRuntime(unittest.TestCase):
                 saida = calibrar_modelo.calibrar_rho_por_liga(df)
 
         self.assertIn("Premier League", saida)
+
+    def test_estimar_rho_debug_printa_status_convergencia(self):
+        dados = [{"gols_casa": 1 + (i % 3), "gols_fora": i % 2} for i in range(60)]
+
+        fake_result = SimpleNamespace(success=True, x=[-0.08], nit=7)
+        with patch("poisson.minimize", return_value=fake_result):
+            with patch("builtins.print") as mocked_print:
+                rho = poisson.estimar_rho(dados, league_name="Bundesliga", debug=True)
+
+        self.assertAlmostEqual(rho, -0.08, places=4)
+        printed = "\n".join(" ".join(str(a) for a in call.args) for call in mocked_print.call_args_list)
+        self.assertIn("[RHO_OPT]", printed)
+        self.assertIn("converged=yes", printed)
+
+    def test_estimar_rho_warn_quando_fica_no_inicial(self):
+        dados = [{"gols_casa": 1 + (i % 2), "gols_fora": i % 2} for i in range(60)]
+
+        def _fake_minimize(_func, x0=None, method=None, bounds=None):
+            return SimpleNamespace(success=True, x=[float(x0[0])], nit=1)
+
+        with patch("poisson.minimize", side_effect=_fake_minimize):
+            with patch("builtins.print") as mocked_print:
+                _ = poisson.estimar_rho(dados, league_name="La Liga", debug=True)
+
+        printed = "\n".join(" ".join(str(a) for a in call.args) for call in mocked_print.call_args_list)
+        self.assertIn("[WARN] RHO optimizer stayed at initial value", printed)
 
 
 if __name__ == "__main__":
