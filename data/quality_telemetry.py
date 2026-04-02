@@ -51,6 +51,10 @@ def garantir_tabela_quality_trends(db_path=None):
 def _calcular_segmento(conn, data_inicio, data_fim, segmento_tipo, segmento_valor):
     c = conn.cursor()
 
+    c.execute("PRAGMA table_info(sinais)")
+    sinais_cols = {str(row[1]) for row in c.fetchall()}
+    tem_coluna_fonte = "fonte" in sinais_cols
+
     filtro_segmento = ""
     params_sinais = [data_inicio, data_fim]
     params_brier = [data_inicio, data_fim]
@@ -91,25 +95,28 @@ def _calcular_segmento(conn, data_inicio, data_fim, segmento_tipo, segmento_valo
     )
     brier_avg = c.fetchone()[0]
 
-    c.execute(
-        f'''
-        SELECT
-            SUM(
-                CASE
-                    WHEN lower(COALESCE(s.fonte, '')) LIKE '%fallback%'
-                      OR lower(COALESCE(s.fonte, '')) LIKE '%medias%'
-                    THEN 1 ELSE 0
-                END
-            )
-        FROM sinais s
-        WHERE s.status = 'finalizado'
-          AND s.data BETWEEN ? AND ?
-          {filtro_segmento}
-        ''',
-        params_sinais,
-    )
-    fallback_count = c.fetchone()[0]
-    fallback_count = int(fallback_count or 0)
+    if tem_coluna_fonte:
+        c.execute(
+            f'''
+            SELECT
+                SUM(
+                    CASE
+                        WHEN lower(COALESCE(s.fonte, '')) LIKE '%fallback%'
+                          OR lower(COALESCE(s.fonte, '')) LIKE '%medias%'
+                        THEN 1 ELSE 0
+                    END
+                )
+            FROM sinais s
+            WHERE s.status = 'finalizado'
+              AND s.data BETWEEN ? AND ?
+              {filtro_segmento}
+            ''',
+            params_sinais,
+        )
+        fallback_count = c.fetchone()[0]
+        fallback_count = int(fallback_count or 0)
+    else:
+        fallback_count = 0
 
     win_rate = round((vitorias / total), 4) if total > 0 else None
     roi_pct = round((lucro_total / total) * 100.0, 4) if total > 0 else None
@@ -146,6 +153,11 @@ def _persist_reliability_deciles(conn, data_inicio, data_fim, referencia_semana)
         )
         '''
     )
+
+    c.execute("PRAGMA table_info(brier_tracking)")
+    brier_cols = {str(row[1]) for row in c.fetchall()}
+    if "prob_prevista" not in brier_cols or "resultado_real" not in brier_cols:
+        return
 
     c.execute(
         '''
@@ -241,87 +253,90 @@ def calcular_snapshot_qualidade_semanal(db_path=None, referencia=None):
     data_inicio, data_fim, referencia_semana = _janela_semanal(referencia)
 
     conn = sqlite3.connect(path)
-    c = conn.cursor()
+    try:
+        c = conn.cursor()
 
-    segmentos = []
-    segmentos.append(_calcular_segmento(conn, data_inicio, data_fim, "global", "all"))
+        segmentos = []
+        segmentos.append(_calcular_segmento(conn, data_inicio, data_fim, "global", "all"))
 
-    c.execute(
-        '''
-        SELECT DISTINCT mercado
-        FROM sinais
-        WHERE status = 'finalizado'
-          AND data BETWEEN ? AND ?
-          AND mercado IS NOT NULL
-          AND mercado != ''
-        ORDER BY mercado
-        ''',
-        (data_inicio, data_fim),
-    )
-    mercados = [r[0] for r in c.fetchall()]
+        c.execute(
+            '''
+            SELECT DISTINCT mercado
+            FROM sinais
+            WHERE status = 'finalizado'
+              AND data BETWEEN ? AND ?
+              AND mercado IS NOT NULL
+              AND mercado != ''
+            ORDER BY mercado
+            ''',
+            (data_inicio, data_fim),
+        )
+        mercados = [r[0] for r in c.fetchall()]
 
-    for mercado in mercados:
-        segmentos.append(_calcular_segmento(conn, data_inicio, data_fim, "mercado", mercado))
+        for mercado in mercados:
+            segmentos.append(_calcular_segmento(conn, data_inicio, data_fim, "mercado", mercado))
 
-    conn.close()
-
-    return {
-        "referencia_semana": referencia_semana,
-        "periodo_inicio": data_inicio,
-        "periodo_fim": data_fim,
-        "segmentos": segmentos,
-    }
+        return {
+            "referencia_semana": referencia_semana,
+            "periodo_inicio": data_inicio,
+            "periodo_fim": data_fim,
+            "segmentos": segmentos,
+        }
+    finally:
+        conn.close()
 
 
 def persistir_snapshot_qualidade(snapshot, db_path=None):
     path = db_path or DB_PATH
     garantir_tabela_quality_trends(path)
     conn = sqlite3.connect(path)
-    c = conn.cursor()
+    try:
+        c = conn.cursor()
 
-    referencia = snapshot["referencia_semana"]
-    data_inicio = snapshot.get("periodo_inicio")
-    data_fim = snapshot.get("periodo_fim")
-    segmentos = snapshot.get("segmentos", [])
-    for seg in segmentos:
-        c.execute(
-            f'''
-            INSERT INTO {QUALITY_TABLE} (
-                referencia_semana,
-                segmento_tipo,
-                segmento_valor,
-                total_apostas,
-                win_rate,
-                roi_pct,
-                brier_medio,
-                fallback_rate
+        referencia = snapshot["referencia_semana"]
+        data_inicio = snapshot.get("periodo_inicio")
+        data_fim = snapshot.get("periodo_fim")
+        segmentos = snapshot.get("segmentos", [])
+        for seg in segmentos:
+            c.execute(
+                f'''
+                INSERT INTO {QUALITY_TABLE} (
+                    referencia_semana,
+                    segmento_tipo,
+                    segmento_valor,
+                    total_apostas,
+                    win_rate,
+                    roi_pct,
+                    brier_medio,
+                    fallback_rate
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(referencia_semana, segmento_tipo, segmento_valor)
+                DO UPDATE SET
+                    total_apostas = excluded.total_apostas,
+                    win_rate = excluded.win_rate,
+                    roi_pct = excluded.roi_pct,
+                    brier_medio = excluded.brier_medio,
+                    fallback_rate = excluded.fallback_rate
+                ''',
+                (
+                    referencia,
+                    seg.get("segmento_tipo", "global"),
+                    seg.get("segmento_valor", "all"),
+                    int(seg.get("total_apostas") or 0),
+                    seg.get("win_rate"),
+                    seg.get("roi_pct"),
+                    seg.get("brier_medio"),
+                    float(seg.get("fallback_rate") or 0.0),
+                ),
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ON CONFLICT(referencia_semana, segmento_tipo, segmento_valor)
-            DO UPDATE SET
-                total_apostas = excluded.total_apostas,
-                win_rate = excluded.win_rate,
-                roi_pct = excluded.roi_pct,
-                brier_medio = excluded.brier_medio,
-                fallback_rate = excluded.fallback_rate
-            ''',
-            (
-                referencia,
-                seg.get("segmento_tipo", "global"),
-                seg.get("segmento_valor", "all"),
-                int(seg.get("total_apostas") or 0),
-                seg.get("win_rate"),
-                seg.get("roi_pct"),
-                seg.get("brier_medio"),
-                float(seg.get("fallback_rate") or 0.0),
-            ),
-        )
 
-    if data_inicio and data_fim:
-        _persist_reliability_deciles(conn, data_inicio, data_fim, referencia)
+        if data_inicio and data_fim:
+            _persist_reliability_deciles(conn, data_inicio, data_fim, referencia)
 
-    conn.commit()
-    conn.close()
+        conn.commit()
+    finally:
+        conn.close()
 
 
 def registrar_snapshot_qualidade_semanal(db_path=None, referencia=None):

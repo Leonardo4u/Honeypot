@@ -1169,7 +1169,16 @@ def formatar_sinal_kelly(analise, kelly):
 async def processar_jogos(dry_run=False):
     ciclo_inicio = time.perf_counter()
     if not _garantir_schema_db():
-        return
+        if not dry_run:
+            return
+        log_event(
+            "runtime",
+            "db",
+            "bootstrap",
+            "warning",
+            "db_schema_bootstrap_skipped_dry_run",
+            {"detalhe": "seguindo em dry-run com schema mockado"},
+        )
     bot = None
     if not dry_run:
         bot = Bot(token=TOKEN)
@@ -2240,11 +2249,15 @@ def _atualizar_clv_settlement(sinal_id, jogo, mercado, liga_nome, outcome):
 
 
 async def verificar_resultados_automatico():
-    from data.verificar_resultados import buscar_resultado_jogo, avaliar_mercado
-    from data.exportar_excel import gerar_excel
+    import sys
 
-    if not _garantir_schema_db():
-        return
+    if "verificar_resultados" in sys.modules:
+        _vr = sys.modules["verificar_resultados"]
+    else:
+        from data import verificar_resultados as _vr
+
+    buscar_resultado_jogo = _vr.buscar_resultado_jogo
+    avaliar_mercado = _vr.avaliar_mercado
 
     bot = Bot(token=TOKEN)
     conn = sqlite3.connect(DB_PATH)
@@ -2344,6 +2357,10 @@ async def verificar_resultados_automatico():
 
     if resultado_registrado:
         try:
+            if "exportar_excel" in sys.modules:
+                gerar_excel = sys.modules["exportar_excel"].gerar_excel
+            else:
+                from data.exportar_excel import gerar_excel
             gerar_excel()
             print("Excel atualizado.")
         except Exception as e:
