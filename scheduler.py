@@ -1250,7 +1250,13 @@ async def processar_jogos(dry_run=False):
     _odds_cache: dict = {}
 
     for liga_key in LIGAS:
-        fetch_result, jogos = DATA_COLLECTION_SERVICE.collect_by_league(liga_key, provider_health)
+        fetch_result = buscar_jogos_com_odds_com_status(liga_key)
+        status = (fetch_result or {}).get("status")
+        if status in provider_health:
+            provider_health[status] += 1
+        else:
+            provider_health["unknown_error"] += 1
+        jogos = formatar_jogos((fetch_result or {}).get("data", []))
 
         for jogo in jogos:
             if jogo["jogo"] in jogos_processados:
@@ -1399,14 +1405,16 @@ async def processar_jogos(dry_run=False):
 
                     if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
                         provider_health["fallback_used"] += 1
-                        registrar_fallback_stats_medias(jogo, mercado, fonte_dados, source_quality)
+                        if not dry_run:
+                            registrar_fallback_stats_medias(jogo, mercado, fonte_dados, source_quality)
 
                     if odd_oponente_mercado <= 0:
                         provider_health["missing_odd_oponente"] = provider_health.get("missing_odd_oponente", 0) + 1
                         provider_health["fallback_used"] += 1
                     elif source_quality != "sharp":
                         provider_health["source_quality_low"] = provider_health.get("source_quality_low", 0) + 1
-                        registrar_fallback_source_quality_low(jogo, mercado, fonte_dados, source_quality)
+                        if not dry_run:
+                            registrar_fallback_source_quality_low(jogo, mercado, fonte_dados, source_quality)
 
                     escalacao_confirmada, origem_escalacao = inferir_escalacao_confirmada(jogo)
                     variacao_odd_gate = calcular_variacao_odd_gate(steam_data)
@@ -1562,11 +1570,15 @@ async def processar_jogos(dry_run=False):
                         )
 
                     analise.setdefault("reasoning_trace", {})
-                    edge_cutoff_runtime = float(analise.get("edge_cutoff_segment", MIN_EDGE_SCORE) or MIN_EDGE_SCORE)
-                    conf_cutoff_runtime = max(
-                        float(MIN_CONFIANCA_EFETIVA),
-                        float(analise.get("confidence_threshold", MIN_CONFIANCA_EFETIVA) or MIN_CONFIANCA_EFETIVA),
-                    )
+                    if dry_run:
+                        edge_cutoff_runtime = -1.0
+                        conf_cutoff_runtime = -1.0
+                    else:
+                        edge_cutoff_runtime = float(analise.get("edge_cutoff_segment", MIN_EDGE_SCORE) or MIN_EDGE_SCORE)
+                        conf_cutoff_runtime = max(
+                            float(MIN_CONFIANCA_EFETIVA),
+                            float(analise.get("confidence_threshold", MIN_CONFIANCA_EFETIVA) or MIN_CONFIANCA_EFETIVA),
+                        )
                     analise["reasoning_trace"]["gate_inputs"] = {
                         "min_edge_score": edge_cutoff_runtime,
                         "min_confianca_efetiva": conf_cutoff_runtime,
