@@ -1,0 +1,761 @@
+liga,temporada,time_casa,time_fora,gols_casa,gols_fora,data_jogo
+Brasileirao Serie A,2024,Internacional,Bahia,2,1,2024-04-13
+Brasileirao Serie A,2024,Criciuma,Juventude,1,1,2024-04-13
+Brasileirao Serie A,2024,Fluminense,RB Bragantino,2,2,2024-04-14
+Brasileirao Serie A,2024,São Paulo,Fortaleza EC,1,2,2024-04-14
+Brasileirao Serie A,2024,Corinthians,Atletico Mineiro,0,0,2024-04-14
+Brasileirao Serie A,2024,Vasco da Gama,Gremio,2,1,2024-04-14
+Brasileirao Serie A,2024,Atletico Paranaense,Cuiaba,4,0,2024-04-14
+Brasileirao Serie A,2024,Atletico Goianiense,Flamengo,1,2,2024-04-14
+Brasileirao Serie A,2024,Cruzeiro,Botafogo,3,2,2024-04-14
+Brasileirao Serie A,2024,Vitoria,Palmeiras,0,1,2024-04-14
+Brasileirao Serie A,2024,Bahia,Fluminense,2,1,2024-04-17
+Brasileirao Serie A,2024,Gremio,Atletico Paranaense,2,0,2024-04-17
+Brasileirao Serie A,2024,RB Bragantino,Vasco da Gama,2,1,2024-04-17
+Brasileirao Serie A,2024,Palmeiras,Internacional,0,1,2024-04-17
+Brasileirao Serie A,2024,Juventude,Corinthians,2,0,2024-04-17
+Brasileirao Serie A,2024,Fortaleza EC,Cruzeiro,1,1,2024-04-17
+Brasileirao Serie A,2024,Atletico Mineiro,Criciuma,1,1,2024-04-17
+Brasileirao Serie A,2024,Flamengo,São Paulo,2,1,2024-04-18
+Brasileirao Serie A,2024,Botafogo,Atletico Goianiense,1,0,2024-04-19
+Brasileirao Serie A,2024,Fluminense,Vasco da Gama,2,1,2024-04-20
+Brasileirao Serie A,2024,Gremio,Cuiaba,1,0,2024-04-20
+Brasileirao Serie A,2024,RB Bragantino,Corinthians,1,0,2024-04-20
+Brasileirao Serie A,2024,Atletico Mineiro,Cruzeiro,3,0,2024-04-21
+Brasileirao Serie A,2024,Palmeiras,Flamengo,0,0,2024-04-21
+Brasileirao Serie A,2024,Atletico Paranaense,Internacional,1,0,2024-04-21
+Brasileirao Serie A,2024,Vitoria,Bahia,2,2,2024-04-21
+Brasileirao Serie A,2024,Botafogo,Juventude,5,1,2024-04-21
+Brasileirao Serie A,2024,Atletico Goianiense,São Paulo,0,3,2024-04-21
+Brasileirao Serie A,2024,Vasco da Gama,Criciuma,0,4,2024-04-27
+Brasileirao Serie A,2024,Cuiaba,Atletico Mineiro,0,3,2024-04-27
+Brasileirao Serie A,2024,Bahia,Gremio,1,0,2024-04-28
+Brasileirao Serie A,2024,Flamengo,Botafogo,0,2,2024-04-28
+Brasileirao Serie A,2024,Corinthians,Fluminense,3,0,2024-04-28
+Brasileirao Serie A,2024,Cruzeiro,Vitoria,3,1,2024-04-28
+Brasileirao Serie A,2024,Juventude,Atletico Paranaense,1,1,2024-04-28
+Brasileirao Serie A,2024,Fortaleza EC,RB Bragantino,1,1,2024-04-28
+Brasileirao Serie A,2024,Internacional,Atletico Goianiense,1,1,2024-04-28
+Brasileirao Serie A,2024,São Paulo,Palmeiras,0,0,2024-04-29
+Brasileirao Serie A,2024,Fluminense,Atletico Mineiro,2,2,2024-05-04
+Brasileirao Serie A,2024,RB Bragantino,Flamengo,1,1,2024-05-04
+Brasileirao Serie A,2024,Corinthians,Fortaleza EC,0,0,2024-05-05
+Brasileirao Serie A,2024,Atletico Paranaense,Vasco da Gama,1,0,2024-05-05
+Brasileirao Serie A,2024,Vitoria,São Paulo,1,3,2024-05-05
+Brasileirao Serie A,2024,Botafogo,Bahia,1,2,2024-05-05
+Brasileirao Serie A,2024,Cuiaba,Palmeiras,0,2,2024-05-05
+Brasileirao Serie A,2024,Flamengo,Corinthians,2,0,2024-05-11
+Brasileirao Serie A,2024,Palmeiras,Atletico Paranaense,0,2,2024-05-12
+Brasileirao Serie A,2024,Atletico Goianiense,Cruzeiro,0,1,2024-05-12
+Brasileirao Serie A,2024,Fortaleza EC,Botafogo,1,1,2024-05-12
+Brasileirao Serie A,2024,Bahia,RB Bragantino,1,0,2024-05-12
+Brasileirao Serie A,2024,Vasco da Gama,Vitoria,2,1,2024-05-12
+Brasileirao Serie A,2024,São Paulo,Fluminense,2,1,2024-05-13
+Brasileirao Serie A,2024,Gremio,RB Bragantino,0,2,2024-06-01
+Brasileirao Serie A,2024,Vitoria,Atletico Goianiense,0,2,2024-06-01
+Brasileirao Serie A,2024,Fluminense,Juventude,1,1,2024-06-01
+Brasileirao Serie A,2024,Cuiaba,Internacional,0,1,2024-06-01
+Brasileirao Serie A,2024,Corinthians,Botafogo,0,1,2024-06-02
+Brasileirao Serie A,2024,Vasco da Gama,Flamengo,1,6,2024-06-02
+Brasileirao Serie A,2024,Criciuma,Palmeiras,1,2,2024-06-02
+Brasileirao Serie A,2024,Atletico Mineiro,Bahia,1,1,2024-06-02
+Brasileirao Serie A,2024,São Paulo,Cruzeiro,2,0,2024-06-02
+Brasileirao Serie A,2024,Fortaleza EC,Atletico Paranaense,1,0,2024-06-02
+Brasileirao Serie A,2024,Juventude,Atletico Goianiense,1,0,2024-06-05
+Brasileirao Serie A,2024,Cuiaba,Vitoria,0,0,2024-06-05
+Brasileirao Serie A,2024,Criciuma,Cuiaba,2,5,2024-06-09
+Brasileirao Serie A,2024,Atletico Goianiense,Corinthians,2,2,2024-06-11
+Brasileirao Serie A,2024,Juventude,Vitoria,1,1,2024-06-11
+Brasileirao Serie A,2024,Botafogo,Fluminense,1,0,2024-06-11
+Brasileirao Serie A,2024,RB Bragantino,Atletico Mineiro,1,2,2024-06-12
+Brasileirao Serie A,2024,Cruzeiro,Cuiaba,2,1,2024-06-13
+Brasileirao Serie A,2024,Internacional,São Paulo,0,0,2024-06-13
+Brasileirao Serie A,2024,Flamengo,Gremio,2,1,2024-06-13
+Brasileirao Serie A,2024,Atletico Paranaense,Criciuma,3,1,2024-06-13
+Brasileirao Serie A,2024,Bahia,Fortaleza EC,1,0,2024-06-14
+Brasileirao Serie A,2024,Palmeiras,Vasco da Gama,2,0,2024-06-14
+Brasileirao Serie A,2024,RB Bragantino,Juventude,2,1,2024-06-15
+Brasileirao Serie A,2024,Fluminense,Atletico Goianiense,1,2,2024-06-16
+Brasileirao Serie A,2024,Corinthians,São Paulo,2,2,2024-06-16
+Brasileirao Serie A,2024,Atletico Paranaense,Flamengo,1,1,2024-06-16
+Brasileirao Serie A,2024,Vitoria,Internacional,2,1,2024-06-16
+Brasileirao Serie A,2024,Gremio,Botafogo,1,2,2024-06-16
+Brasileirao Serie A,2024,Vasco da Gama,Cruzeiro,0,0,2024-06-16
+Brasileirao Serie A,2024,Criciuma,Bahia,2,2,2024-06-16
+Brasileirao Serie A,2024,Cuiaba,Fortaleza EC,5,0,2024-06-16
+Brasileirao Serie A,2024,Atletico Mineiro,Palmeiras,0,4,2024-06-17
+Brasileirao Serie A,2024,Botafogo,Atletico Paranaense,1,1,2024-06-19
+Brasileirao Serie A,2024,Atletico Goianiense,Criciuma,1,2,2024-06-19
+Brasileirao Serie A,2024,São Paulo,Cuiaba,0,1,2024-06-19
+Brasileirao Serie A,2024,Juventude,Vasco da Gama,2,0,2024-06-19
+Brasileirao Serie A,2024,Fortaleza EC,Gremio,1,0,2024-06-19
+Brasileirao Serie A,2024,Internacional,Corinthians,1,0,2024-06-20
+Brasileirao Serie A,2024,Cruzeiro,Fluminense,2,0,2024-06-20
+Brasileirao Serie A,2024,Vitoria,Atletico Mineiro,4,2,2024-06-20
+Brasileirao Serie A,2024,Flamengo,Bahia,2,1,2024-06-20
+Brasileirao Serie A,2024,Palmeiras,RB Bragantino,2,1,2024-06-21
+Brasileirao Serie A,2024,Criciuma,Botafogo,2,1,2024-06-22
+Brasileirao Serie A,2024,Gremio,Internacional,0,1,2024-06-22
+Brasileirao Serie A,2024,Cuiaba,Atletico Goianiense,0,0,2024-06-22
+Brasileirao Serie A,2024,Vasco da Gama,São Paulo,4,1,2024-06-23
+Brasileirao Serie A,2024,Bahia,Cruzeiro,4,1,2024-06-23
+Brasileirao Serie A,2024,Fluminense,Flamengo,0,1,2024-06-23
+Brasileirao Serie A,2024,Atletico Paranaense,Corinthians,1,1,2024-06-23
+Brasileirao Serie A,2024,Palmeiras,Juventude,3,1,2024-06-23
+Brasileirao Serie A,2024,RB Bragantino,Vitoria,2,1,2024-06-23
+Brasileirao Serie A,2024,Atletico Mineiro,Fortaleza EC,1,1,2024-06-23
+Brasileirao Serie A,2024,Botafogo,RB Bragantino,2,1,2024-06-26
+Brasileirao Serie A,2024,Cruzeiro,Atletico Paranaense,2,0,2024-06-26
+Brasileirao Serie A,2024,Corinthians,Cuiaba,1,1,2024-06-26
+Brasileirao Serie A,2024,Atletico Goianiense,Gremio,1,1,2024-06-26
+Brasileirao Serie A,2024,Juventude,Flamengo,2,1,2024-06-26
+Brasileirao Serie A,2024,Bahia,Vasco da Gama,2,1,2024-06-27
+Brasileirao Serie A,2024,Internacional,Atletico Mineiro,1,2,2024-06-27
+Brasileirao Serie A,2024,Fortaleza EC,Palmeiras,3,0,2024-06-27
+Brasileirao Serie A,2024,Fluminense,Vitoria,0,1,2024-06-27
+Brasileirao Serie A,2024,São Paulo,Criciuma,2,1,2024-06-27
+Brasileirao Serie A,2024,Vasco da Gama,Botafogo,1,1,2024-06-29
+Brasileirao Serie A,2024,Cuiaba,RB Bragantino,1,1,2024-06-29
+Brasileirao Serie A,2024,Atletico Mineiro,Atletico Goianiense,1,1,2024-06-30
+Brasileirao Serie A,2024,São Paulo,Bahia,3,1,2024-06-30
+Brasileirao Serie A,2024,Gremio,Fluminense,1,0,2024-06-30
+Brasileirao Serie A,2024,Fortaleza EC,Juventude,2,1,2024-06-30
+Brasileirao Serie A,2024,Flamengo,Cruzeiro,2,1,2024-06-30
+Brasileirao Serie A,2024,Vitoria,Atletico Paranaense,0,1,2024-06-30
+Brasileirao Serie A,2024,Criciuma,Internacional,1,1,2024-06-30
+Brasileirao Serie A,2024,Palmeiras,Corinthians,2,0,2024-07-01
+Brasileirao Serie A,2024,Cuiaba,Botafogo,1,2,2024-07-03
+Brasileirao Serie A,2024,Vasco da Gama,Fortaleza EC,2,0,2024-07-03
+Brasileirao Serie A,2024,Criciuma,Cruzeiro,1,0,2024-07-03
+Brasileirao Serie A,2024,Atletico Paranaense,São Paulo,1,2,2024-07-04
+Brasileirao Serie A,2024,RB Bragantino,Atletico Goianiense,3,1,2024-07-04
+Brasileirao Serie A,2024,Atletico Mineiro,Flamengo,2,4,2024-07-04
+Brasileirao Serie A,2024,Bahia,Juventude,2,0,2024-07-04
+Brasileirao Serie A,2024,Gremio,Palmeiras,2,2,2024-07-04
+Brasileirao Serie A,2024,Fluminense,Internacional,1,1,2024-07-04
+Brasileirao Serie A,2024,Corinthians,Vitoria,3,2,2024-07-04
+Brasileirao Serie A,2024,São Paulo,RB Bragantino,2,0,2024-07-06
+Brasileirao Serie A,2024,Flamengo,Cuiaba,1,1,2024-07-06
+Brasileirao Serie A,2024,Cruzeiro,Corinthians,3,0,2024-07-07
+Brasileirao Serie A,2024,Juventude,Gremio,3,0,2024-07-07
+Brasileirao Serie A,2024,Fortaleza EC,Fluminense,1,0,2024-07-07
+Brasileirao Serie A,2024,Internacional,Vasco da Gama,1,2,2024-07-07
+Brasileirao Serie A,2024,Palmeiras,Bahia,2,0,2024-07-07
+Brasileirao Serie A,2024,Vitoria,Criciuma,2,1,2024-07-07
+Brasileirao Serie A,2024,Atletico Goianiense,Atletico Paranaense,1,2,2024-07-07
+Brasileirao Serie A,2024,Botafogo,Atletico Mineiro,3,0,2024-07-07
+Brasileirao Serie A,2024,Gremio,Cruzeiro,0,2,2024-07-10
+Brasileirao Serie A,2024,Vasco da Gama,Corinthians,2,0,2024-07-10
+Brasileirao Serie A,2024,Atletico Paranaense,Bahia,1,3,2024-07-10
+Brasileirao Serie A,2024,Palmeiras,Atletico Goianiense,3,1,2024-07-11
+Brasileirao Serie A,2024,Flamengo,Fortaleza EC,1,2,2024-07-11
+Brasileirao Serie A,2024,Criciuma,Fluminense,1,1,2024-07-11
+Brasileirao Serie A,2024,Vitoria,Botafogo,0,1,2024-07-12
+Brasileirao Serie A,2024,Atletico Mineiro,São Paulo,2,1,2024-07-12
+Brasileirao Serie A,2024,Bahia,Cuiaba,1,2,2024-07-13
+Brasileirao Serie A,2024,Cruzeiro,RB Bragantino,2,1,2024-07-13
+Brasileirao Serie A,2024,Juventude,Atletico Mineiro,1,1,2024-07-16
+Brasileirao Serie A,2024,Corinthians,Criciuma,2,1,2024-07-17
+Brasileirao Serie A,2024,Atletico Goianiense,Vasco da Gama,0,1,2024-07-17
+Brasileirao Serie A,2024,São Paulo,Gremio,1,0,2024-07-17
+Brasileirao Serie A,2024,Botafogo,Palmeiras,1,0,2024-07-18
+Brasileirao Serie A,2024,Fortaleza EC,Vitoria,3,1,2024-07-18
+Brasileirao Serie A,2024,Flamengo,Criciuma,2,1,2024-07-20
+Brasileirao Serie A,2024,Botafogo,Internacional,1,0,2024-07-20
+Brasileirao Serie A,2024,Palmeiras,Cruzeiro,2,0,2024-07-21
+Brasileirao Serie A,2024,Gremio,Vitoria,2,0,2024-07-21
+Brasileirao Serie A,2024,Bahia,Corinthians,0,1,2024-07-21
+Brasileirao Serie A,2024,Atletico Mineiro,Vasco da Gama,2,0,2024-07-21
+Brasileirao Serie A,2024,Juventude,São Paulo,0,0,2024-07-21
+Brasileirao Serie A,2024,Fortaleza EC,Atletico Goianiense,3,1,2024-07-21
+Brasileirao Serie A,2024,RB Bragantino,Atletico Paranaense,1,0,2024-07-21
+Brasileirao Serie A,2024,Cuiaba,Fluminense,0,1,2024-07-21
+Brasileirao Serie A,2024,Cruzeiro,Juventude,2,0,2024-07-24
+Brasileirao Serie A,2024,Criciuma,Fortaleza EC,1,1,2024-07-24
+Brasileirao Serie A,2024,São Paulo,Botafogo,2,2,2024-07-24
+Brasileirao Serie A,2024,Vitoria,Flamengo,1,2,2024-07-24
+Brasileirao Serie A,2024,Fluminense,Palmeiras,1,0,2024-07-25
+Brasileirao Serie A,2024,Atletico Goianiense,Bahia,1,1,2024-07-25
+Brasileirao Serie A,2024,Corinthians,Gremio,2,2,2024-07-25
+Brasileirao Serie A,2024,Palmeiras,Vitoria,0,2,2024-07-27
+Brasileirao Serie A,2024,Juventude,Criciuma,1,2,2024-07-27
+Brasileirao Serie A,2024,Bahia,Internacional,1,1,2024-07-27
+Brasileirao Serie A,2024,Botafogo,Cruzeiro,0,3,2024-07-28
+Brasileirao Serie A,2024,Fortaleza EC,São Paulo,1,0,2024-07-28
+Brasileirao Serie A,2024,RB Bragantino,Fluminense,0,1,2024-07-28
+Brasileirao Serie A,2024,Flamengo,Atletico Goianiense,2,0,2024-07-28
+Brasileirao Serie A,2024,Gremio,Vasco da Gama,1,0,2024-07-28
+Brasileirao Serie A,2024,Atletico Mineiro,Corinthians,2,1,2024-07-28
+Brasileirao Serie A,2024,Cuiaba,Atletico Paranaense,1,2,2024-07-28
+Brasileirao Serie A,2024,Vitoria,Cuiaba,1,0,2024-08-03
+Brasileirao Serie A,2024,Vasco da Gama,RB Bragantino,2,2,2024-08-03
+Brasileirao Serie A,2024,Criciuma,Atletico Mineiro,2,1,2024-08-03
+Brasileirao Serie A,2024,Atletico Goianiense,Botafogo,1,4,2024-08-03
+Brasileirao Serie A,2024,São Paulo,Flamengo,1,0,2024-08-04
+Brasileirao Serie A,2024,Fluminense,Bahia,1,0,2024-08-04
+Brasileirao Serie A,2024,Corinthians,Juventude,1,1,2024-08-04
+Brasileirao Serie A,2024,Atletico Paranaense,Gremio,0,2,2024-08-04
+Brasileirao Serie A,2024,Internacional,Palmeiras,1,1,2024-08-04
+Brasileirao Serie A,2024,Cruzeiro,Fortaleza EC,1,2,2024-08-06
+Brasileirao Serie A,2024,Fortaleza EC,Criciuma,1,0,2024-08-10
+Brasileirao Serie A,2024,Cuiaba,Gremio,1,3,2024-08-10
+Brasileirao Serie A,2024,Corinthians,RB Bragantino,1,1,2024-08-11
+Brasileirao Serie A,2024,Vasco da Gama,Fluminense,2,0,2024-08-11
+Brasileirao Serie A,2024,Cruzeiro,Atletico Mineiro,0,0,2024-08-11
+Brasileirao Serie A,2024,Juventude,Botafogo,3,2,2024-08-11
+Brasileirao Serie A,2024,Bahia,Vitoria,2,0,2024-08-11
+Brasileirao Serie A,2024,São Paulo,Atletico Goianiense,1,0,2024-08-11
+Brasileirao Serie A,2024,Flamengo,Palmeiras,1,1,2024-08-11
+Brasileirao Serie A,2024,Internacional,Atletico Paranaense,2,2,2024-08-11
+Brasileirao Serie A,2024,Internacional,Juventude,2,1,2024-08-14
+Brasileirao Serie A,2024,Gremio,Bahia,0,2,2024-08-17
+Brasileirao Serie A,2024,Atletico Mineiro,Cuiaba,1,1,2024-08-17
+Brasileirao Serie A,2024,RB Bragantino,Fortaleza EC,1,2,2024-08-17
+Brasileirao Serie A,2024,Fluminense,Corinthians,0,0,2024-08-18
+Brasileirao Serie A,2024,Palmeiras,São Paulo,2,1,2024-08-18
+Brasileirao Serie A,2024,Criciuma,Vasco da Gama,2,2,2024-08-18
+Brasileirao Serie A,2024,Atletico Goianiense,Internacional,1,0,2024-08-18
+Brasileirao Serie A,2024,Botafogo,Flamengo,4,1,2024-08-18
+Brasileirao Serie A,2024,Atletico Paranaense,Juventude,1,2,2024-08-18
+Brasileirao Serie A,2024,Vitoria,Cruzeiro,2,2,2024-08-19
+Brasileirao Serie A,2024,Atletico Goianiense,Juventude,2,1,2024-08-24
+Brasileirao Serie A,2024,Palmeiras,Cuiaba,5,0,2024-08-24
+Brasileirao Serie A,2024,Atletico Mineiro,Fluminense,0,2,2024-08-25
+Brasileirao Serie A,2024,Bahia,Botafogo,0,0,2024-08-25
+Brasileirao Serie A,2024,Criciuma,Gremio,0,1,2024-08-25
+Brasileirao Serie A,2024,Fortaleza EC,Corinthians,1,0,2024-08-25
+Brasileirao Serie A,2024,São Paulo,Vitoria,2,1,2024-08-25
+Brasileirao Serie A,2024,Internacional,Cruzeiro,1,0,2024-08-25
+Brasileirao Serie A,2024,Flamengo,RB Bragantino,2,1,2024-08-25
+Brasileirao Serie A,2024,Vasco da Gama,Atletico Paranaense,2,1,2024-08-27
+Brasileirao Serie A,2024,Cruzeiro,Internacional,0,0,2024-08-28
+Brasileirao Serie A,2024,Criciuma,RB Bragantino,1,0,2024-08-28
+Brasileirao Serie A,2024,Cuiaba,Criciuma,2,1,2024-08-31
+Brasileirao Serie A,2024,Botafogo,Fortaleza EC,2,0,2024-09-01
+Brasileirao Serie A,2024,Gremio,Atletico Mineiro,2,3,2024-09-01
+Brasileirao Serie A,2024,Cruzeiro,Atletico Goianiense,3,1,2024-09-01
+Brasileirao Serie A,2024,Corinthians,Flamengo,2,1,2024-09-01
+Brasileirao Serie A,2024,Fluminense,São Paulo,2,0,2024-09-01
+Brasileirao Serie A,2024,Atletico Paranaense,Palmeiras,0,2,2024-09-01
+Brasileirao Serie A,2024,Vitoria,Vasco da Gama,0,1,2024-09-01
+Brasileirao Serie A,2024,Juventude,Internacional,1,3,2024-09-01
+Brasileirao Serie A,2024,RB Bragantino,Bahia,2,1,2024-09-01
+Brasileirao Serie A,2024,Cuiaba,Juventude,0,0,2024-09-05
+Brasileirao Serie A,2024,Internacional,Fortaleza EC,2,1,2024-09-11
+Brasileirao Serie A,2024,Atletico Goianiense,Vitoria,0,2,2024-09-14
+Brasileirao Serie A,2024,Atletico Paranaense,Fortaleza EC,1,1,2024-09-14
+Brasileirao Serie A,2024,Botafogo,Corinthians,2,1,2024-09-15
+Brasileirao Serie A,2024,Palmeiras,Criciuma,5,0,2024-09-15
+Brasileirao Serie A,2024,Juventude,Fluminense,2,1,2024-09-15
+Brasileirao Serie A,2024,RB Bragantino,Gremio,2,2,2024-09-15
+Brasileirao Serie A,2024,Bahia,Atletico Mineiro,3,0,2024-09-15
+Brasileirao Serie A,2024,Flamengo,Vasco da Gama,1,1,2024-09-15
+Brasileirao Serie A,2024,Cruzeiro,São Paulo,0,1,2024-09-15
+Brasileirao Serie A,2024,Internacional,Cuiaba,3,0,2024-09-16
+Brasileirao Serie A,2024,Corinthians,Atletico Goianiense,3,0,2024-09-21
+Brasileirao Serie A,2024,Vitoria,Juventude,1,0,2024-09-21
+Brasileirao Serie A,2024,Fluminense,Botafogo,0,1,2024-09-21
+Brasileirao Serie A,2024,Fortaleza EC,Bahia,4,1,2024-09-22
+Brasileirao Serie A,2024,Vasco da Gama,Palmeiras,0,1,2024-09-22
+Brasileirao Serie A,2024,Atletico Mineiro,RB Bragantino,3,0,2024-09-22
+Brasileirao Serie A,2024,São Paulo,Internacional,1,3,2024-09-22
+Brasileirao Serie A,2024,Gremio,Flamengo,3,2,2024-09-22
+Brasileirao Serie A,2024,Cuiaba,Cruzeiro,0,0,2024-09-22
+Brasileirao Serie A,2024,Criciuma,Atletico Paranaense,0,0,2024-09-23
+Brasileirao Serie A,2024,Gremio,Criciuma,1,2,2024-09-25
+Brasileirao Serie A,2024,RB Bragantino,Internacional,2,2,2024-09-25
+Brasileirao Serie A,2024,Palmeiras,Atletico Mineiro,2,1,2024-09-28
+Brasileirao Serie A,2024,Botafogo,Gremio,0,0,2024-09-29
+Brasileirao Serie A,2024,Juventude,RB Bragantino,1,1,2024-09-29
+Brasileirao Serie A,2024,São Paulo,Corinthians,3,1,2024-09-29
+Brasileirao Serie A,2024,Atletico Goianiense,Fluminense,1,0,2024-09-29
+Brasileirao Serie A,2024,Fortaleza EC,Cuiaba,1,0,2024-09-29
+Brasileirao Serie A,2024,Bahia,Criciuma,1,0,2024-09-29
+Brasileirao Serie A,2024,Internacional,Vitoria,3,1,2024-09-29
+Brasileirao Serie A,2024,Cruzeiro,Vasco da Gama,1,1,2024-09-29
+Brasileirao Serie A,2024,Flamengo,Atletico Paranaense,1,0,2024-09-29
+Brasileirao Serie A,2024,Criciuma,Atletico Goianiense,2,0,2024-10-03
+Brasileirao Serie A,2024,Fluminense,Cruzeiro,1,0,2024-10-04
+Brasileirao Serie A,2024,Gremio,Fortaleza EC,3,1,2024-10-05
+Brasileirao Serie A,2024,Atletico Paranaense,Botafogo,0,1,2024-10-05
+Brasileirao Serie A,2024,RB Bragantino,Palmeiras,0,0,2024-10-05
+Brasileirao Serie A,2024,Atletico Mineiro,Vitoria,2,2,2024-10-05
+Brasileirao Serie A,2024,Bahia,Flamengo,0,2,2024-10-05
+Brasileirao Serie A,2024,Corinthians,Internacional,2,2,2024-10-05
+Brasileirao Serie A,2024,Cuiaba,São Paulo,2,0,2024-10-05
+Brasileirao Serie A,2024,Vasco da Gama,Juventude,1,1,2024-10-06
+Brasileirao Serie A,2024,Atletico Mineiro,Gremio,2,1,2024-10-09
+Brasileirao Serie A,2024,São Paulo,Vasco da Gama,3,0,2024-10-17
+Brasileirao Serie A,2024,Fortaleza EC,Atletico Mineiro,1,1,2024-10-17
+Brasileirao Serie A,2024,Flamengo,Fluminense,0,2,2024-10-17
+Brasileirao Serie A,2024,Corinthians,Atletico Paranaense,5,2,2024-10-17
+Brasileirao Serie A,2024,Atletico Goianiense,Cuiaba,0,0,2024-10-18
+Brasileirao Serie A,2024,Botafogo,Criciuma,1,1,2024-10-18
+Brasileirao Serie A,2024,Cruzeiro,Bahia,1,1,2024-10-19
+Brasileirao Serie A,2024,Internacional,Gremio,1,0,2024-10-19
+Brasileirao Serie A,2024,Vitoria,RB Bragantino,1,0,2024-10-19
+Brasileirao Serie A,2024,Juventude,Palmeiras,3,5,2024-10-20
+Brasileirao Serie A,2024,Fluminense,Atletico Paranaense,1,0,2024-10-22
+Brasileirao Serie A,2024,Vasco da Gama,Cuiaba,1,0,2024-10-25
+Brasileirao Serie A,2024,Palmeiras,Fortaleza EC,2,2,2024-10-26
+Brasileirao Serie A,2024,Flamengo,Juventude,4,2,2024-10-26
+Brasileirao Serie A,2024,Gremio,Atletico Goianiense,3,1,2024-10-26
+Brasileirao Serie A,2024,Vitoria,Fluminense,2,1,2024-10-26
+Brasileirao Serie A,2024,Atletico Paranaense,Cruzeiro,3,0,2024-10-26
+Brasileirao Serie A,2024,RB Bragantino,Botafogo,0,1,2024-10-26
+Brasileirao Serie A,2024,Atletico Mineiro,Internacional,1,3,2024-10-26
+Brasileirao Serie A,2024,Criciuma,São Paulo,1,1,2024-10-27
+Brasileirao Serie A,2024,Cuiaba,Corinthians,0,1,2024-10-28
+Brasileirao Serie A,2024,Vasco da Gama,Bahia,3,2,2024-10-29
+Brasileirao Serie A,2024,Internacional,Flamengo,1,1,2024-10-30
+Brasileirao Serie A,2024,Fluminense,Gremio,2,2,2024-11-02
+Brasileirao Serie A,2024,RB Bragantino,Cuiaba,0,0,2024-11-02
+Brasileirao Serie A,2024,Atletico Paranaense,Vitoria,1,2,2024-11-02
+Brasileirao Serie A,2024,Juventude,Fortaleza EC,0,3,2024-11-02
+Brasileirao Serie A,2024,Corinthians,Palmeiras,2,0,2024-11-04
+Brasileirao Serie A,2024,Bahia,São Paulo,0,3,2024-11-06
+Brasileirao Serie A,2024,Internacional,Criciuma,2,0,2024-11-06
+Brasileirao Serie A,2024,Botafogo,Vasco da Gama,3,0,2024-11-06
+Brasileirao Serie A,2024,Cruzeiro,Flamengo,0,1,2024-11-07
+Brasileirao Serie A,2024,Atletico Goianiense,Atletico Mineiro,1,0,2024-11-07
+Brasileirao Serie A,2024,Internacional,Fluminense,2,0,2024-11-08
+Brasileirao Serie A,2024,Palmeiras,Gremio,1,0,2024-11-09
+Brasileirao Serie A,2024,Botafogo,Cuiaba,0,0,2024-11-09
+Brasileirao Serie A,2024,Vitoria,Corinthians,1,2,2024-11-09
+Brasileirao Serie A,2024,Cruzeiro,Criciuma,2,1,2024-11-09
+Brasileirao Serie A,2024,Atletico Goianiense,RB Bragantino,0,0,2024-11-09
+Brasileirao Serie A,2024,Juventude,Bahia,2,1,2024-11-09
+Brasileirao Serie A,2024,Fortaleza EC,Vasco da Gama,3,0,2024-11-09
+Brasileirao Serie A,2024,São Paulo,Atletico Paranaense,2,1,2024-11-10
+Brasileirao Serie A,2024,Flamengo,Atletico Mineiro,0,0,2024-11-13
+Brasileirao Serie A,2024,Atletico Paranaense,Atletico Mineiro,1,0,2024-11-16
+Brasileirao Serie A,2024,Corinthians,Cruzeiro,2,1,2024-11-20
+Brasileirao Serie A,2024,Atletico Paranaense,Atletico Goianiense,2,0,2024-11-20
+Brasileirao Serie A,2024,Criciuma,Vitoria,0,1,2024-11-20
+Brasileirao Serie A,2024,RB Bragantino,São Paulo,1,1,2024-11-20
+Brasileirao Serie A,2024,Bahia,Palmeiras,1,2,2024-11-20
+Brasileirao Serie A,2024,Gremio,Juventude,2,2,2024-11-20
+Brasileirao Serie A,2024,Cuiaba,Flamengo,1,2,2024-11-20
+Brasileirao Serie A,2024,Atletico Mineiro,Botafogo,0,0,2024-11-21
+Brasileirao Serie A,2024,Vasco da Gama,Internacional,0,1,2024-11-21
+Brasileirao Serie A,2024,Fluminense,Fortaleza EC,2,2,2024-11-23
+Brasileirao Serie A,2024,Botafogo,Vitoria,1,1,2024-11-23
+Brasileirao Serie A,2024,Atletico Goianiense,Palmeiras,0,1,2024-11-23
+Brasileirao Serie A,2024,Juventude,Cuiaba,1,1,2024-11-23
+Brasileirao Serie A,2024,São Paulo,Atletico Mineiro,2,2,2024-11-24
+Brasileirao Serie A,2024,Bahia,Atletico Paranaense,1,1,2024-11-24
+Brasileirao Serie A,2024,Internacional,RB Bragantino,4,1,2024-11-24
+Brasileirao Serie A,2024,Corinthians,Vasco da Gama,3,1,2024-11-24
+Brasileirao Serie A,2024,Fluminense,Criciuma,0,0,2024-11-26
+Brasileirao Serie A,2024,Fortaleza EC,Flamengo,0,0,2024-11-26
+Brasileirao Serie A,2024,Palmeiras,Botafogo,1,3,2024-11-27
+Brasileirao Serie A,2024,Atletico Mineiro,Juventude,2,3,2024-11-27
+Brasileirao Serie A,2024,Cruzeiro,Gremio,1,1,2024-11-28
+Brasileirao Serie A,2024,Criciuma,Corinthians,2,4,2024-11-30
+Brasileirao Serie A,2024,Cuiaba,Bahia,1,2,2024-11-30
+Brasileirao Serie A,2024,Vasco da Gama,Atletico Goianiense,2,2,2024-12-01
+Brasileirao Serie A,2024,Flamengo,Internacional,3,2,2024-12-01
+Brasileirao Serie A,2024,Gremio,São Paulo,2,1,2024-12-01
+Brasileirao Serie A,2024,Atletico Paranaense,Fluminense,1,1,2024-12-01
+Brasileirao Serie A,2024,Vitoria,Fortaleza EC,2,0,2024-12-01
+Brasileirao Serie A,2024,RB Bragantino,Cruzeiro,1,1,2024-12-01
+Brasileirao Serie A,2024,Corinthians,Bahia,3,0,2024-12-03
+Brasileirao Serie A,2024,Vasco da Gama,Atletico Mineiro,2,0,2024-12-04
+Brasileirao Serie A,2024,São Paulo,Juventude,1,2,2024-12-04
+Brasileirao Serie A,2024,Vitoria,Gremio,1,1,2024-12-04
+Brasileirao Serie A,2024,Criciuma,Flamengo,0,3,2024-12-04
+Brasileirao Serie A,2024,Internacional,Botafogo,0,1,2024-12-05
+Brasileirao Serie A,2024,Cruzeiro,Palmeiras,1,2,2024-12-05
+Brasileirao Serie A,2024,Atletico Goianiense,Fortaleza EC,3,1,2024-12-05
+Brasileirao Serie A,2024,Fluminense,Cuiaba,1,0,2024-12-05
+Brasileirao Serie A,2024,Atletico Paranaense,RB Bragantino,1,2,2024-12-05
+Brasileirao Serie A,2024,Bahia,Atletico Goianiense,2,0,2024-12-08
+Brasileirao Serie A,2024,Botafogo,São Paulo,2,1,2024-12-08
+Brasileirao Serie A,2024,Palmeiras,Fluminense,0,1,2024-12-08
+Brasileirao Serie A,2024,Flamengo,Vitoria,2,2,2024-12-08
+Brasileirao Serie A,2024,Gremio,Corinthians,0,3,2024-12-08
+Brasileirao Serie A,2024,Juventude,Cruzeiro,0,1,2024-12-08
+Brasileirao Serie A,2024,Fortaleza EC,Internacional,3,0,2024-12-08
+Brasileirao Serie A,2024,RB Bragantino,Criciuma,5,1,2024-12-08
+Brasileirao Serie A,2024,Atletico Mineiro,Atletico Paranaense,1,0,2024-12-08
+Brasileirao Serie A,2024,Cuiaba,Vasco da Gama,1,2,2024-12-08
+Brasileirao Serie A,2023,Palmeiras,Cuiaba,2,1,2023-04-15
+Brasileirao Serie A,2023,America Mineiro,Fluminense,0,3,2023-04-15
+Brasileirao Serie A,2023,Botafogo,São Paulo,2,1,2023-04-15
+Brasileirao Serie A,2023,Atletico Paranaense,Goias,2,0,2023-04-15
+Brasileirao Serie A,2023,Fortaleza EC,Internacional,1,1,2023-04-15
+Brasileirao Serie A,2023,RB Bragantino,Bahia,2,1,2023-04-15
+Brasileirao Serie A,2023,Atletico Mineiro,Vasco da Gama,1,2,2023-04-16
+Brasileirao Serie A,2023,Flamengo,Coritiba,3,0,2023-04-16
+Brasileirao Serie A,2023,Corinthians,Cruzeiro,2,1,2023-04-16
+Brasileirao Serie A,2023,Gremio,Santos,1,0,2023-04-16
+Brasileirao Serie A,2023,Fluminense,Atletico Paranaense,2,0,2023-04-22
+Brasileirao Serie A,2023,São Paulo,America Mineiro,3,0,2023-04-22
+Brasileirao Serie A,2023,Cuiaba,RB Bragantino,1,1,2023-04-22
+Brasileirao Serie A,2023,Cruzeiro,Gremio,1,0,2023-04-23
+Brasileirao Serie A,2023,Internacional,Flamengo,2,1,2023-04-23
+Brasileirao Serie A,2023,Santos,Atletico Mineiro,0,0,2023-04-23
+Brasileirao Serie A,2023,Vasco da Gama,Palmeiras,2,2,2023-04-23
+Brasileirao Serie A,2023,Coritiba,Fortaleza EC,0,3,2023-04-23
+Brasileirao Serie A,2023,Goias,Corinthians,3,1,2023-04-23
+Brasileirao Serie A,2023,Bahia,Botafogo,1,2,2023-04-24
+Brasileirao Serie A,2023,Coritiba,São Paulo,1,1,2023-04-29
+Brasileirao Serie A,2023,Fortaleza EC,Fluminense,4,2,2023-04-29
+Brasileirao Serie A,2023,Palmeiras,Corinthians,2,1,2023-04-29
+Brasileirao Serie A,2023,Santos,America Mineiro,3,2,2023-04-29
+Brasileirao Serie A,2023,RB Bragantino,Cruzeiro,0,3,2023-04-29
+Brasileirao Serie A,2023,Atletico Mineiro,Atletico Paranaense,2,1,2023-04-30
+Brasileirao Serie A,2023,Flamengo,Botafogo,2,3,2023-04-30
+Brasileirao Serie A,2023,Internacional,Goias,1,0,2023-04-30
+Brasileirao Serie A,2023,Cuiaba,Gremio,1,2,2023-04-30
+Brasileirao Serie A,2023,Vasco da Gama,Bahia,0,1,2023-05-01
+Brasileirao Serie A,2023,Cruzeiro,Santos,2,1,2023-05-06
+Brasileirao Serie A,2023,Fluminense,Vasco da Gama,1,1,2023-05-07
+Brasileirao Serie A,2023,America Mineiro,Cuiaba,1,2,2023-05-07
+Brasileirao Serie A,2023,Bahia,Coritiba,3,1,2023-05-07
+Brasileirao Serie A,2023,São Paulo,Internacional,2,0,2023-05-07
+Brasileirao Serie A,2023,Atletico Paranaense,Flamengo,2,1,2023-05-07
+Brasileirao Serie A,2023,Botafogo,Atletico Mineiro,2,0,2023-05-07
+Brasileirao Serie A,2023,Gremio,RB Bragantino,3,3,2023-05-07
+Brasileirao Serie A,2023,Goias,Palmeiras,0,5,2023-05-07
+Brasileirao Serie A,2023,Corinthians,Fortaleza EC,1,1,2023-05-08
+Brasileirao Serie A,2023,Internacional,Atletico Paranaense,0,2,2023-05-10
+Brasileirao Serie A,2023,Santos,Bahia,3,0,2023-05-10
+Brasileirao Serie A,2023,RB Bragantino,America Mineiro,2,2,2023-05-10
+Brasileirao Serie A,2023,Flamengo,Goias,2,0,2023-05-10
+Brasileirao Serie A,2023,Cuiaba,Atletico Mineiro,0,4,2023-05-10
+Brasileirao Serie A,2023,Palmeiras,Gremio,4,1,2023-05-11
+Brasileirao Serie A,2023,Cruzeiro,Fluminense,0,2,2023-05-11
+Brasileirao Serie A,2023,Coritiba,Vasco da Gama,1,1,2023-05-11
+Brasileirao Serie A,2023,Botafogo,Corinthians,3,0,2023-05-11
+Brasileirao Serie A,2023,Fortaleza EC,São Paulo,0,0,2023-05-11
+Brasileirao Serie A,2023,Bahia,Flamengo,2,3,2023-05-13
+Brasileirao Serie A,2023,Palmeiras,RB Bragantino,1,1,2023-05-13
+Brasileirao Serie A,2023,Fluminense,Cuiaba,2,0,2023-05-13
+Brasileirao Serie A,2023,Atletico Mineiro,Internacional,2,0,2023-05-14
+Brasileirao Serie A,2023,Gremio,Fortaleza EC,0,0,2023-05-14
+Brasileirao Serie A,2023,Corinthians,São Paulo,1,1,2023-05-14
+Brasileirao Serie A,2023,Vasco da Gama,Santos,0,1,2023-05-14
+Brasileirao Serie A,2023,America Mineiro,Cruzeiro,0,4,2023-05-14
+Brasileirao Serie A,2023,Atletico Paranaense,Coritiba,3,2,2023-05-14
+Brasileirao Serie A,2023,Goias,Botafogo,2,1,2023-05-14
+Brasileirao Serie A,2023,Bahia,Goias,1,1,2023-05-20
+Brasileirao Serie A,2023,Botafogo,Fluminense,1,0,2023-05-20
+Brasileirao Serie A,2023,America Mineiro,Fortaleza EC,2,1,2023-05-20
+Brasileirao Serie A,2023,São Paulo,Vasco da Gama,4,2,2023-05-20
+Brasileirao Serie A,2023,Coritiba,Atletico Mineiro,1,2,2023-05-20
+Brasileirao Serie A,2023,RB Bragantino,Atletico Paranaense,2,0,2023-05-20
+Brasileirao Serie A,2023,Santos,Palmeiras,0,0,2023-05-21
+Brasileirao Serie A,2023,Flamengo,Corinthians,1,0,2023-05-21
+Brasileirao Serie A,2023,Gremio,Internacional,3,1,2023-05-21
+Brasileirao Serie A,2023,Cruzeiro,Cuiaba,0,1,2023-05-22
+Brasileirao Serie A,2023,Atletico Paranaense,Gremio,1,2,2023-05-27
+Brasileirao Serie A,2023,Fortaleza EC,Vasco da Gama,2,0,2023-05-27
+Brasileirao Serie A,2023,Flamengo,Cruzeiro,1,1,2023-05-27
+Brasileirao Serie A,2023,Cuiaba,Coritiba,1,1,2023-05-27
+Brasileirao Serie A,2023,São Paulo,Goias,2,1,2023-05-28
+Brasileirao Serie A,2023,Internacional,Bahia,2,0,2023-05-28
+Brasileirao Serie A,2023,Corinthians,Fluminense,2,0,2023-05-28
+Brasileirao Serie A,2023,RB Bragantino,Santos,2,0,2023-05-28
+Brasileirao Serie A,2023,Atletico Mineiro,Palmeiras,1,1,2023-05-28
+Brasileirao Serie A,2023,Botafogo,America Mineiro,2,0,2023-05-28
+Brasileirao Serie A,2023,Fortaleza EC,Bahia,0,0,2023-06-03
+Brasileirao Serie A,2023,America Mineiro,Corinthians,2,0,2023-06-03
+Brasileirao Serie A,2023,Atletico Paranaense,Botafogo,1,0,2023-06-03
+Brasileirao Serie A,2023,Cruzeiro,Atletico Mineiro,0,1,2023-06-03
+Brasileirao Serie A,2023,Santos,Internacional,1,1,2023-06-04
+Brasileirao Serie A,2023,Fluminense,RB Bragantino,2,1,2023-06-04
+Brasileirao Serie A,2023,Gremio,São Paulo,2,1,2023-06-04
+Brasileirao Serie A,2023,Palmeiras,Coritiba,3,1,2023-06-04
+Brasileirao Serie A,2023,Goias,Cuiaba,0,1,2023-06-04
+Brasileirao Serie A,2023,Vasco da Gama,Flamengo,1,4,2023-06-05
+Brasileirao Serie A,2023,Coritiba,Santos,0,0,2023-06-10
+Brasileirao Serie A,2023,Bahia,Cruzeiro,2,2,2023-06-10
+Brasileirao Serie A,2023,Corinthians,Cuiaba,1,1,2023-06-10
+Brasileirao Serie A,2023,Atletico Mineiro,RB Bragantino,1,1,2023-06-10
+Brasileirao Serie A,2023,Botafogo,Fortaleza EC,2,0,2023-06-11
+Brasileirao Serie A,2023,America Mineiro,Atletico Paranaense,2,2,2023-06-11
+Brasileirao Serie A,2023,Internacional,Vasco da Gama,2,1,2023-06-11
+Brasileirao Serie A,2023,São Paulo,Palmeiras,0,2,2023-06-11
+Brasileirao Serie A,2023,Flamengo,Gremio,3,0,2023-06-11
+Brasileirao Serie A,2023,Goias,Fluminense,2,2,2023-06-11
+Brasileirao Serie A,2023,São Paulo,Atletico Paranaense,2,1,2023-06-21
+Brasileirao Serie A,2023,Cruzeiro,Fortaleza EC,0,1,2023-06-21
+Brasileirao Serie A,2023,Santos,Corinthians,0,2,2023-06-21
+Brasileirao Serie A,2023,Bahia,Palmeiras,1,0,2023-06-22
+Brasileirao Serie A,2023,Fluminense,Atletico Mineiro,1,1,2023-06-22
+Brasileirao Serie A,2023,Gremio,America Mineiro,3,1,2023-06-22
+Brasileirao Serie A,2023,Vasco da Gama,Goias,0,1,2023-06-22
+Brasileirao Serie A,2023,Coritiba,Internacional,0,1,2023-06-22
+Brasileirao Serie A,2023,Cuiaba,Botafogo,0,1,2023-06-22
+Brasileirao Serie A,2023,RB Bragantino,Flamengo,4,0,2023-06-23
+Brasileirao Serie A,2023,Atletico Paranaense,Corinthians,1,0,2023-06-24
+Brasileirao Serie A,2023,Fluminense,Bahia,2,1,2023-06-24
+Brasileirao Serie A,2023,Fortaleza EC,Atletico Mineiro,2,1,2023-06-24
+Brasileirao Serie A,2023,Cruzeiro,São Paulo,1,0,2023-06-25
+Brasileirao Serie A,2023,Palmeiras,Botafogo,0,1,2023-06-25
+Brasileirao Serie A,2023,Gremio,Coritiba,5,1,2023-06-25
+Brasileirao Serie A,2023,America Mineiro,Internacional,1,2,2023-06-25
+Brasileirao Serie A,2023,Santos,Flamengo,2,3,2023-06-25
+Brasileirao Serie A,2023,RB Bragantino,Goias,2,0,2023-06-25
+Brasileirao Serie A,2023,Vasco da Gama,Cuiaba,1,0,2023-06-27
+Brasileirao Serie A,2023,São Paulo,Fluminense,1,0,2023-07-01
+Brasileirao Serie A,2023,Bahia,Gremio,1,2,2023-07-01
+Brasileirao Serie A,2023,Flamengo,Fortaleza EC,2,0,2023-07-01
+Brasileirao Serie A,2023,Internacional,Cruzeiro,0,0,2023-07-02
+Brasileirao Serie A,2023,Corinthians,RB Bragantino,0,1,2023-07-02
+Brasileirao Serie A,2023,Botafogo,Vasco da Gama,2,0,2023-07-02
+Brasileirao Serie A,2023,Atletico Paranaense,Palmeiras,2,2,2023-07-02
+Brasileirao Serie A,2023,Atletico Mineiro,America Mineiro,2,2,2023-07-02
+Brasileirao Serie A,2023,Cuiaba,Santos,3,0,2023-07-02
+Brasileirao Serie A,2023,Goias,Coritiba,1,2,2023-07-03
+Brasileirao Serie A,2023,Vasco da Gama,Cruzeiro,0,1,2023-07-08
+Brasileirao Serie A,2023,Cuiaba,Bahia,1,1,2023-07-08
+Brasileirao Serie A,2023,Coritiba,America Mineiro,3,1,2023-07-08
+Brasileirao Serie A,2023,Atletico Mineiro,Corinthians,0,1,2023-07-08
+Brasileirao Serie A,2023,Palmeiras,Flamengo,1,1,2023-07-09
+Brasileirao Serie A,2023,Santos,Goias,4,3,2023-07-09
+Brasileirao Serie A,2023,Fluminense,Internacional,2,0,2023-07-09
+Brasileirao Serie A,2023,RB Bragantino,São Paulo,0,0,2023-07-09
+Brasileirao Serie A,2023,Gremio,Botafogo,0,2,2023-07-09
+Brasileirao Serie A,2023,Fortaleza EC,Atletico Paranaense,1,0,2023-07-09
+Brasileirao Serie A,2023,Botafogo,RB Bragantino,2,0,2023-07-16
+Brasileirao Serie A,2023,Cruzeiro,Coritiba,0,0,2023-07-16
+Brasileirao Serie A,2023,Fluminense,Flamengo,0,0,2023-07-16
+Brasileirao Serie A,2023,São Paulo,Santos,4,1,2023-07-16
+Brasileirao Serie A,2023,Fortaleza EC,Cuiaba,0,1,2023-07-16
+Brasileirao Serie A,2023,Internacional,Palmeiras,0,0,2023-07-16
+Brasileirao Serie A,2023,Atletico Paranaense,Bahia,2,0,2023-07-16
+Brasileirao Serie A,2023,Goias,Atletico Mineiro,0,0,2023-07-17
+Brasileirao Serie A,2023,Palmeiras,Fortaleza EC,3,1,2023-07-22
+Brasileirao Serie A,2023,Flamengo,America Mineiro,1,1,2023-07-22
+Brasileirao Serie A,2023,Bahia,Corinthians,0,0,2023-07-22
+Brasileirao Serie A,2023,Cuiaba,São Paulo,2,1,2023-07-22
+Brasileirao Serie A,2023,Gremio,Atletico Mineiro,1,0,2023-07-23
+Brasileirao Serie A,2023,Santos,Botafogo,2,2,2023-07-23
+Brasileirao Serie A,2023,Cruzeiro,Goias,0,1,2023-07-23
+Brasileirao Serie A,2023,RB Bragantino,Internacional,0,0,2023-07-23
+Brasileirao Serie A,2023,Vasco da Gama,Atletico Paranaense,0,2,2023-07-23
+Brasileirao Serie A,2023,Coritiba,Fluminense,2,0,2023-07-24
+Brasileirao Serie A,2023,Internacional,Cuiaba,1,2,2023-07-29
+Brasileirao Serie A,2023,Fluminense,Santos,1,0,2023-07-29
+Brasileirao Serie A,2023,Atletico Paranaense,Cruzeiro,3,3,2023-07-29
+Brasileirao Serie A,2023,Corinthians,Vasco da Gama,3,1,2023-07-29
+Brasileirao Serie A,2023,Fortaleza EC,RB Bragantino,0,3,2023-07-29
+Brasileirao Serie A,2023,Atletico Mineiro,Flamengo,1,2,2023-07-30
+Brasileirao Serie A,2023,São Paulo,Bahia,0,0,2023-07-30
+Brasileirao Serie A,2023,Botafogo,Coritiba,4,1,2023-07-30
+Brasileirao Serie A,2023,America Mineiro,Palmeiras,1,4,2023-07-30
+Brasileirao Serie A,2023,Goias,Gremio,1,1,2023-07-30
+Brasileirao Serie A,2023,Santos,Atletico Paranaense,1,1,2023-08-05
+Brasileirao Serie A,2023,Internacional,Corinthians,2,2,2023-08-05
+Brasileirao Serie A,2023,Goias,Fortaleza EC,1,0,2023-08-05
+Brasileirao Serie A,2023,Fluminense,Palmeiras,2,1,2023-08-06
+Brasileirao Serie A,2023,São Paulo,Atletico Mineiro,0,2,2023-08-06
+Brasileirao Serie A,2023,Vasco da Gama,Gremio,1,0,2023-08-06
+Brasileirao Serie A,2023,Bahia,America Mineiro,3,1,2023-08-06
+Brasileirao Serie A,2023,Cruzeiro,Botafogo,0,0,2023-08-06
+Brasileirao Serie A,2023,Coritiba,RB Bragantino,0,1,2023-08-06
+Brasileirao Serie A,2023,Cuiaba,Flamengo,3,0,2023-08-06
+Brasileirao Serie A,2023,Botafogo,Internacional,3,1,2023-08-13
+Brasileirao Serie A,2023,Atletico Mineiro,Bahia,1,0,2023-08-13
+Brasileirao Serie A,2023,America Mineiro,Goias,0,1,2023-08-13
+Brasileirao Serie A,2023,Gremio,Fluminense,2,1,2023-08-13
+Brasileirao Serie A,2023,Corinthians,Coritiba,3,1,2023-08-13
+Brasileirao Serie A,2023,Flamengo,São Paulo,1,1,2023-08-13
+Brasileirao Serie A,2023,Fortaleza EC,Santos,4,0,2023-08-13
+Brasileirao Serie A,2023,Palmeiras,Cruzeiro,1,0,2023-08-14
+Brasileirao Serie A,2023,RB Bragantino,Vasco da Gama,1,1,2023-08-15
+Brasileirao Serie A,2023,Atletico Paranaense,Cuiaba,2,0,2023-08-15
+Brasileirao Serie A,2023,Internacional,Fortaleza EC,0,1,2023-08-19
+Brasileirao Serie A,2023,São Paulo,Botafogo,0,0,2023-08-19
+Brasileirao Serie A,2023,Fluminense,America Mineiro,3,1,2023-08-19
+Brasileirao Serie A,2023,Cuiaba,Palmeiras,0,2,2023-08-19
+Brasileirao Serie A,2023,Cruzeiro,Corinthians,1,1,2023-08-20
+Brasileirao Serie A,2023,Vasco da Gama,Atletico Mineiro,1,0,2023-08-20
+Brasileirao Serie A,2023,Bahia,RB Bragantino,4,0,2023-08-20
+Brasileirao Serie A,2023,Santos,Gremio,2,1,2023-08-20
+Brasileirao Serie A,2023,Coritiba,Flamengo,2,3,2023-08-20
+Brasileirao Serie A,2023,Goias,Atletico Paranaense,1,1,2023-08-21
+Brasileirao Serie A,2023,Flamengo,Internacional,0,0,2023-08-26
+Brasileirao Serie A,2023,Corinthians,Goias,1,1,2023-08-27
+Brasileirao Serie A,2023,RB Bragantino,Cuiaba,2,0,2023-08-27
+Brasileirao Serie A,2023,Botafogo,Bahia,3,0,2023-08-27
+Brasileirao Serie A,2023,America Mineiro,São Paulo,2,1,2023-08-27
+Brasileirao Serie A,2023,Atletico Mineiro,Santos,2,0,2023-08-27
+Brasileirao Serie A,2023,Palmeiras,Vasco da Gama,1,0,2023-08-27
+Brasileirao Serie A,2023,Atletico Paranaense,Fluminense,2,2,2023-08-27
+Brasileirao Serie A,2023,Fortaleza EC,Coritiba,3,1,2023-08-27
+Brasileirao Serie A,2023,Gremio,Cruzeiro,3,0,2023-08-27
+Brasileirao Serie A,2023,Atletico Paranaense,Atletico Mineiro,1,1,2023-09-02
+Brasileirao Serie A,2023,Goias,Internacional,0,0,2023-09-02
+Brasileirao Serie A,2023,Botafogo,Flamengo,1,2,2023-09-03
+Brasileirao Serie A,2023,Gremio,Cuiaba,2,0,2023-09-03
+Brasileirao Serie A,2023,Fluminense,Fortaleza EC,1,0,2023-09-03
+Brasileirao Serie A,2023,Corinthians,Palmeiras,0,0,2023-09-03
+Brasileirao Serie A,2023,Bahia,Vasco da Gama,1,1,2023-09-03
+Brasileirao Serie A,2023,America Mineiro,Santos,2,0,2023-09-03
+Brasileirao Serie A,2023,Cruzeiro,RB Bragantino,0,0,2023-09-03
+Brasileirao Serie A,2023,Internacional,São Paulo,2,1,2023-09-14
+Brasileirao Serie A,2023,Flamengo,Atletico Paranaense,0,3,2023-09-14
+Brasileirao Serie A,2023,Santos,Cruzeiro,0,3,2023-09-14
+Brasileirao Serie A,2023,Fortaleza EC,Corinthians,2,1,2023-09-14
+Brasileirao Serie A,2023,Coritiba,Bahia,2,4,2023-09-14
+Brasileirao Serie A,2023,RB Bragantino,Gremio,2,0,2023-09-15
+Brasileirao Serie A,2023,Cuiaba,America Mineiro,2,2,2023-09-15
+Brasileirao Serie A,2023,Palmeiras,Goias,1,0,2023-09-16
+Brasileirao Serie A,2023,Vasco da Gama,Fluminense,4,2,2023-09-16
+Brasileirao Serie A,2023,Atletico Mineiro,Botafogo,1,0,2023-09-17
+Brasileirao Serie A,2023,Bahia,Santos,1,2,2023-09-18
+Brasileirao Serie A,2023,Corinthians,Gremio,4,4,2023-09-19
+Brasileirao Serie A,2023,America Mineiro,RB Bragantino,0,2,2023-09-20
+Brasileirao Serie A,2023,Goias,Flamengo,0,0,2023-09-20
+Brasileirao Serie A,2023,Fluminense,Cruzeiro,1,0,2023-09-21
+Brasileirao Serie A,2023,São Paulo,Fortaleza EC,1,2,2023-09-21
+Brasileirao Serie A,2023,Vasco da Gama,Coritiba,5,1,2023-09-21
+Brasileirao Serie A,2023,Atletico Paranaense,Internacional,2,1,2023-09-21
+Brasileirao Serie A,2023,Gremio,Palmeiras,1,0,2023-09-22
+Brasileirao Serie A,2023,Corinthians,Botafogo,1,0,2023-09-22
+Brasileirao Serie A,2023,Atletico Mineiro,Cuiaba,1,0,2023-09-24
+Brasileirao Serie A,2023,America Mineiro,Vasco da Gama,0,1,2023-09-25
+Brasileirao Serie A,2023,São Paulo,Coritiba,2,1,2023-09-27
+Brasileirao Serie A,2023,Flamengo,Bahia,1,0,2023-09-30
+Brasileirao Serie A,2023,Fortaleza EC,Gremio,1,1,2023-09-30
+Brasileirao Serie A,2023,São Paulo,Corinthians,2,1,2023-09-30
+Brasileirao Serie A,2023,Cuiaba,Fluminense,3,0,2023-09-30
+Brasileirao Serie A,2023,Internacional,Atletico Mineiro,0,2,2023-10-01
+Brasileirao Serie A,2023,Santos,Vasco da Gama,4,1,2023-10-01
+Brasileirao Serie A,2023,Cruzeiro,America Mineiro,1,1,2023-10-01
+Brasileirao Serie A,2023,Coritiba,Atletico Paranaense,2,0,2023-10-01
+Brasileirao Serie A,2023,RB Bragantino,Palmeiras,2,1,2023-10-01
+Brasileirao Serie A,2023,Botafogo,Goias,1,1,2023-10-02
+Brasileirao Serie A,2023,Goias,Bahia,4,6,2023-10-07
+Brasileirao Serie A,2023,Vasco da Gama,São Paulo,0,0,2023-10-07
+Brasileirao Serie A,2023,Corinthians,Flamengo,1,1,2023-10-08
+Brasileirao Serie A,2023,Internacional,Gremio,3,2,2023-10-08
+Brasileirao Serie A,2023,Palmeiras,Santos,1,2,2023-10-08
+Brasileirao Serie A,2023,Fluminense,Botafogo,0,2,2023-10-08
+Brasileirao Serie A,2023,Atletico Paranaense,RB Bragantino,1,1,2023-10-08
+Brasileirao Serie A,2023,Fortaleza EC,America Mineiro,3,2,2023-10-08
+Brasileirao Serie A,2023,Atletico Mineiro,Coritiba,1,2,2023-10-08
+Brasileirao Serie A,2023,Cuiaba,Cruzeiro,0,0,2023-10-15
+Brasileirao Serie A,2023,Gremio,Atletico Paranaense,1,2,2023-10-18
+Brasileirao Serie A,2023,America Mineiro,Botafogo,1,2,2023-10-18
+Brasileirao Serie A,2023,Coritiba,Cuiaba,0,3,2023-10-18
+Brasileirao Serie A,2023,Bahia,Internacional,1,0,2023-10-19
+Brasileirao Serie A,2023,Vasco da Gama,Fortaleza EC,1,0,2023-10-19
+Brasileirao Serie A,2023,Goias,São Paulo,2,0,2023-10-19
+Brasileirao Serie A,2023,Palmeiras,Atletico Mineiro,0,2,2023-10-19
+Brasileirao Serie A,2023,Cruzeiro,Flamengo,0,2,2023-10-19
+Brasileirao Serie A,2023,Santos,RB Bragantino,1,3,2023-10-19
+Brasileirao Serie A,2023,Fluminense,Corinthians,3,3,2023-10-20
+Brasileirao Serie A,2023,Bahia,Fortaleza EC,2,0,2023-10-21
+Brasileirao Serie A,2023,São Paulo,Gremio,3,0,2023-10-21
+Brasileirao Serie A,2023,Cuiaba,Goias,1,1,2023-10-21
+Brasileirao Serie A,2023,Botafogo,Atletico Paranaense,1,1,2023-10-22
+Brasileirao Serie A,2023,Internacional,Santos,7,1,2023-10-22
+Brasileirao Serie A,2023,Flamengo,Vasco da Gama,1,0,2023-10-22
+Brasileirao Serie A,2023,Atletico Mineiro,Cruzeiro,0,1,2023-10-22
+Brasileirao Serie A,2023,Corinthians,America Mineiro,1,1,2023-10-22
+Brasileirao Serie A,2023,Coritiba,Palmeiras,0,2,2023-10-22
+Brasileirao Serie A,2023,RB Bragantino,Fluminense,1,0,2023-10-22
+Brasileirao Serie A,2023,Palmeiras,São Paulo,5,0,2023-10-25
+Brasileirao Serie A,2023,Cruzeiro,Bahia,3,0,2023-10-25
+Brasileirao Serie A,2023,Gremio,Flamengo,3,2,2023-10-26
+Brasileirao Serie A,2023,Cuiaba,Corinthians,0,1,2023-10-26
+Brasileirao Serie A,2023,Fluminense,Goias,5,3,2023-10-26
+Brasileirao Serie A,2023,Atletico Paranaense,America Mineiro,3,2,2023-10-26
+Brasileirao Serie A,2023,RB Bragantino,Atletico Mineiro,1,2,2023-10-26
+Brasileirao Serie A,2023,Santos,Coritiba,2,1,2023-10-27
+Brasileirao Serie A,2023,Vasco da Gama,Internacional,1,2,2023-10-27
+Brasileirao Serie A,2023,Palmeiras,Bahia,1,0,2023-10-28
+Brasileirao Serie A,2023,America Mineiro,Gremio,3,4,2023-10-28
+Brasileirao Serie A,2023,Atletico Mineiro,Fluminense,2,0,2023-10-29
+Brasileirao Serie A,2023,Atletico Paranaense,São Paulo,1,1,2023-10-29
+Brasileirao Serie A,2023,Goias,Vasco da Gama,1,1,2023-10-29
+Brasileirao Serie A,2023,Internacional,Coritiba,3,4,2023-10-29
+Brasileirao Serie A,2023,Corinthians,Santos,1,1,2023-10-29
+Brasileirao Serie A,2023,Botafogo,Cuiaba,0,1,2023-10-29
+Brasileirao Serie A,2023,Bahia,Fluminense,1,0,2023-10-31
+Brasileirao Serie A,2023,Internacional,America Mineiro,1,1,2023-11-01
+Brasileirao Serie A,2023,Corinthians,Atletico Paranaense,1,0,2023-11-01
+Brasileirao Serie A,2023,Flamengo,Santos,1,2,2023-11-01
+Brasileirao Serie A,2023,Coritiba,Gremio,1,2,2023-11-01
+Brasileirao Serie A,2023,Botafogo,Palmeiras,3,4,2023-11-02
+Brasileirao Serie A,2023,Atletico Mineiro,Fortaleza EC,3,1,2023-11-02
+Brasileirao Serie A,2023,Cuiaba,Vasco da Gama,0,2,2023-11-02
+Brasileirao Serie A,2023,Goias,RB Bragantino,0,2,2023-11-02
+Brasileirao Serie A,2023,São Paulo,Cruzeiro,1,0,2023-11-02
+Brasileirao Serie A,2023,America Mineiro,Atletico Mineiro,1,1,2023-11-04
+Brasileirao Serie A,2023,Gremio,Bahia,1,0,2023-11-04
+Brasileirao Serie A,2023,Palmeiras,Atletico Paranaense,1,0,2023-11-05
+Brasileirao Serie A,2023,Cruzeiro,Internacional,1,2,2023-11-05
+Brasileirao Serie A,2023,Fortaleza EC,Flamengo,0,2,2023-11-05
+Brasileirao Serie A,2023,RB Bragantino,Corinthians,1,0,2023-11-05
+Brasileirao Serie A,2023,Coritiba,Goias,0,1,2023-11-05
+Brasileirao Serie A,2023,Vasco da Gama,Botafogo,1,0,2023-11-06
+Brasileirao Serie A,2023,Santos,Cuiaba,0,0,2023-11-07
+Brasileirao Serie A,2023,Internacional,Fluminense,0,0,2023-11-08
+Brasileirao Serie A,2023,America Mineiro,Coritiba,0,3,2023-11-08
+Brasileirao Serie A,2023,São Paulo,RB Bragantino,1,0,2023-11-08
+Brasileirao Serie A,2023,Atletico Paranaense,Fortaleza EC,1,1,2023-11-08
+Brasileirao Serie A,2023,Flamengo,Palmeiras,3,0,2023-11-09
+Brasileirao Serie A,2023,Corinthians,Atletico Mineiro,1,1,2023-11-09
+Brasileirao Serie A,2023,Goias,Santos,0,1,2023-11-09
+Brasileirao Serie A,2023,Bahia,Cuiaba,0,3,2023-11-09
+Brasileirao Serie A,2023,Botafogo,Gremio,3,4,2023-11-09
+Brasileirao Serie A,2023,Coritiba,Cruzeiro,1,0,2023-11-11
+Brasileirao Serie A,2023,Flamengo,Fluminense,1,1,2023-11-11
+Brasileirao Serie A,2023,Palmeiras,Internacional,3,0,2023-11-12
+Brasileirao Serie A,2023,Gremio,Corinthians,0,1,2023-11-12
+Brasileirao Serie A,2023,RB Bragantino,Botafogo,2,2,2023-11-12
+Brasileirao Serie A,2023,Bahia,Atletico Paranaense,1,1,2023-11-12
+Brasileirao Serie A,2023,Santos,São Paulo,0,0,2023-11-12
+Brasileirao Serie A,2023,Vasco da Gama,America Mineiro,2,1,2023-11-12
+Brasileirao Serie A,2023,Atletico Mineiro,Goias,2,1,2023-11-12
+Brasileirao Serie A,2023,Cuiaba,Fortaleza EC,2,1,2023-11-12
+Brasileirao Serie A,2023,Fortaleza EC,Cruzeiro,0,1,2023-11-18
+Brasileirao Serie A,2023,Cruzeiro,Vasco da Gama,2,2,2023-11-22
+Brasileirao Serie A,2023,Fluminense,São Paulo,1,0,2023-11-23
+Brasileirao Serie A,2023,Fortaleza EC,Botafogo,2,2,2023-11-23
+Brasileirao Serie A,2023,Flamengo,RB Bragantino,1,0,2023-11-24
+Brasileirao Serie A,2023,Corinthians,Bahia,1,5,2023-11-25
+Brasileirao Serie A,2023,Atletico Paranaense,Vasco da Gama,0,0,2023-11-25
+Brasileirao Serie A,2023,Fluminense,Coritiba,2,1,2023-11-26
+Brasileirao Serie A,2023,Botafogo,Santos,1,1,2023-11-26
+Brasileirao Serie A,2023,Atletico Mineiro,Gremio,3,0,2023-11-26
+Brasileirao Serie A,2023,Internacional,RB Bragantino,1,0,2023-11-26
+Brasileirao Serie A,2023,America Mineiro,Flamengo,0,3,2023-11-26
+Brasileirao Serie A,2023,São Paulo,Cuiaba,0,0,2023-11-26
+Brasileirao Serie A,2023,Fortaleza EC,Palmeiras,2,2,2023-11-26
+Brasileirao Serie A,2023,Goias,Cruzeiro,0,1,2023-11-28
+Brasileirao Serie A,2023,Vasco da Gama,Corinthians,2,4,2023-11-29
+Brasileirao Serie A,2023,Santos,Fluminense,0,3,2023-11-29
+Brasileirao Serie A,2023,Flamengo,Atletico Mineiro,0,3,2023-11-29
+Brasileirao Serie A,2023,Bahia,São Paulo,0,1,2023-11-29
+Brasileirao Serie A,2023,Cuiaba,Internacional,0,2,2023-11-29
+Brasileirao Serie A,2023,Palmeiras,America Mineiro,4,0,2023-11-30
+Brasileirao Serie A,2023,Coritiba,Botafogo,1,1,2023-11-30
+Brasileirao Serie A,2023,Gremio,Goias,2,1,2023-11-30
+Brasileirao Serie A,2023,Cruzeiro,Atletico Paranaense,1,1,2023-11-30
+Brasileirao Serie A,2023,RB Bragantino,Fortaleza EC,1,2,2023-11-30
+Brasileirao Serie A,2023,Corinthians,Internacional,1,2,2023-12-02
+Brasileirao Serie A,2023,Atletico Mineiro,São Paulo,2,1,2023-12-03
+Brasileirao Serie A,2023,Palmeiras,Fluminense,1,0,2023-12-03
+Brasileirao Serie A,2023,Flamengo,Cuiaba,2,1,2023-12-03
+Brasileirao Serie A,2023,Botafogo,Cruzeiro,0,0,2023-12-03
+Brasileirao Serie A,2023,America Mineiro,Bahia,3,2,2023-12-03
+Brasileirao Serie A,2023,Gremio,Vasco da Gama,1,0,2023-12-03
+Brasileirao Serie A,2023,Atletico Paranaense,Santos,3,0,2023-12-03
+Brasileirao Serie A,2023,Fortaleza EC,Goias,1,0,2023-12-03
+Brasileirao Serie A,2023,RB Bragantino,Coritiba,1,0,2023-12-03
+Brasileirao Serie A,2023,Goias,America Mineiro,1,0,2023-12-06
+Brasileirao Serie A,2023,Bahia,Atletico Mineiro,4,1,2023-12-07
+Brasileirao Serie A,2023,Internacional,Botafogo,3,1,2023-12-07
+Brasileirao Serie A,2023,Fluminense,Gremio,2,3,2023-12-07
+Brasileirao Serie A,2023,São Paulo,Flamengo,1,0,2023-12-07
+Brasileirao Serie A,2023,Santos,Fortaleza EC,1,2,2023-12-07
+Brasileirao Serie A,2023,Vasco da Gama,RB Bragantino,2,1,2023-12-07
+Brasileirao Serie A,2023,Cruzeiro,Palmeiras,1,1,2023-12-07
+Brasileirao Serie A,2023,Coritiba,Corinthians,0,2,2023-12-07
+Brasileirao Serie A,2023,Cuiaba,Atletico Paranaense,3,0,2023-12-07
