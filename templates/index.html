@@ -1,0 +1,360 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge Protocol | Dashboard v2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Space Grotesk", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"],
+          },
+          colors: {
+            bg: "#05070d",
+            card: "#0d1423",
+            cardSoft: "#111c30",
+            line: "#1e2b42",
+            cyan: "#29d3c5",
+            blue: "#2a7fff",
+            amber: "#ffcc66",
+            green: "#3dd68c",
+            red: "#ff5a76",
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-bg text-slate-100 min-h-screen grid-bg" x-data="dashboardApp()" x-init="init()">
+  <div class="max-w-[1500px] mx-auto px-4 md:px-6 py-6 md:py-8">
+    <header class="glass-panel rounded-2xl p-5 md:p-6 mb-6 reveal">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-center xl:justify-between">
+        <div>
+          <p class="text-xs tracking-[0.22em] text-cyan/80 uppercase font-mono">Edge Protocol Command Deck</p>
+          <h1 class="text-3xl md:text-4xl font-bold mt-2">Dashboard Operacional</h1>
+          <p class="text-slate-400 mt-2">Sinais, risco e qualidade em tempo quase real com foco em execução.</p>
+        </div>
+        <div class="flex items-center gap-4 flex-wrap">
+          <a href="/calibracao" class="btn-secondary">Calibracao</a>
+          <button class="btn-primary" @click="loadData(true)">Atualizar agora</button>
+          <div class="rounded-xl px-4 py-2 bg-cardSoft border border-line text-xs font-mono">
+            <p class="text-slate-400">ultimo ciclo</p>
+            <p class="text-slate-100" x-text="kpis.ultimo_ciclo || 'N/A'"></p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center gap-3 text-xs text-slate-300">
+        <span class="health-chip" :class="health.odds_api.ok ? 'health-ok' : 'health-bad'" :title="'odds: ' + (health.odds_api.ultima_coleta || 'N/A')">
+          <span class="dot"></span>odds
+        </span>
+        <span class="health-chip" :class="health.api_football.ok ? 'health-ok' : 'health-bad'" :title="'resultados: ' + (health.api_football.ultimo_resultado || 'N/A')">
+          <span class="dot"></span>resultados
+        </span>
+        <span class="text-slate-500 font-mono">auto-refresh 60s</span>
+      </div>
+    </header>
+
+    <section class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-4 mb-6">
+      <article class="kpi-card reveal-stagger">
+        <p class="kpi-label">Total sinais</p>
+        <p class="kpi-value" x-text="kpis.total_sinais"></p>
+        <p class="kpi-delta" :class="deltaClass(kpis.delta_7d.total_sinais)" x-text="formatDelta(kpis.delta_7d.total_sinais, 0)"></p>
+      </article>
+      <article class="kpi-card reveal-stagger">
+        <p class="kpi-label">Winrate</p>
+        <p class="kpi-value" x-text="formatPct(kpis.winrate)"></p>
+        <p class="kpi-delta" :class="deltaClass(kpis.delta_7d.winrate)" x-text="formatDelta(kpis.delta_7d.winrate)"></p>
+      </article>
+      <article class="kpi-card reveal-stagger">
+        <p class="kpi-label">ROI</p>
+        <p class="kpi-value" x-text="formatPct(kpis.roi)"></p>
+        <p class="kpi-delta" :class="deltaClass(kpis.delta_7d.roi)" x-text="formatDelta(kpis.delta_7d.roi)"></p>
+      </article>
+      <article class="kpi-card reveal-stagger">
+        <p class="kpi-label">CLV medio</p>
+        <p class="kpi-value" x-text="formatPct(kpis.clv_medio)"></p>
+        <p class="kpi-delta" :class="deltaClass(kpis.delta_7d.clv_medio)" x-text="formatDelta(kpis.delta_7d.clv_medio)"></p>
+      </article>
+      <article class="kpi-card reveal-stagger">
+        <p class="kpi-label">Brier medio</p>
+        <p class="kpi-value" x-text="formatBrier(kpis.brier_medio)"></p>
+        <p class="kpi-delta" :class="deltaClass(-kpis.delta_7d.brier_medio)" x-text="formatDelta(-kpis.delta_7d.brier_medio)"></p>
+      </article>
+    </section>
+
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+      <article class="panel reveal">
+        <div class="panel-header">
+          <h2>Lucro acumulado</h2>
+        </div>
+        <canvas id="chartLucro" height="120"></canvas>
+      </article>
+      <article class="panel reveal">
+        <div class="panel-header">
+          <h2>Winrate por liga</h2>
+        </div>
+        <canvas id="chartLiga" height="120"></canvas>
+      </article>
+      <article class="panel reveal">
+        <div class="panel-header">
+          <h2>Distribuicao edge score</h2>
+        </div>
+        <canvas id="chartEdge" height="120"></canvas>
+      </article>
+      <article class="panel reveal">
+        <div class="panel-header">
+          <h2>CLV medio por semana</h2>
+        </div>
+        <canvas id="chartClv" height="120"></canvas>
+      </article>
+    </section>
+
+    <section class="panel reveal">
+      <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-semibold">Sinais</h2>
+          <p class="text-xs text-slate-400">Busca, filtros e exportacao da visao corrente.</p>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 w-full lg:w-auto">
+          <div class="field">
+            <label>Liga</label>
+            <select x-model="filters.liga" @change="loadData()">
+              <option value="">Todas</option>
+              <template x-for="liga in ligas" :key="liga">
+                <option :value="liga" x-text="liga"></option>
+              </template>
+            </select>
+          </div>
+          <div class="field">
+            <label>Status</label>
+            <select x-model="filters.status" @change="loadData()">
+              <option value="todos">Todos</option>
+              <option value="pendente">Pendente</option>
+              <option value="finalizado">Finalizado</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Buscar jogo</label>
+            <input type="text" placeholder="time casa x fora" x-model="filters.q" @keyup.enter="loadData()" />
+          </div>
+          <div class="field">
+            <label>Acoes</label>
+            <div class="flex gap-2">
+              <button class="btn-secondary w-full" @click="loadData()">Filtrar</button>
+              <button class="btn-secondary w-full" @click="exportCSV()">CSV</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[1080px]">
+          <thead>
+            <tr>
+              <th>Data</th><th>Liga</th><th>Jogo</th><th>Mercado</th>
+              <th class="text-right">Odd</th><th class="text-right">Edge</th><th class="text-right">EV%</th>
+              <th>Status</th><th>Resultado</th><th class="text-right">Lucro</th><th class="text-right">CLV%</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-if="sinais.length === 0">
+              <tr><td colspan="11" class="empty-row">Sem registros para o filtro atual.</td></tr>
+            </template>
+            <template x-for="s in sinais" :key="s.id + '-' + s.data">
+              <tr :class="rowClass(s)">
+                <td x-text="s.data"></td>
+                <td x-text="s.liga"></td>
+                <td x-text="s.jogo"></td>
+                <td x-text="s.mercado"></td>
+                <td class="text-right" x-text="toFixed(s.odd)"></td>
+                <td class="text-right" x-text="toFixed(s.edge_score)"></td>
+                <td class="text-right" x-text="toFixed(s.ev_estimado)"></td>
+                <td x-text="s.status"></td>
+                <td x-text="s.resultado || '-' "></td>
+                <td class="text-right" :class="profitClass(s.lucro_unidades)" x-text="toFixed(s.lucro_unidades, 4)"></td>
+                <td class="text-right" x-text="toFixed(s.clv_percentual, 3)"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs text-slate-400">
+        <p>
+          pagina <span class="font-mono text-slate-200" x-text="pagination.page"></span>
+          de <span class="font-mono text-slate-200" x-text="pagination.total_pages"></span>
+          | total <span class="font-mono text-slate-200" x-text="pagination.total"></span>
+        </p>
+        <div class="flex gap-2">
+          <button class="btn-secondary" :disabled="pagination.page <= 1" @click="goPage(pagination.page - 1)">Anterior</button>
+          <button class="btn-secondary" :disabled="pagination.page >= pagination.total_pages" @click="goPage(pagination.page + 1)">Proxima</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function dashboardApp() {
+      return {
+        kpis: {
+          total_sinais: 0,
+          winrate: 0,
+          roi: 0,
+          clv_medio: 0,
+          brier_medio: 0,
+          ultimo_ciclo: null,
+          delta_7d: { total_sinais: 0, winrate: 0, roi: 0, clv_medio: 0, brier_medio: 0 },
+        },
+        health: {
+          odds_api: { ok: false, ultima_coleta: null },
+          api_football: { ok: false, ultimo_resultado: null },
+        },
+        ligas: [],
+        sinais: [],
+        pagination: { page: 1, per_page: 25, total: 0, total_pages: 0 },
+        filters: { liga: "", status: "todos", q: "" },
+        charts: {},
+        refreshHandle: null,
+
+        init() {
+          this.loadData(true);
+          this.refreshHandle = setInterval(() => this.loadData(), 60000);
+        },
+
+        queryString() {
+          const p = new URLSearchParams();
+          if (this.filters.liga) p.set("liga", this.filters.liga);
+          if (this.filters.status) p.set("status", this.filters.status);
+          if (this.filters.q) p.set("q", this.filters.q);
+          p.set("page", this.pagination.page || 1);
+          p.set("per_page", this.pagination.per_page || 25);
+          return p.toString();
+        },
+
+        async loadData(resetPage = false) {
+          if (resetPage) this.pagination.page = 1;
+          const dadosResp = await fetch(`/api/dados?${this.queryString()}`);
+          const dados = await dadosResp.json();
+          this.kpis = dados.kpis || this.kpis;
+          this.ligas = dados.ligas || [];
+          this.sinais = dados.sinais || [];
+          this.pagination = dados.pagination || this.pagination;
+
+          this.renderCharts(dados);
+
+          const healthResp = await fetch('/api/health');
+          this.health = await healthResp.json();
+        },
+
+        goPage(page) {
+          if (page < 1 || page > this.pagination.total_pages) return;
+          this.pagination.page = page;
+          this.loadData();
+        },
+
+        exportCSV() {
+          const cols = ["id","data","liga","jogo","mercado","odd","edge_score","ev_estimado","status","resultado","lucro_unidades","clv_percentual"];
+          const lines = [cols.join(',')];
+          for (const row of this.sinais) {
+            const line = cols.map((c) => {
+              const v = row[c] ?? '';
+              return `"${String(v).replaceAll('"', '""')}"`;
+            }).join(',');
+            lines.push(line);
+          }
+          const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `sinais_${new Date().toISOString().slice(0,19).replaceAll(':','-')}.csv`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        },
+
+        renderCharts(dados) {
+          this.drawLine('chartLucro', 'Lucro acumulado', (dados.grafico_lucro || []).map((x) => x.data), (dados.grafico_lucro || []).map((x) => x.lucro_acumulado), '#2a7fff', 'rgba(42,127,255,0.18)');
+          this.drawBar('chartLiga', (dados.winrate_por_liga || []).map((x) => x.liga), (dados.winrate_por_liga || []).map((x) => x.winrate), '#29d3c5');
+          this.drawBar('chartEdge', (dados.edges_hist || {}).bins || [], (dados.edges_hist || {}).counts || [], '#ffcc66');
+          this.drawLine('chartClv', 'CLV semanal', (dados.clv_por_semana || []).map((x) => x.semana), (dados.clv_por_semana || []).map((x) => x.clv_medio), '#3dd68c', 'rgba(61,214,140,0.16)');
+        },
+
+        chartCommon() {
+          return {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { labels: { color: '#c5d2eb' } } },
+            scales: {
+              x: { ticks: { color: '#8ea2c8', maxRotation: 0 }, grid: { color: 'rgba(58,76,110,0.25)' } },
+              y: { ticks: { color: '#8ea2c8' }, grid: { color: 'rgba(58,76,110,0.25)' } },
+            },
+          };
+        },
+
+        drawLine(id, label, labels, values, borderColor, backgroundColor) {
+          if (this.charts[id]) this.charts[id].destroy();
+          const ctx = document.getElementById(id);
+          this.charts[id] = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [{ label, data: values, borderColor, backgroundColor, fill: true, pointRadius: 1.5, borderWidth: 2, tension: 0.28 }],
+            },
+            options: this.chartCommon(),
+          });
+        },
+
+        drawBar(id, labels, values, color) {
+          if (this.charts[id]) this.charts[id].destroy();
+          const ctx = document.getElementById(id);
+          this.charts[id] = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ data: values, backgroundColor: color, borderRadius: 6, maxBarThickness: 20 }] },
+            options: { ...this.chartCommon(), plugins: { legend: { display: false } } },
+          });
+        },
+
+        rowClass(s) {
+          if (s.resultado === 'verde') return 'row-green';
+          if (s.resultado === 'vermelho') return 'row-red';
+          if (s.status === 'pendente') return 'row-pending';
+          return '';
+        },
+
+        profitClass(v) {
+          if (Number(v) > 0) return 'text-green';
+          if (Number(v) < 0) return 'text-red';
+          return 'text-slate-300';
+        },
+
+        toFixed(v, d = 2) { return Number(v || 0).toFixed(d); },
+        formatPct(v) { return `${this.toFixed(v, 2)}%`; },
+        formatBrier(v) { return this.toFixed(v, 4); },
+        formatDelta(v, d = 2) {
+          const n = Number(v || 0);
+          const sign = n > 0 ? '+' : '';
+          return `${sign}${n.toFixed(d)} vs 7d`;
+        },
+        deltaClass(v) {
+          const n = Number(v || 0);
+          if (n > 0) return 'text-green';
+          if (n < 0) return 'text-red';
+          return 'text-slate-400';
+        },
+      };
+    }
+  </script>
+</body>
+</html>

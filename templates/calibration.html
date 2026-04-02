@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Edge Protocol | Calibracao</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ["Space Grotesk", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"],
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-bg text-slate-100 min-h-screen grid-bg" x-data="calibrationApp()" x-init="init()">
+  <div class="max-w-[1500px] mx-auto px-4 md:px-6 py-6 md:py-8">
+    <header class="glass-panel rounded-2xl p-5 md:p-6 mb-6 reveal">
+      <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <p class="text-xs tracking-[0.22em] text-cyan/80 uppercase font-mono">Calibration Desk</p>
+          <h1 class="text-3xl md:text-4xl font-bold mt-2">Qualidade de Probabilidade</h1>
+          <p class="text-slate-400 mt-2">Confiabilidade, Brier, CLV e comparacao shadow para decisao de promocao.</p>
+        </div>
+        <div class="flex gap-3 items-center">
+          <a href="/" class="btn-secondary">Voltar ao dashboard</a>
+          <button class="btn-primary" @click="loadData()">Atualizar</button>
+        </div>
+      </div>
+      <div class="mt-4 flex items-center gap-4 text-xs">
+        <span class="health-chip" :class="ece <= 0.05 ? 'health-ok' : ece <= 0.10 ? 'health-warn' : 'health-bad'">ECE <span class="font-mono" x-text="toFixed(ece, 4)"></span></span>
+        <span class="health-chip" :class="mce <= 0.10 ? 'health-ok' : mce <= 0.20 ? 'health-warn' : 'health-bad'">MCE <span class="font-mono" x-text="toFixed(mce, 4)"></span></span>
+        <span class="text-slate-300" x-text="label"></span>
+      </div>
+    </header>
+
+    <section class="grid grid-cols-1 xl:grid-cols-2 gap-4 mb-6">
+      <article class="panel reveal">
+        <div class="panel-header"><h2>Reliability diagram</h2></div>
+        <canvas id="chartReliability" height="130"></canvas>
+      </article>
+      <article class="panel reveal">
+        <div class="panel-header"><h2>Brier por mercado</h2></div>
+        <canvas id="chartBrier" height="130"></canvas>
+      </article>
+      <article class="panel reveal xl:col-span-2">
+        <div class="panel-header"><h2>CLV medio por semana</h2></div>
+        <canvas id="chartClvWeek" height="110"></canvas>
+      </article>
+    </section>
+
+    <section class="panel reveal">
+      <div class="panel-header">
+        <h2>Shadow vs real</h2>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm min-w-[880px]">
+          <thead>
+            <tr>
+              <th>Liga</th>
+              <th>Mercado</th>
+              <th class="text-right">Shadow total</th>
+              <th class="text-right">Settled</th>
+              <th class="text-right">Brier baseline</th>
+              <th class="text-right">Brier advanced</th>
+              <th class="text-right">Delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-if="shadow.length === 0">
+              <tr><td colspan="7" class="empty-row">Sem dados de shadow settled.</td></tr>
+            </template>
+            <template x-for="r in shadow" :key="r.liga + '-' + r.mercado">
+              <tr>
+                <td x-text="r.liga"></td>
+                <td x-text="r.mercado"></td>
+                <td class="text-right" x-text="r.shadow_total"></td>
+                <td class="text-right" x-text="r.shadow_settled"></td>
+                <td class="text-right" x-text="toFixed(r.brier_baseline_avg, 4)"></td>
+                <td class="text-right" x-text="toFixed(r.brier_advanced_avg, 4)"></td>
+                <td class="text-right" :class="(r.brier_advanced_avg - r.brier_baseline_avg) <= 0 ? 'text-green' : 'text-red'" x-text="deltaBrier(r)"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function calibrationApp() {
+      return {
+        ece: 0,
+        mce: 0,
+        label: 'Sem dados',
+        shadow: [],
+        charts: {},
+
+        init() {
+          this.loadData();
+        },
+
+        async loadData() {
+          const resp = await fetch('/api/calibracao');
+          const data = await resp.json();
+          this.ece = Number(data.ece || 0);
+          this.mce = Number(data.mce || 0);
+          this.label = data.calibration_label || 'Sem dados';
+          this.shadow = data.shadow_vs_real || [];
+
+          this.drawReliability(data.reliability_curve || []);
+          this.drawBrier(data.brier_por_mercado || []);
+          this.drawClv(data.clv_por_semana || []);
+        },
+
+        commonOptions() {
+          return {
+            responsive: true,
+            maintainAspectRatio: true,
+            plugins: { legend: { labels: { color: '#c5d2eb' } } },
+            scales: {
+              x: { ticks: { color: '#8ea2c8' }, grid: { color: 'rgba(58,76,110,0.25)' } },
+              y: { ticks: { color: '#8ea2c8' }, grid: { color: 'rgba(58,76,110,0.25)' } },
+            },
+          };
+        },
+
+        drawReliability(points) {
+          const labels = points.map((p) => p.bin);
+          const pred = points.map((p) => p.pred || 0);
+          const obs = points.map((p) => p.obs == null ? null : p.obs);
+
+          if (this.charts.rel) this.charts.rel.destroy();
+          this.charts.rel = new Chart(document.getElementById('chartReliability'), {
+            type: 'line',
+            data: {
+              labels,
+              datasets: [
+                { label: 'Ideal', data: labels, borderColor: '#8ea2c8', borderDash: [5, 5], pointRadius: 0, tension: 0 },
+                { label: 'Predito', data: pred, borderColor: '#2a7fff', backgroundColor: 'rgba(42,127,255,0.18)', fill: false, tension: 0.2 },
+                { label: 'Observado', data: obs, borderColor: '#29d3c5', backgroundColor: 'rgba(41,211,197,0.2)', fill: false, tension: 0.2 },
+              ],
+            },
+            options: { ...this.commonOptions(), scales: { x: { min: 0, max: 1 }, y: { min: 0, max: 1 } } },
+          });
+        },
+
+        drawBrier(rows) {
+          if (this.charts.brier) this.charts.brier.destroy();
+          this.charts.brier = new Chart(document.getElementById('chartBrier'), {
+            type: 'bar',
+            data: {
+              labels: rows.map((r) => r.mercado),
+              datasets: [{ data: rows.map((r) => r.brier), backgroundColor: '#ffcc66', borderRadius: 6, maxBarThickness: 24 }],
+            },
+            options: { ...this.commonOptions(), plugins: { legend: { display: false } } },
+          });
+        },
+
+        drawClv(rows) {
+          if (this.charts.clv) this.charts.clv.destroy();
+          this.charts.clv = new Chart(document.getElementById('chartClvWeek'), {
+            type: 'line',
+            data: {
+              labels: rows.map((r) => r.semana),
+              datasets: [{ label: 'CLV semanal', data: rows.map((r) => r.clv_medio), borderColor: '#3dd68c', backgroundColor: 'rgba(61,214,140,0.15)', fill: true, borderWidth: 2, tension: 0.28, pointRadius: 1.5 }],
+            },
+            options: this.commonOptions(),
+          });
+        },
+
+        deltaBrier(r) {
+          const delta = Number(r.brier_advanced_avg || 0) - Number(r.brier_baseline_avg || 0);
+          const sign = delta > 0 ? '+' : '';
+          return `${sign}${delta.toFixed(4)}`;
+        },
+
+        toFixed(v, d = 2) {
+          return Number(v || 0).toFixed(d);
+        },
+      };
+    }
+  </script>
+</body>
+</html>
