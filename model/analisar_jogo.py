@@ -1,14 +1,18 @@
 import os
 import uuid
+import json
+import logging
+import traceback
+from datetime import datetime
 
-from poisson import (
+from model.poisson import (
     calcular_probabilidades,
     calcular_prob_over_under,
     calcular_prob_btts,
     ajuste_contextual,
     log_comparacao,
 )
-from edge_score import (
+from model.edge_score import (
     calcular_ev,
     ev_para_score,
     calcular_edge_score,
@@ -19,8 +23,24 @@ from edge_score import (
     calcular_kelly_fracionado,
     MIN_CONFIDENCE_ACTIONABLE,
 )
-from calibrator import BucketCalibrator
-from picks_log import PickLogger
+from model.calibrator import BucketCalibrator, CalibratorRegistry
+from model.picks_log import PickLogger
+from model.market_features import no_vig_probability, build_market_features, blend_probability
+from model.contextual_features import get_h2h_features, get_travel_bucket
+
+
+logger = logging.getLogger(__name__)
+
+
+def _log_structured_warning(jogo, mercado, etapa, reason_code):
+    payload = {
+        "jogo": jogo,
+        "mercado": mercado,
+        "etapa": etapa,
+        "reason_code": reason_code,
+        "traceback": traceback.format_exc(),
+    }
+    logger.warning("analisar_jogo_warning %s", json.dumps(payload, ensure_ascii=False))
 
 
 BOT_DATA_DIR = os.getenv(
@@ -37,11 +57,107 @@ PICKS_LOG_PATH = os.path.join(BOT_DATA_DIR, "picks_log.csv")
 def _carregar_calibrador_prob():
     if os.path.exists(CALIBRACAO_PROB_PATH):
         try:
-            return BucketCalibrator.load(CALIBRACAO_PROB_PATH)
-        except Exception:
-            # Fallback seguro: pass-through caso arquivo exista mas esteja inválido.
-            return BucketCalibrator()
+            return CalibratorRegistry.load(CALIBRACAO_PROB_PATH)
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            try:
+                return BucketCalibrator.load(CALIBRACAO_PROB_PATH)
+            except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                # Fallback seguro: pass-through caso arquivo exista mas esteja inválido.
+                _log_structured_warning(
+                    jogo=None,
+                    mercado=None,
+                    etapa="carregar_calibrador_prob",
+                    reason_code="calibration_load_fallback",
+                )
+                return BucketCalibrator()
     return BucketCalibrator()
+
+
+def _calibrator_is_fitted(calibrator):
+    if isinstance(calibrator, CalibratorRegistry):
+        global_fit = bool(getattr(calibrator.global_calibrator, "is_fitted", False))
+        segment_fit = any(bool(getattr(ref.calibrator, "is_fitted", False)) for ref in calibrator.by_league.values())
+        segment_fit = segment_fit or any(
+            bool(getattr(ref.calibrator, "is_fitted", False)) for ref in calibrator.by_league_market.values()
+        )
+        return global_fit or segment_fit
+    return bool(getattr(calibrator, "is_fitted", False))
+
+
+def _predict_calibrated_probability(prob_ajustada, liga, mercado):
+    if isinstance(PROB_CALIBRATOR, CalibratorRegistry):
+        return PROB_CALIBRATOR.predict(prob_ajustada, liga=liga, mercado=mercado)
+    return PROB_CALIBRATOR.predict(prob_ajustada)
+
+
+def _obter_threshold_segmentado(liga, mercado):
+    default_cfg = {
+        "ev_floor": 0.04,
+        "confidence_floor": float(MIN_CONFIDENCE_ACTIONABLE),
+        "edge_cutoff": 65.0,
+        "versao": "default",
+    }
+    try:
+        from data.database import obter_segment_threshold
+
+        cfg = obter_segment_threshold(liga, mercado)
+        if not cfg:
+            return default_cfg
+        return {
+            "ev_floor": float(cfg.get("ev_floor", default_cfg["ev_floor"])),
+            "confidence_floor": float(cfg.get("confidence_floor", default_cfg["confidence_floor"])),
+            "edge_cutoff": float(cfg.get("edge_cutoff", default_cfg["edge_cutoff"])),
+            "versao": str(cfg.get("versao", "db")),
+        }
+    except Exception:
+        return default_cfg
+
+
+def _contextual_factor_avancado(dados):
+    base = (
+        float(dados.get("ajuste_lesoes", 0) or 0)
+        + float(dados.get("ajuste_motivacao", 0) or 0)
+        + float(dados.get("ajuste_fadiga", 0) or 0)
+    )
+
+    # Ajuste leve orientado por contexto; mantém comportamento anterior se dados ausentes.
+    h2h = get_h2h_features(
+        str(dados.get("time_casa") or ""),
+        str(dados.get("time_fora") or ""),
+        h2h_rows=dados.get("h2h_rows"),
+    )
+    h2h_games = int(h2h.get("h2h_games", 0) or 0)
+    h2h_home = float(h2h.get("h2h_win_rate_home", 0.5) or 0.5)
+    h2h_component = 0.0
+    if h2h_games > 0:
+        h2h_component = ((h2h_home - 0.5) * 0.03) * float(h2h.get("h2h_shrinkage_weight", 0.0) or 0.0)
+
+    travel_bucket = get_travel_bucket(dados.get("cidade_casa"), dados.get("cidade_fora"))
+    travel_component = {
+        "local": 0.01,
+        "regional": 0.0,
+        "nacional": -0.005,
+        "intercontinental": -0.015,
+    }.get(travel_bucket, 0.0)
+
+    match_date = dados.get("horario") or datetime.utcnow().isoformat()
+    rest_days_home = float(dados.get("rest_days_home", 0) or 0)
+    rest_days_away = float(dados.get("rest_days_away", 0) or 0)
+    if rest_days_home <= 0:
+        from model.contextual_features import get_rest_days
+
+        rest_days_home = float(
+            get_rest_days(str(dados.get("time_casa") or ""), match_date, fixture_history=dados.get("fixture_history"))
+        )
+    if rest_days_away <= 0:
+        from model.contextual_features import get_rest_days
+
+        rest_days_away = float(
+            get_rest_days(str(dados.get("time_fora") or ""), match_date, fixture_history=dados.get("fixture_history"))
+        )
+    rest_component = max(-0.02, min(0.02, (rest_days_home - rest_days_away) * 0.0025))
+
+    return float(base + h2h_component + travel_component + rest_component)
 
 
 PROB_CALIBRATOR = _carregar_calibrador_prob()
@@ -72,8 +188,14 @@ def _registrar_pick(result: dict, dados: dict):
             recomendacao_acao=result.get("recomendacao_acao", "SKIP"),
             reasoning_trace=result.get("reasoning_trace", {}),
         )
-    except Exception:
+    except (KeyError, TypeError, ValueError, OSError):
         # Falha de log nao deve quebrar ciclo principal de decisao.
+        _log_structured_warning(
+            jogo=result.get("jogo", dados.get("jogo", "unknown")),
+            mercado=result.get("mercado", dados.get("mercado", "unknown")),
+            etapa="registrar_pick",
+            reason_code="pick_logger_failed",
+        )
         return
 
 
@@ -126,19 +248,42 @@ def analisar_jogo(dados, log_dc=True):
     else:
         prob_base = probs_1x2["prob_casa"]
 
-    # ── Ajuste contextual (lesões, motivação, fadiga) ──────────────
-    fator_total = (
-        dados.get("ajuste_lesoes", 0)
-        + dados.get("ajuste_motivacao", 0)
-        + dados.get("ajuste_fadiga", 0)
+    # ── Blend de mercado + ajuste contextual avançado (com fallback) ──
+    odd_oponente = dados.get("odd_oponente_mercado")
+    p_no_vig = None
+    try:
+        p_no_vig = no_vig_probability(odd, odd_oponente)
+    except Exception:
+        p_no_vig = None
+
+    source_quality = dados.get("source_quality", "fallback")
+    market_features = build_market_features(
+        odds_novid=p_no_vig,
+        p_poisson=prob_base,
+        odd_abertura=dados.get("odd_abertura"),
+        odd_atual=odd,
+        source_quality=source_quality,
     )
-    prob_ajustada = ajuste_contextual(prob_base, fator_total)
-    prob_calibrada = PROB_CALIBRATOR.predict(prob_ajustada)
+
+    prob_blend = blend_probability(
+        p_poisson=prob_base,
+        p_mercado=market_features.get("p_mercado_no_vig"),
+        w=dados.get("blend_w_poisson"),
+        liga=liga,
+        mercado=mercado,
+    )
+
+    fator_total = _contextual_factor_avancado(dados)
+    prob_ajustada = ajuste_contextual(prob_blend, fator_total)
+    prob_calibrada = _predict_calibrated_probability(prob_ajustada, liga=liga, mercado=mercado)
+
+    threshold_cfg = _obter_threshold_segmentado(liga, mercado)
+    ev_floor = float(threshold_cfg.get("ev_floor", 0.04))
 
     # ── EV usando probabilidade calibrada ──────────────────────────
     ev = calcular_ev(prob_calibrada, odd)
 
-    if ev < 0.04:
+    if ev < ev_floor:
         prob_implicita = round(1 / odd, 4)
         reasoning_trace = montar_reasoning_trace(
             mercado=mercado,
@@ -148,17 +293,21 @@ def analisar_jogo(dados, log_dc=True):
             ev=ev,
             edge_score=0,
             confianca=dados.get("confianca_dados", 70),
-            min_conf=MIN_CONFIDENCE_ACTIONABLE,
+            min_conf=threshold_cfg.get("confidence_floor", MIN_CONFIDENCE_ACTIONABLE),
         )
-        reasoning_trace["prob_modelo_raw"] = round(prob_ajustada, 4)
+        reasoning_trace["prob_modelo_raw"] = round(prob_base, 4)
+        reasoning_trace["prob_modelo_blend"] = round(prob_blend, 4)
+        reasoning_trace["prob_modelo_ajustada"] = round(prob_ajustada, 4)
         reasoning_trace["prob_modelo_calibrada"] = round(prob_calibrada, 4)
-        reasoning_trace["calibrator_fitted"] = bool(getattr(PROB_CALIBRATOR, "is_fitted", False))
+        reasoning_trace["calibrator_fitted"] = _calibrator_is_fitted(PROB_CALIBRATOR)
         reasoning_trace["effective_halflife"] = probs_1x2.get("recency_halflife_usado")
+        reasoning_trace["market_features"] = market_features
+        reasoning_trace["segment_threshold"] = threshold_cfg
         result = {
             "prediction_id": prediction_id,
             "decisao": "DESCARTAR",
             "recomendacao_acao": "AVOID",
-            "motivo": f"EV insuficiente: {ev*100:.2f}% (mínimo 4%)",
+            "motivo": f"EV insuficiente: {ev*100:.2f}% (mínimo {ev_floor*100:.2f}%)",
             "jogo": dados["jogo"],
             "mercado": mercado,
             "odd": odd,
@@ -170,7 +319,16 @@ def analisar_jogo(dados, log_dc=True):
             "kelly_bruto_frac": 0.0,
             "kelly_bruto_pct": 0.0,
             "prob_modelo": prob_calibrada,
-            "prob_modelo_raw": prob_ajustada,
+            "prob_modelo_raw": prob_base,
+            "prob_modelo_blend": prob_blend,
+            "prob_modelo_ajustada": prob_ajustada,
+            "shadow_mode": bool(dados.get("shadow_mode", False)),
+            "shadow_payload": {
+                "prob_baseline": round(float(prob_base), 6),
+                "prob_advanced": round(float(prob_calibrada), 6),
+                "market_features": market_features,
+                "segment_threshold": threshold_cfg,
+            },
             # Dixon-Coles mesmo em descarte
             "rho_usado": probs_1x2["rho_usado"],
             "dc_delta_empate": probs_1x2["dc_delta_empate"],
@@ -194,7 +352,7 @@ def analisar_jogo(dados, log_dc=True):
         edge_score=edge_score,
         confianca=dados.get("confianca_dados", 70),
         ev=ev,
-        min_conf=MIN_CONFIDENCE_ACTIONABLE,
+        min_conf=threshold_cfg.get("confidence_floor", MIN_CONFIDENCE_ACTIONABLE),
     )
     prob_implicita = round(1 / odd, 4)
     reasoning_trace = montar_reasoning_trace(
@@ -205,12 +363,16 @@ def analisar_jogo(dados, log_dc=True):
         ev=ev,
         edge_score=edge_score,
         confianca=dados.get("confianca_dados", 70),
-        min_conf=MIN_CONFIDENCE_ACTIONABLE,
+        min_conf=threshold_cfg.get("confidence_floor", MIN_CONFIDENCE_ACTIONABLE),
     )
-    reasoning_trace["prob_modelo_raw"] = round(prob_ajustada, 4)
+    reasoning_trace["prob_modelo_raw"] = round(prob_base, 4)
+    reasoning_trace["prob_modelo_blend"] = round(prob_blend, 4)
+    reasoning_trace["prob_modelo_ajustada"] = round(prob_ajustada, 4)
     reasoning_trace["prob_modelo_calibrada"] = round(prob_calibrada, 4)
-    reasoning_trace["calibrator_fitted"] = bool(getattr(PROB_CALIBRATOR, "is_fitted", False))
+    reasoning_trace["calibrator_fitted"] = _calibrator_is_fitted(PROB_CALIBRATOR)
     reasoning_trace["effective_halflife"] = probs_1x2.get("recency_halflife_usado")
+    reasoning_trace["market_features"] = market_features
+    reasoning_trace["segment_threshold"] = threshold_cfg
 
     # Kelly também usa probabilidade calibrada.
     kelly_bruto_frac = calcular_kelly_fracionado(
@@ -235,7 +397,9 @@ def analisar_jogo(dados, log_dc=True):
         "odd": odd,
         "prob_modelo_base": prob_base,
         "prob_modelo": prob_calibrada,
-        "prob_modelo_raw": prob_ajustada,
+        "prob_modelo_raw": prob_base,
+        "prob_modelo_blend": prob_blend,
+        "prob_modelo_ajustada": prob_ajustada,
         "prob_implicita": prob_implicita,
         "ev": round(ev, 4),
         "ev_percentual": f"{ev*100:.2f}%",
@@ -245,9 +409,19 @@ def analisar_jogo(dados, log_dc=True):
         "stake_unidades": stake["unidades"],
         "stake_reais": stake["valor_reais"],
         "unidade_reais": stake["unidade_valor"],
-        "confidence_threshold": MIN_CONFIDENCE_ACTIONABLE,
+        "confidence_threshold": threshold_cfg.get("confidence_floor", MIN_CONFIDENCE_ACTIONABLE),
+        "ev_floor": ev_floor,
+        "edge_cutoff_segment": threshold_cfg.get("edge_cutoff", 65.0),
+        "threshold_version": threshold_cfg.get("versao", "default"),
         "kelly_bruto_frac": kelly_bruto_frac,
         "kelly_bruto_pct": round(kelly_bruto_frac * 100, 2),
+        "shadow_mode": bool(dados.get("shadow_mode", False)),
+        "shadow_payload": {
+            "prob_baseline": round(float(prob_base), 6),
+            "prob_advanced": round(float(prob_calibrada), 6),
+            "market_features": market_features,
+            "segment_threshold": threshold_cfg,
+        },
         "reasoning_trace": reasoning_trace,
         # Campos novos Dixon-Coles
         "prob_casa_raw": probs_1x2["prob_casa_raw"],

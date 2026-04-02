@@ -36,7 +36,7 @@ class TestCalibrarModeloLigas(unittest.TestCase):
                 self.assertNotIn("La Liga", out)
                 self.assertEqual(out["Premier League"]["recency_halflife"], 38)
 
-                with open(calibrar_modelo.CALIBRACAO_LIGAS_PATH, "r", encoding="utf-8") as f:
+                with open(calibrar_modelo.CALIBRACAO_LIGAS_PATH, "r", encoding="utf-8-sig") as f:
                     payload = json.load(f)
                 self.assertIn("Premier League", payload)
                 self.assertIn("rho", payload["Premier League"])

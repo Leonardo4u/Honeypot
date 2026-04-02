@@ -4,7 +4,7 @@ import os
 import json
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from database import sinal_existe
+from data.database import sinal_existe
 
 load_dotenv()
 

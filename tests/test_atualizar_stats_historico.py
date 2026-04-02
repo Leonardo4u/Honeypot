@@ -79,10 +79,10 @@ class TestAtualizarStatsHistorico(unittest.TestCase):
 
             try:
                 with patch("data.atualizar_stats.requests.get", return_value=_FakeResponse(payload=payload)):
-                    df = atualizar_stats.fetch_historico_brasileirao(seasons=0, league_id=72)
+                    df = atualizar_stats.fetch_historico_brasileirao(seasons=0, league_id=71)
 
                 self.assertEqual(len(df), 1)
-                self.assertFalse(os.path.exists(os.path.join(td, "historico_BRA2.csv")))
+                self.assertFalse(os.path.exists(os.path.join(td, "historico_BRA1.csv")))
             finally:
                 atualizar_stats.API_FOOTBALL_KEY = old_key
                 atualizar_stats.BOT_DATA_DIR = old_data_dir

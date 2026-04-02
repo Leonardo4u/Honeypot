@@ -1,16 +1,12 @@
 import os
-import sys
 import asyncio
 from dotenv import load_dotenv
 from telegram import Bot
 
 load_dotenv()
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "model"))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "data"))
-
-from analisar_jogo import analisar_jogo, formatar_sinal
-from database import inserir_sinal, buscar_sinais_hoje, resumo_mensal
+from model.analisar_jogo import analisar_jogo, formatar_sinal
+from data.database import inserir_sinal, buscar_sinais_hoje, resumo_mensal
 
 TOKEN = os.getenv("BOT_TOKEN")
 CANAL_FREE = os.getenv("CANAL_FREE")
@@ -58,7 +54,7 @@ async def enviar_resultado(sinal_id, resultado, odd_final):
     Envia o resultado de um sinal para os canais.
     resultado: 'verde' ou 'vermelho'
     """
-    from database import atualizar_resultado
+    from data.database import atualizar_resultado
     bot = Bot(token=TOKEN)
 
     if resultado == "verde":

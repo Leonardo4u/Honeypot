@@ -91,6 +91,26 @@ def _calcular_segmento(conn, data_inicio, data_fim, segmento_tipo, segmento_valo
     )
     brier_avg = c.fetchone()[0]
 
+    c.execute(
+        f'''
+        SELECT
+            SUM(
+                CASE
+                    WHEN lower(COALESCE(s.fonte, '')) LIKE '%fallback%'
+                      OR lower(COALESCE(s.fonte, '')) LIKE '%medias%'
+                    THEN 1 ELSE 0
+                END
+            )
+        FROM sinais s
+        WHERE s.status = 'finalizado'
+          AND s.data BETWEEN ? AND ?
+          {filtro_segmento}
+        ''',
+        params_sinais,
+    )
+    fallback_count = c.fetchone()[0]
+    fallback_count = int(fallback_count or 0)
+
     win_rate = round((vitorias / total), 4) if total > 0 else None
     roi_pct = round((lucro_total / total) * 100.0, 4) if total > 0 else None
     brier_medio = round(float(brier_avg), 4) if brier_avg is not None else None
@@ -102,9 +122,118 @@ def _calcular_segmento(conn, data_inicio, data_fim, segmento_tipo, segmento_valo
         "win_rate": win_rate,
         "roi_pct": roi_pct,
         "brier_medio": brier_medio,
-        # Placeholder until fallback telemetry is persisted per settled signal in sinais/brier tables.
-        "fallback_rate": 0.0,
+        "fallback_rate": round((fallback_count / total), 4) if total > 0 else 0.0,
     }
+
+
+def _persist_reliability_deciles(conn, data_inicio, data_fim, referencia_semana):
+    c = conn.cursor()
+    c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS reliability_deciles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            referencia_semana TEXT NOT NULL,
+            mercado TEXT NOT NULL,
+            decil INTEGER NOT NULL,
+            p_prevista REAL,
+            p_observada REAL,
+            n INTEGER NOT NULL,
+            ece_contribution REAL,
+            ece REAL,
+            mce REAL,
+            criado_em TEXT NOT NULL,
+            UNIQUE(referencia_semana, mercado, decil)
+        )
+        '''
+    )
+
+    c.execute(
+        '''
+        SELECT s.mercado, bt.prob_prevista, bt.resultado_real
+        FROM brier_tracking bt
+        JOIN sinais s ON s.id = bt.sinal_id
+        WHERE bt.resultado_real IS NOT NULL
+          AND bt.prob_prevista IS NOT NULL
+          AND s.data BETWEEN ? AND ?
+          AND s.mercado IS NOT NULL
+          AND s.mercado != ''
+        ORDER BY s.mercado, bt.prob_prevista
+        ''',
+        (data_inicio, data_fim),
+    )
+    rows = c.fetchall()
+    if not rows:
+        return
+
+    by_market = {}
+    for mercado, p, y in rows:
+        by_market.setdefault(str(mercado), []).append((float(p), int(y)))
+
+    criado_em = datetime.now().isoformat()
+    for mercado, values in by_market.items():
+        n_total = len(values)
+        if n_total < 10:
+            continue
+
+        bins = []
+        for i in range(10):
+            start = int(i * n_total / 10)
+            end = int((i + 1) * n_total / 10)
+            chunk = values[start:end]
+            if not chunk:
+                continue
+            n = len(chunk)
+            p_avg = sum(v[0] for v in chunk) / n
+            y_avg = sum(v[1] for v in chunk) / n
+            abs_gap = abs(p_avg - y_avg)
+            bins.append(
+                {
+                    "decil": i + 1,
+                    "n": n,
+                    "p_prevista": p_avg,
+                    "p_observada": y_avg,
+                    "abs_gap": abs_gap,
+                }
+            )
+
+        if not bins:
+            continue
+
+        ece = sum((b["n"] / n_total) * b["abs_gap"] for b in bins)
+        mce = max(b["abs_gap"] for b in bins)
+
+        for b in bins:
+            ece_contribution = (b["n"] / n_total) * b["abs_gap"]
+            c.execute(
+                '''
+                INSERT INTO reliability_deciles (
+                    referencia_semana, mercado, decil,
+                    p_prevista, p_observada, n,
+                    ece_contribution, ece, mce, criado_em
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(referencia_semana, mercado, decil)
+                DO UPDATE SET
+                    p_prevista = excluded.p_prevista,
+                    p_observada = excluded.p_observada,
+                    n = excluded.n,
+                    ece_contribution = excluded.ece_contribution,
+                    ece = excluded.ece,
+                    mce = excluded.mce,
+                    criado_em = excluded.criado_em
+                ''',
+                (
+                    referencia_semana,
+                    mercado,
+                    int(b["decil"]),
+                    round(float(b["p_prevista"]), 6),
+                    round(float(b["p_observada"]), 6),
+                    int(b["n"]),
+                    round(float(ece_contribution), 6),
+                    round(float(ece), 6),
+                    round(float(mce), 6),
+                    criado_em,
+                ),
+            )
 
 
 def calcular_snapshot_qualidade_semanal(db_path=None, referencia=None):
@@ -151,6 +280,8 @@ def persistir_snapshot_qualidade(snapshot, db_path=None):
     c = conn.cursor()
 
     referencia = snapshot["referencia_semana"]
+    data_inicio = snapshot.get("periodo_inicio")
+    data_fim = snapshot.get("periodo_fim")
     segmentos = snapshot.get("segmentos", [])
     for seg in segmentos:
         c.execute(
@@ -185,6 +316,9 @@ def persistir_snapshot_qualidade(snapshot, db_path=None):
                 float(seg.get("fallback_rate") or 0.0),
             ),
         )
+
+    if data_inicio and data_fim:
+        _persist_reliability_deciles(conn, data_inicio, data_fim, referencia)
 
     conn.commit()
     conn.close()

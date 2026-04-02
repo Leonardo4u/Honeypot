@@ -1,5 +1,4 @@
 import os
-import sys
 import sqlite3
 import argparse
 import requests
@@ -13,17 +12,14 @@ from datetime import datetime, timezone
 
 from model.team_name_normalizer import normalize_df
 
-# Garante que os modulos do projeto sao encontrados
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, ROOT_DIR)
-sys.path.insert(0, os.path.join(ROOT_DIR, "data"))
-sys.path.insert(0, os.path.join(ROOT_DIR, "model"))
 
 BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(ROOT_DIR, "data"))
 HISTORICO_DIR = os.path.join(BOT_DATA_DIR, "historico")
 DB_PATH = os.path.join(BOT_DATA_DIR, "edge_protocol.db")
 CALIBRACAO_LIGAS_PATH = os.path.join(BOT_DATA_DIR, "calibracao_ligas.json")
 MEDIAS_GOLS_PATH = os.path.join(BOT_DATA_DIR, "medias_gols.json")
+PICKS_LOG_PATH = os.path.join(BOT_DATA_DIR, "picks_log.csv")
 
 LIGAS_FOOTBALL_DATA = {
     # Brasileirao not available on football-data.co.uk - use API-Football source.
@@ -36,7 +32,6 @@ LIGAS_FOOTBALL_DATA = {
 
 LIGAS_API_FOOTBALL_HIST = {
     "Brasileirao Serie A": "BRA1",
-    "Brasileirao Serie B": "BRA2",
 }
 
 KNOWN_TEAMS = {
@@ -46,7 +41,6 @@ KNOWN_TEAMS = {
     "I1": {"Juventus", "Inter", "Milan", "Napoli", "Roma"},
     "F1": {"Paris SG", "Marseille", "Lyon", "Monaco", "Lille"},
     "BRA1": {"Flamengo", "Palmeiras", "Sao Paulo", "Corinthians", "Atletico-MG"},
-    "BRA2": {"Sport Recife", "Ceara", "Vitoria", "Coritiba", "Goias"},
 }
 
 TEAM_ALIASES = {
@@ -69,7 +63,7 @@ def _all_leagues_map():
 
 def _cleanup_deprecated_brazil_files():
     """Remove artefatos antigos do football-data mapeados incorretamente para Brasil."""
-    for fname in ("historico_B1.csv", "historico_B2.csv"):
+    for fname in ("historico_B1.csv", "historico_B2.csv", "historico_BRA2.csv"):
         path = os.path.join(BOT_DATA_DIR, fname)
         if os.path.exists(path):
             try:
@@ -922,12 +916,92 @@ def parse_args(argv=None):
     """Parseia argumentos da CLI de calibracao."""
     parser = argparse.ArgumentParser(description="Calibracao de modelo e ligas")
     parser.add_argument("--fetch-history", action="store_true", help="Baixa e consolida histórico multi-season")
-    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca histórico BR via API-Football (BRA1/BRA2)")
+    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca histórico BR via API-Football (BRA1)")
     parser.add_argument("--seasons", type=int, default=HISTORICAL_SEASONS, help="Qtde de temporadas passadas além da atual")
     parser.add_argument("--check-coverage", action="store_true", help="Mostra cobertura n por liga/time")
     parser.add_argument("--build-ligas", action="store_true", help="Gera calibracao_ligas.json com rho/home_advantage")
     parser.add_argument("--min-matches", type=int, default=50, help="Minimo de jogos por liga para calibrar")
+    parser.add_argument("--walk-forward-validate", action="store_true", help="Executa validacao walk-forward com picks_log")
+    parser.add_argument("--wf-train-months", type=int, default=12)
+    parser.add_argument("--wf-val-months", type=int, default=3)
+    parser.add_argument("--wf-test-months", type=int, default=3)
     return parser.parse_args(argv)
+
+
+def _run_walk_forward_validation(train_months=12, val_months=3, test_months=3):
+    if not os.path.exists(PICKS_LOG_PATH):
+        print(f"[WF] picks_log inexistente: {PICKS_LOG_PATH}")
+        return []
+
+    df = pd.read_csv(PICKS_LOG_PATH)
+    if df.empty or "outcome" not in df.columns:
+        print("[WF] sem dados com outcome no picks_log")
+        return []
+
+    df = df[df["outcome"].isin([0, 1])].copy()
+    if df.empty:
+        print("[WF] nenhuma linha settled para validacao")
+        return []
+
+    date_col = "timestamp" if "timestamp" in df.columns else None
+    if not date_col:
+        print("[WF] coluna timestamp ausente no picks_log")
+        return []
+
+    rows = []
+    for _, r in df.iterrows():
+        try:
+            rows.append(
+                {
+                    "date": str(r.get(date_col) or ""),
+                    "prob": float(r.get("calibrated_prob_model") or 0.0),
+                    "odd": float(r.get("odds_at_pick") or 0.0),
+                    "stake": float(r.get("kelly_stake") or 1.0),
+                    "outcome": int(r.get("outcome")),
+                }
+            )
+        except Exception:
+            continue
+
+    if len(rows) < 60:
+        print(f"[WF] amostra insuficiente para folds robustos: {len(rows)}")
+        return []
+
+    from model.walk_forward import WalkForwardValidator
+    from data.database import registrar_walk_forward_result
+
+    wf = WalkForwardValidator(
+        train_months=int(train_months),
+        val_months=int(val_months),
+        test_months=int(test_months),
+    )
+
+    # Baseline temporal: sem tuning intrafold, apenas avaliacao OOS da serie.
+    folds = wf.run_folds(
+        rows,
+        fit_fn=lambda train_rows: None,
+        select_fn=lambda val_rows: {"mode": "baseline"},
+        apply_fn=lambda params, test_rows: test_rows,
+    )
+
+    for fold in folds:
+        registrar_walk_forward_result(
+            fold_id=fold.fold_id,
+            data_inicio=fold.data_inicio,
+            data_fim=fold.data_fim,
+            brier_val=fold.brier_val,
+            brier_test=fold.brier_test,
+            roi_test=fold.roi_test,
+            n_picks=fold.n_picks,
+        )
+
+    print(f"[WF] folds gerados: {len(folds)}")
+    for fold in folds:
+        print(
+            f"  - {fold.fold_id} {fold.data_inicio}->{fold.data_fim} "
+            f"brier_test={fold.brier_test:.4f} roi_test={fold.roi_test:.4f} n={fold.n_picks}"
+        )
+    return folds
 
 
 def main(argv=None):
@@ -989,6 +1063,14 @@ def main(argv=None):
     if args.check_coverage:
         cov = build_coverage_report(min_n=args.min_matches)
         print_coverage_report(cov, min_n=args.min_matches)
+        return 0
+
+    if args.walk_forward_validate:
+        _run_walk_forward_validation(
+            train_months=args.wf_train_months,
+            val_months=args.wf_val_months,
+            test_months=args.wf_test_months,
+        )
         return 0
 
     if args.build_ligas:

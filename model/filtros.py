@@ -3,7 +3,7 @@ import sqlite3
 import json
 from datetime import datetime
 
-from signal_policy import (
+from model.signal_policy import (
     ODD_MAX,
     ODD_MIN,
     REJECT_CODE_DAILY_LIMIT,
@@ -46,7 +46,7 @@ def _carregar_cache_standings_persistido():
         if not os.path.isfile(STANDINGS_CACHE_PATH):
             return
 
-        with open(STANDINGS_CACHE_PATH, "r", encoding="utf-8") as f:
+        with open(STANDINGS_CACHE_PATH, "r", encoding="utf-8-sig") as f:
             payload = json.load(f)
 
         for key, item in payload.items():

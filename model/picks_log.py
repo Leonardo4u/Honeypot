@@ -104,6 +104,16 @@ class PickLogger:
             for row in rows:
                 writer.writerow(row)
 
+    @staticmethod
+    def _date_from_timestamp(value: str) -> str:
+        dt = PickLogger._parse_timestamp(value)
+        if dt is not None:
+            return dt.date().isoformat()
+        raw = str(value or "").strip()
+        if len(raw) >= 10:
+            return raw[:10]
+        return ""
+
     def append_pick(
         self,
         *,
@@ -128,9 +138,30 @@ class PickLogger:
     ):
         """Anexa uma linha de pick no CSV."""
         home, away = self.split_match_teams(match_name)
+        now_ts = datetime.now(timezone.utc).isoformat()
+        now_day = self._date_from_timestamp(now_ts)
+
+        # INTEGRATION: evita duplicidade no picks_log para mesma liga/jogo/mercado no mesmo dia.
+        rows = self._read_rows()
+        league_key = str(league or "").strip().lower()
+        market_key = str(market or "").strip().lower()
+        home_key = str(home or "").strip().lower()
+        away_key = str(away or "").strip().lower()
+        for existing in rows:
+            same_day = self._date_from_timestamp(existing.get("timestamp", "")) == now_day
+            if not same_day:
+                continue
+            if (
+                str(existing.get("league") or "").strip().lower() == league_key
+                and str(existing.get("market") or "").strip().lower() == market_key
+                and str(existing.get("team_home") or "").strip().lower() == home_key
+                and str(existing.get("team_away") or "").strip().lower() == away_key
+            ):
+                return False
+
         row = {
             "prediction_id": prediction_id,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": now_ts,
             "league": league,
             "market": market,
             "team_home": home,
@@ -155,6 +186,7 @@ class PickLogger:
         with open(self.csv_path, "a", newline="", encoding="utf-8") as f:
             writer = csv.DictWriter(f, fieldnames=self.FIELDNAMES)
             writer.writerow(row)
+        return True
 
     def update_outcome(self, prediction_id: str, outcome: int, closing_odds: Optional[float]):
         """Atualiza outcome e closing_odds de um prediction_id ja registrado."""

@@ -90,6 +90,9 @@ python -m venv .venv
 # 4) Instalar dependências
 pip install -r requirements.txt
 
+# 4.1) Instalar projeto em modo editável (import absoluto sem sys.path)
+pip install -e .
+
 # 5) Inicializar banco/tabelas (se necessário)
 python criar_tabelas.py
 ```
@@ -104,6 +107,8 @@ incluindo tipo, valor padrão e descrição. Para começar:
 ```bash
 copy .env.example .env
 ```
+
+Nunca commite credenciais reais no repositório. O arquivo `.env` é local e deve conter apenas segredos da sua máquina/ambiente.
 
 Depois, ajuste os segredos obrigatórios (`BOT_TOKEN`, `ODDS_API_KEY`, `API_FOOTBALL_KEY`, canais).
 
@@ -242,6 +247,19 @@ python scripts/slo_panel.py
 Saída em `logs/slo_panel_latest.json`.
 
 A suíte canônica cobre módulos críticos de gates, scheduler, settlement, qualidade de dados, telemetria e integração de banco.
+
+---
+
+## 📦 Dependências e reprodutibilidade
+
+- `requirements.txt`: dependências de desenvolvimento/manutenção.
+- `requirements.lock`: snapshot congelado para execução reprodutível em CI/produção.
+
+Gerar lock local:
+
+```bash
+pip freeze > requirements.lock
+```
 
 ---
 

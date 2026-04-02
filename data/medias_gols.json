@@ -1,940 +1,896 @@
-{
-  "Liverpool": {
-    "casa": 2.5,
-    "fora": 1.75,
-    "gols_sofridos_casa": 0.25,
-    "gols_sofridos_fora": 1.0,
-    "team_id": 40
-  },
-  "Arsenal": {
-    "casa": 2.25,
-    "fora": 1.75,
-    "gols_sofridos_casa": 0.0,
-    "gols_sofridos_fora": 0.75,
-    "team_id": 42
-  },
-  "Manchester City": {
-    "casa": 2.75,
-    "fora": 1.75,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 2.5,
-    "team_id": 50
-  },
-  "Chelsea": {
-    "casa": 1.84,
-    "fora": 1.53,
-    "gols_sofridos_casa": 0.95,
-    "gols_sofridos_fora": 1.32,
-    "team_id": 49
-  },
-  "Newcastle": {
-    "casa": 2.11,
-    "fora": 1.47,
-    "gols_sofridos_casa": 1.05,
-    "gols_sofridos_fora": 1.42,
-    "team_id": 34
-  },
-  "Aston Villa": {
-    "casa": 1.75,
-    "fora": 1.5,
-    "gols_sofridos_casa": 0.5,
-    "gols_sofridos_fora": 1.0,
-    "team_id": 66
-  },
-  "Nottingham Forest": {
-    "casa": 1.37,
-    "fora": 1.68,
-    "gols_sofridos_casa": 0.84,
-    "gols_sofridos_fora": 1.58,
-    "team_id": 65
-  },
-  "Brighton": {
-    "casa": 1.58,
-    "fora": 1.89,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.74,
-    "team_id": 51
-  },
-  "Bournemouth": {
-    "casa": 1.21,
-    "fora": 1.84,
-    "gols_sofridos_casa": 0.84,
-    "gols_sofridos_fora": 1.58,
-    "team_id": 35
-  },
-  "Brentford": {
-    "casa": 2.11,
-    "fora": 1.37,
-    "gols_sofridos_casa": 1.84,
-    "gols_sofridos_fora": 1.16,
-    "team_id": 55
-  },
-  "Fulham": {
-    "casa": 1.42,
-    "fora": 1.42,
-    "gols_sofridos_casa": 1.58,
-    "gols_sofridos_fora": 1.26,
-    "team_id": 36
-  },
-  "Crystal Palace": {
-    "casa": 1.26,
-    "fora": 1.42,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.32,
-    "team_id": 52
-  },
-  "Everton": {
-    "casa": 1.37,
-    "fora": 0.84,
-    "gols_sofridos_casa": 1.21,
-    "gols_sofridos_fora": 1.11,
-    "team_id": 45
-  },
-  "West Ham": {
-    "casa": 1.21,
-    "fora": 1.21,
-    "gols_sofridos_casa": 1.79,
-    "gols_sofridos_fora": 1.47,
-    "team_id": 48
-  },
-  "Manchester United": {
-    "casa": 1.21,
-    "fora": 1.11,
-    "gols_sofridos_casa": 1.47,
-    "gols_sofridos_fora": 1.37,
-    "team_id": 33
-  },
-  "Wolves": {
-    "casa": 1.42,
-    "fora": 1.42,
-    "gols_sofridos_casa": 1.68,
-    "gols_sofridos_fora": 1.95,
-    "team_id": 39
-  },
-  "Tottenham": {
-    "casa": 1.84,
-    "fora": 1.53,
-    "gols_sofridos_casa": 1.84,
-    "gols_sofridos_fora": 1.58,
-    "team_id": 47
-  },
-  "Leicester": {
-    "casa": 0.79,
-    "fora": 0.95,
-    "gols_sofridos_casa": 1.79,
-    "gols_sofridos_fora": 2.42,
-    "team_id": 46
-  },
-  "Ipswich": {
-    "casa": 0.74,
-    "fora": 1.16,
-    "gols_sofridos_casa": 2.32,
-    "gols_sofridos_fora": 2.0,
-    "team_id": 57
-  },
-  "Southampton": {
-    "casa": 0.68,
-    "fora": 0.68,
-    "gols_sofridos_casa": 2.47,
-    "gols_sofridos_fora": 2.05,
-    "team_id": 41
-  },
-  "Barcelona": {
-    "casa": 3.5,
-    "fora": 3.5,
-    "gols_sofridos_casa": 0.75,
-    "gols_sofridos_fora": 2.5,
-    "team_id": 529
-  },
-  "Real Madrid": {
-    "casa": 3.5,
-    "fora": 1.5,
-    "gols_sofridos_casa": 1.75,
-    "gols_sofridos_fora": 1.25,
-    "team_id": 541
-  },
-  "Atletico Madrid": {
-    "casa": 2.0,
-    "fora": 3.0,
-    "gols_sofridos_casa": 1.5,
-    "gols_sofridos_fora": 1.5,
-    "team_id": 530
-  },
-  "Athletic Club": {
-    "casa": 1.68,
-    "fora": 1.16,
-    "gols_sofridos_casa": 0.68,
-    "gols_sofridos_fora": 0.84,
-    "team_id": 531
-  },
-  "Villarreal": {
-    "casa": 2.26,
-    "fora": 1.47,
-    "gols_sofridos_casa": 1.42,
-    "gols_sofridos_fora": 1.26,
-    "team_id": 533
-  },
-  "Real Betis": {
-    "casa": 1.68,
-    "fora": 1.32,
-    "gols_sofridos_casa": 1.11,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 543
-  },
-  "Celta Vigo": {
-    "casa": 1.68,
-    "fora": 1.42,
-    "gols_sofridos_casa": 1.11,
-    "gols_sofridos_fora": 1.89,
-    "team_id": 538
-  },
-  "Rayo Vallecano": {
-    "casa": 1.26,
-    "fora": 0.89,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.0,
-    "team_id": 728
-  },
-  "Osasuna": {
-    "casa": 1.74,
-    "fora": 0.79,
-    "gols_sofridos_casa": 1.21,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 727
-  },
-  "Mallorca": {
-    "casa": 1.05,
-    "fora": 0.79,
-    "gols_sofridos_casa": 1.11,
-    "gols_sofridos_fora": 1.21,
-    "team_id": 798
-  },
-  "Real Sociedad": {
-    "casa": 1.05,
-    "fora": 0.79,
-    "gols_sofridos_casa": 1.05,
-    "gols_sofridos_fora": 1.37,
-    "team_id": 548
-  },
-  "Valencia": {
-    "casa": 1.37,
-    "fora": 0.95,
-    "gols_sofridos_casa": 1.05,
-    "gols_sofridos_fora": 1.79,
-    "team_id": 532
-  },
-  "Getafe": {
-    "casa": 0.79,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.05,
-    "team_id": 546
-  },
-  "Espanyol": {
-    "casa": 1.21,
-    "fora": 0.89,
-    "gols_sofridos_casa": 1.05,
-    "gols_sofridos_fora": 1.63,
-    "team_id": 540
-  },
-  "Alaves": {
-    "casa": 0.74,
-    "fora": 1.26,
-    "gols_sofridos_casa": 0.89,
-    "gols_sofridos_fora": 1.63,
-    "team_id": 542
-  },
-  "Girona": {
-    "casa": 1.25,
-    "fora": 0.0,
-    "gols_sofridos_casa": 1.5,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 547
-  },
-  "Sevilla": {
-    "casa": 0.89,
-    "fora": 1.32,
-    "gols_sofridos_casa": 1.21,
-    "gols_sofridos_fora": 1.68,
-    "team_id": 536
-  },
-  "Leganes": {
-    "casa": 1.21,
-    "fora": 0.84,
-    "gols_sofridos_casa": 1.42,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 537
-  },
-  "Las Palmas": {
-    "casa": 1.11,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.53,
-    "gols_sofridos_fora": 1.68,
-    "team_id": 534
-  },
-  "Valladolid": {
-    "casa": 0.58,
-    "fora": 0.79,
-    "gols_sofridos_casa": 1.68,
-    "gols_sofridos_fora": 3.05,
-    "team_id": 720
-  },
-  "Bayern München": {
-    "casa": 3.5,
-    "fora": 1.5,
-    "gols_sofridos_casa": 0.75,
-    "gols_sofridos_fora": 2.25,
-    "team_id": 157
-  },
-  "Bayer Leverkusen": {
-    "casa": 2.25,
-    "fora": 1.5,
-    "gols_sofridos_casa": 0.0,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 168
-  },
-  "Eintracht Frankfurt": {
-    "casa": 2.41,
-    "fora": 1.59,
-    "gols_sofridos_casa": 1.29,
-    "gols_sofridos_fora": 1.41,
-    "team_id": 169
-  },
-  "Borussia Dortmund": {
-    "casa": 3.25,
-    "fora": 2.25,
-    "gols_sofridos_casa": 1.25,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 165
-  },
-  "SC Freiburg": {
-    "casa": 1.88,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.53,
-    "gols_sofridos_fora": 1.59,
-    "team_id": 160
-  },
-  "FSV Mainz 05": {
-    "casa": 1.41,
-    "fora": 1.82,
-    "gols_sofridos_casa": 1.06,
-    "gols_sofridos_fora": 1.47,
-    "team_id": 164
-  },
-  "RB Leipzig": {
-    "casa": 1.5,
-    "fora": 0.5,
-    "gols_sofridos_casa": 2.0,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 173
-  },
-  "Werder Bremen": {
-    "casa": 1.24,
-    "fora": 1.94,
-    "gols_sofridos_casa": 1.53,
-    "gols_sofridos_fora": 1.82,
-    "team_id": 162
-  },
-  "VfB Stuttgart": {
-    "casa": 1.75,
-    "fora": 1.5,
-    "gols_sofridos_casa": 2.0,
-    "gols_sofridos_fora": 2.25,
-    "team_id": 172
-  },
-  "Borussia Mönchengladbach": {
-    "casa": 1.71,
-    "fora": 1.53,
-    "gols_sofridos_casa": 1.53,
-    "gols_sofridos_fora": 1.82,
-    "team_id": 163
-  },
-  "VfL Wolfsburg": {
-    "casa": 1.59,
-    "fora": 1.71,
-    "gols_sofridos_casa": 1.76,
-    "gols_sofridos_fora": 1.41,
-    "team_id": 161
-  },
-  "FC Augsburg": {
-    "casa": 1.06,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.18,
-    "gols_sofridos_fora": 1.82,
-    "team_id": 170
-  },
-  "Union Berlin": {
-    "casa": 1.06,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.35,
-    "gols_sofridos_fora": 1.65,
-    "team_id": 182
-  },
-  "FC St. Pauli": {
-    "casa": 0.59,
-    "fora": 1.06,
-    "gols_sofridos_casa": 1.12,
-    "gols_sofridos_fora": 1.29,
-    "team_id": 186
-  },
-  "1899 Hoffenheim": {
-    "casa": 1.47,
-    "fora": 1.24,
-    "gols_sofridos_casa": 2.12,
-    "gols_sofridos_fora": 1.88,
-    "team_id": 167
-  },
-  "1. FC Heidenheim": {
-    "casa": 0.76,
-    "fora": 1.41,
-    "gols_sofridos_casa": 1.94,
-    "gols_sofridos_fora": 1.82,
-    "team_id": 180
-  },
-  "Holstein Kiel": {
-    "casa": 1.41,
-    "fora": 1.47,
-    "gols_sofridos_casa": 2.41,
-    "gols_sofridos_fora": 2.29,
-    "team_id": 191
-  },
-  "VfL Bochum": {
-    "casa": 0.94,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.94,
-    "gols_sofridos_fora": 2.0,
-    "team_id": 176
-  },
-  "Napoli": {
-    "casa": 1.68,
-    "fora": 1.42,
-    "gols_sofridos_casa": 0.68,
-    "gols_sofridos_fora": 0.74,
-    "team_id": 492
-  },
-  "Inter": {
-    "casa": 2.25,
-    "fora": 0.5,
-    "gols_sofridos_casa": 0.0,
-    "gols_sofridos_fora": 0.25,
-    "team_id": 505
-  },
-  "Atalanta": {
-    "casa": 1.75,
-    "fora": 3.25,
-    "gols_sofridos_casa": 0.75,
-    "gols_sofridos_fora": 0.75,
-    "team_id": 499
-  },
-  "Juventus": {
-    "casa": 1.25,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 0.75,
-    "team_id": 496
-  },
-  "AS Roma": {
-    "casa": 1.95,
-    "fora": 1.0,
-    "gols_sofridos_casa": 0.79,
-    "gols_sofridos_fora": 1.05,
-    "team_id": 497
-  },
-  "Fiorentina": {
-    "casa": 1.68,
-    "fora": 1.47,
-    "gols_sofridos_casa": 0.95,
-    "gols_sofridos_fora": 1.21,
-    "team_id": 502
-  },
-  "Lazio": {
-    "casa": 1.74,
-    "fora": 1.47,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.21,
-    "team_id": 487
-  },
-  "AC Milan": {
-    "casa": 1.75,
-    "fora": 1.75,
-    "gols_sofridos_casa": 1.25,
-    "gols_sofridos_fora": 1.5,
-    "team_id": 489
-  },
-  "Bologna": {
-    "casa": 0.75,
-    "fora": 0.25,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.25,
-    "team_id": 500
-  },
-  "Como": {
-    "casa": 1.47,
-    "fora": 1.11,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.37,
-    "team_id": 895
-  },
-  "Torino": {
-    "casa": 0.89,
-    "fora": 1.16,
-    "gols_sofridos_casa": 0.95,
-    "gols_sofridos_fora": 1.42,
-    "team_id": 503
-  },
-  "Udinese": {
-    "casa": 1.16,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.42,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 494
-  },
-  "Genoa": {
-    "casa": 1.11,
-    "fora": 0.84,
-    "gols_sofridos_casa": 1.32,
-    "gols_sofridos_fora": 1.26,
-    "team_id": 495
-  },
-  "Verona": {
-    "casa": 0.79,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.89,
-    "gols_sofridos_fora": 1.58,
-    "team_id": 504
-  },
-  "Cagliari": {
-    "casa": 1.26,
-    "fora": 0.84,
-    "gols_sofridos_casa": 1.47,
-    "gols_sofridos_fora": 1.47,
-    "team_id": 490
-  },
-  "Parma": {
-    "casa": 1.32,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.47,
-    "gols_sofridos_fora": 1.58,
-    "team_id": 523
-  },
-  "Lecce": {
-    "casa": 0.68,
-    "fora": 0.74,
-    "gols_sofridos_casa": 1.63,
-    "gols_sofridos_fora": 1.42,
-    "team_id": 867
-  },
-  "Empoli": {
-    "casa": 0.53,
-    "fora": 1.21,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.74,
-    "team_id": 511
-  },
-  "Venezia": {
-    "casa": 0.89,
-    "fora": 0.79,
-    "gols_sofridos_casa": 1.16,
-    "gols_sofridos_fora": 1.79,
-    "team_id": 517
-  },
-  "Monza": {
-    "casa": 0.68,
-    "fora": 0.79,
-    "gols_sofridos_casa": 1.63,
-    "gols_sofridos_fora": 2.0,
-    "team_id": 1579
-  },
-  "Paris Saint Germain": {
-    "casa": 1.75,
-    "fora": 1.75,
-    "gols_sofridos_casa": 1.25,
-    "gols_sofridos_fora": 1.0,
-    "team_id": 85
-  },
-  "Marseille": {
-    "casa": 2.41,
-    "fora": 1.94,
-    "gols_sofridos_casa": 1.35,
-    "gols_sofridos_fora": 1.41,
-    "team_id": 81
-  },
-  "Monaco": {
-    "casa": 2.5,
-    "fora": 0.75,
-    "gols_sofridos_casa": 1.25,
-    "gols_sofridos_fora": 2.0,
-    "team_id": 91
-  },
-  "Nice": {
-    "casa": 2.24,
-    "fora": 1.65,
-    "gols_sofridos_casa": 0.88,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 84
-  },
-  "Lille": {
-    "casa": 2.75,
-    "fora": 1.5,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.5,
-    "team_id": 79
-  },
-  "Lyon": {
-    "casa": 2.18,
-    "fora": 1.65,
-    "gols_sofridos_casa": 1.24,
-    "gols_sofridos_fora": 1.47,
-    "team_id": 80
-  },
-  "Strasbourg": {
-    "casa": 1.94,
-    "fora": 1.35,
-    "gols_sofridos_casa": 1.18,
-    "gols_sofridos_fora": 1.41,
-    "team_id": 95
-  },
-  "Lens": {
-    "casa": 1.12,
-    "fora": 1.35,
-    "gols_sofridos_casa": 1.29,
-    "gols_sofridos_fora": 1.0,
-    "team_id": 116
-  },
-  "Stade Brestois 29": {
-    "casa": 1.0,
-    "fora": 1.5,
-    "gols_sofridos_casa": 1.25,
-    "gols_sofridos_fora": 1.5,
-    "team_id": 106
-  },
-  "Toulouse": {
-    "casa": 1.18,
-    "fora": 1.41,
-    "gols_sofridos_casa": 1.29,
-    "gols_sofridos_fora": 1.24,
-    "team_id": 96
-  },
-  "Auxerre": {
-    "casa": 1.41,
-    "fora": 1.41,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 2.0,
-    "team_id": 108
-  },
-  "Rennes": {
-    "casa": 1.47,
-    "fora": 1.53,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.94,
-    "team_id": 94
-  },
-  "Nantes": {
-    "casa": 1.12,
-    "fora": 1.18,
-    "gols_sofridos_casa": 1.06,
-    "gols_sofridos_fora": 2.0,
-    "team_id": 83
-  },
-  "Angers": {
-    "casa": 1.06,
-    "fora": 0.82,
-    "gols_sofridos_casa": 1.94,
-    "gols_sofridos_fora": 1.18,
-    "team_id": 77
-  },
-  "Le Havre": {
-    "casa": 0.88,
-    "fora": 1.47,
-    "gols_sofridos_casa": 2.41,
-    "gols_sofridos_fora": 1.76,
-    "team_id": 111
-  },
-  "Reims": {
-    "casa": 1.0,
-    "fora": 0.94,
-    "gols_sofridos_casa": 1.47,
-    "gols_sofridos_fora": 1.29,
-    "team_id": 93
-  },
-  "Saint Etienne": {
-    "casa": 1.41,
-    "fora": 0.88,
-    "gols_sofridos_casa": 1.94,
-    "gols_sofridos_fora": 2.59,
-    "team_id": 1063
-  },
-  "Montpellier": {
-    "casa": 1.0,
-    "fora": 0.35,
-    "gols_sofridos_casa": 2.41,
-    "gols_sofridos_fora": 2.24,
-    "team_id": 82
-  },
-  "Botafogo": {
-    "casa": 1.63,
-    "fora": 1.47,
-    "gols_sofridos_casa": 0.68,
-    "gols_sofridos_fora": 0.84,
-    "team_id": 120
-  },
-  "Palmeiras": {
-    "casa": 1.79,
-    "fora": 1.37,
-    "gols_sofridos_casa": 0.84,
-    "gols_sofridos_fora": 0.89,
-    "team_id": 121
-  },
-  "Flamengo": {
-    "casa": 1.58,
-    "fora": 1.63,
-    "gols_sofridos_casa": 1.11,
-    "gols_sofridos_fora": 1.11,
-    "team_id": 127
-  },
-  "Fortaleza EC": {
-    "casa": 1.68,
-    "fora": 1.11,
-    "gols_sofridos_casa": 0.42,
-    "gols_sofridos_fora": 1.63,
-    "team_id": 154
-  },
-  "Internacional": {
-    "casa": 1.58,
-    "fora": 1.21,
-    "gols_sofridos_casa": 0.79,
-    "gols_sofridos_fora": 1.11,
-    "team_id": 119
-  },
-  "Sao Paulo": {
-    "casa": 1.63,
-    "fora": 1.16,
-    "gols_sofridos_casa": 0.95,
-    "gols_sofridos_fora": 1.32,
-    "team_id": 126
-  },
-  "Corinthians": {
-    "casa": 1.95,
-    "fora": 0.89,
-    "gols_sofridos_casa": 0.95,
-    "gols_sofridos_fora": 1.42,
-    "team_id": 131
-  },
-  "Bahia": {
-    "casa": 1.32,
-    "fora": 1.26,
-    "gols_sofridos_casa": 0.79,
-    "gols_sofridos_fora": 1.79,
-    "team_id": 118
-  },
-  "Cruzeiro": {
-    "casa": 1.53,
-    "fora": 0.74,
-    "gols_sofridos_casa": 0.84,
-    "gols_sofridos_fora": 1.32,
-    "team_id": 135
-  },
-  "Vasco DA Gama": {
-    "casa": 1.53,
-    "fora": 0.74,
-    "gols_sofridos_casa": 1.26,
-    "gols_sofridos_fora": 1.68,
-    "team_id": 133
-  },
-  "Vasco da Gama": {
-    "casa": 1.53,
-    "fora": 0.74,
-    "gols_sofridos_casa": 1.26,
-    "gols_sofridos_fora": 1.68,
-    "team_id": 133
-  },
-  "Vitoria": {
-    "casa": 1.21,
-    "fora": 1.16,
-    "gols_sofridos_casa": 1.21,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 136
-  },
-  "Atletico-MG": {
-    "casa": 1.42,
-    "fora": 1.05,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.47,
-    "team_id": 1062
-  },
-  "Atletico Mineiro": {
-    "casa": 1.42,
-    "fora": 1.05,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.47,
-    "team_id": 1062
-  },
-  "Fluminense": {
-    "casa": 1.05,
-    "fora": 0.68,
-    "gols_sofridos_casa": 0.84,
-    "gols_sofridos_fora": 1.21,
-    "team_id": 124
-  },
-  "Gremio": {
-    "casa": 1.37,
-    "fora": 0.95,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.26,
-    "team_id": 130
-  },
-  "Grêmio": {
-    "casa": 1.37,
-    "fora": 0.95,
-    "gols_sofridos_casa": 1.37,
-    "gols_sofridos_fora": 1.26,
-    "team_id": 130
-  },
-  "Juventude": {
-    "casa": 1.42,
-    "fora": 1.11,
-    "gols_sofridos_casa": 1.26,
-    "gols_sofridos_fora": 1.84,
-    "team_id": 152
-  },
-  "RB Bragantino": {
-    "casa": 1.42,
-    "fora": 0.89,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 794
-  },
-  "Bragantino-SP": {
-    "casa": 1.42,
-    "fora": 0.89,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.53,
-    "team_id": 794
-  },
-  "Atletico Paranaense": {
-    "casa": 1.26,
-    "fora": 0.84,
-    "gols_sofridos_casa": 1.11,
-    "gols_sofridos_fora": 1.32,
-    "team_id": 134
-  },
-  "Criciuma": {
-    "casa": 1.16,
-    "fora": 1.05,
-    "gols_sofridos_casa": 1.42,
-    "gols_sofridos_fora": 1.79,
-    "team_id": 140
-  },
-  "Atletico Goianiense": {
-    "casa": 0.84,
-    "fora": 0.68,
-    "gols_sofridos_casa": 1.26,
-    "gols_sofridos_fora": 1.79,
-    "team_id": 144
-  },
-  "Cuiaba": {
-    "casa": 0.84,
-    "fora": 0.68,
-    "gols_sofridos_casa": 1.21,
-    "gols_sofridos_fora": 1.37,
-    "team_id": 1193
-  },
-  "PSV Eindhoven": {
-    "casa": 2.75,
-    "fora": 1.25,
-    "gols_sofridos_casa": 1.25,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 197
-  },
-  "Benfica": {
-    "casa": 2.25,
-    "fora": 1.75,
-    "gols_sofridos_casa": 2.0,
-    "gols_sofridos_fora": 1.0,
-    "team_id": 211
-  },
-  "Feyenoord": {
-    "casa": 2.0,
-    "fora": 2.5,
-    "gols_sofridos_casa": 2.25,
-    "gols_sofridos_fora": 3.0,
-    "team_id": 209
-  },
-  "Celtic": {
-    "casa": 2.5,
-    "fora": 0.75,
-    "gols_sofridos_casa": 0.75,
-    "gols_sofridos_fora": 2.75,
-    "team_id": 247
-  },
-  "Sporting CP": {
-    "casa": 2.0,
-    "fora": 1.25,
-    "gols_sofridos_casa": 1.75,
-    "gols_sofridos_fora": 1.25,
-    "team_id": 228
-  },
-  "Club Brugge KV": {
-    "casa": 0.75,
-    "fora": 1.0,
-    "gols_sofridos_casa": 1.0,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 569
-  },
-  "Dinamo Zagreb": {
-    "casa": 1.0,
-    "fora": 2.0,
-    "gols_sofridos_casa": 1.5,
-    "gols_sofridos_fora": 3.25,
-    "team_id": 620
-  },
-  "Shakhtar Donetsk": {
-    "casa": 1.25,
-    "fora": 0.75,
-    "gols_sofridos_casa": 2.25,
-    "gols_sofridos_fora": 1.75,
-    "team_id": 550
-  },
-  "FK Crvena Zvezda": {
-    "casa": 2.5,
-    "fora": 0.75,
-    "gols_sofridos_casa": 2.75,
-    "gols_sofridos_fora": 2.75,
-    "team_id": 598
-  },
-  "Sturm Graz": {
-    "casa": 0.5,
-    "fora": 0.75,
-    "gols_sofridos_casa": 0.75,
-    "gols_sofridos_fora": 2.75,
-    "team_id": 637
-  },
-  "Sparta Praha": {
-    "casa": 1.0,
-    "fora": 0.75,
-    "gols_sofridos_casa": 2.25,
-    "gols_sofridos_fora": 3.0,
-    "team_id": 628
-  },
-  "Red Bull Salzburg": {
-    "casa": 0.25,
-    "fora": 1.0,
-    "gols_sofridos_casa": 3.25,
-    "gols_sofridos_fora": 3.5,
-    "team_id": 571
-  },
-  "Slovan Bratislava": {
-    "casa": 1.0,
-    "fora": 0.75,
-    "gols_sofridos_casa": 3.5,
-    "gols_sofridos_fora": 3.25,
-    "team_id": 656
-  },
-  "BSC Young Boys": {
-    "casa": 0.25,
-    "fora": 0.5,
-    "gols_sofridos_casa": 2.75,
-    "gols_sofridos_fora": 3.25,
-    "team_id": 565
-  }
+﻿{
+    "Liverpool":  {
+                      "casa":  2.28,
+                      "fora":  1.82,
+                      "gols_sofridos_casa":  0.93,
+                      "gols_sofridos_fora":  1.42
+                  },
+    "Bournemouth":  {
+                        "casa":  1.27,
+                        "fora":  1.42,
+                        "gols_sofridos_casa":  1.22,
+                        "gols_sofridos_fora":  1.99
+                    },
+    "Aston Villa":  {
+                        "casa":  1.89,
+                        "fora":  1.24,
+                        "gols_sofridos_casa":  1.15,
+                        "gols_sofridos_fora":  1.54
+                    },
+    "Newcastle":  {
+                      "casa":  2.11,
+                      "fora":  1.54,
+                      "gols_sofridos_casa":  1.12,
+                      "gols_sofridos_fora":  1.46
+                  },
+    "Brighton":  {
+                     "casa":  1.66,
+                     "fora":  1.57,
+                     "gols_sofridos_casa":  1.25,
+                     "gols_sofridos_fora":  1.67
+                 },
+    "Fulham":  {
+                   "casa":  1.59,
+                   "fora":  1.26,
+                   "gols_sofridos_casa":  1.4,
+                   "gols_sofridos_fora":  1.53
+               },
+    "Sunderland":  {
+                       "casa":  1.47,
+                       "fora":  0.62,
+                       "gols_sofridos_casa":  0.93,
+                       "gols_sofridos_fora":  1.38
+                   },
+    "West Ham":  {
+                     "casa":  1.36,
+                     "fora":  1.18,
+                     "gols_sofridos_casa":  1.58,
+                     "gols_sofridos_fora":  1.84
+                 },
+    "Tottenham":  {
+                      "casa":  1.75,
+                      "fora":  1.67,
+                      "gols_sofridos_casa":  1.58,
+                      "gols_sofridos_fora":  1.72
+                  },
+    "Burnley":  {
+                    "casa":  1.0,
+                    "fora":  1.14,
+                    "gols_sofridos_casa":  1.94,
+                    "gols_sofridos_fora":  2.09
+                },
+    "Wolves":  {
+                   "casa":  1.22,
+                   "fora":  0.97,
+                   "gols_sofridos_casa":  1.55,
+                   "gols_sofridos_fora":  1.85
+               },
+    "Man City":  {
+                     "casa":  2.64,
+                     "fora":  1.83,
+                     "gols_sofridos_casa":  0.93,
+                     "gols_sofridos_fora":  1.0
+                 },
+    "Chelsea":  {
+                    "casa":  1.69,
+                    "fora":  1.51,
+                    "gols_sofridos_casa":  1.11,
+                    "gols_sofridos_fora":  1.52
+                },
+    "Crystal Palace":  {
+                           "casa":  1.33,
+                           "fora":  1.18,
+                           "gols_sofridos_casa":  1.29,
+                           "gols_sofridos_fora":  1.39
+                       },
+    "Nott\u0027m Forest":  {
+                               "casa":  1.29,
+                               "fora":  1.14,
+                               "gols_sofridos_casa":  1.24,
+                               "gols_sofridos_fora":  1.85
+                           },
+    "Brentford":  {
+                      "casa":  1.81,
+                      "fora":  1.32,
+                      "gols_sofridos_casa":  1.44,
+                      "gols_sofridos_fora":  1.45
+                  },
+    "Man United":  {
+                       "casa":  1.67,
+                       "fora":  1.3,
+                       "gols_sofridos_casa":  1.15,
+                       "gols_sofridos_fora":  1.58
+                   },
+    "Arsenal":  {
+                    "casa":  2.38,
+                    "fora":  1.89,
+                    "gols_sofridos_casa":  0.93,
+                    "gols_sofridos_fora":  0.84
+                },
+    "Leeds":  {
+                  "casa":  1.37,
+                  "fora":  1.09,
+                  "gols_sofridos_casa":  1.63,
+                  "gols_sofridos_fora":  2.03
+              },
+    "Everton":  {
+                    "casa":  1.16,
+                    "fora":  0.94,
+                    "gols_sofridos_casa":  1.19,
+                    "gols_sofridos_fora":  1.39
+                },
+    "Ipswich":  {
+                    "casa":  0.74,
+                    "fora":  1.16,
+                    "gols_sofridos_casa":  2.32,
+                    "gols_sofridos_fora":  2.0
+                },
+    "Southampton":  {
+                        "casa":  0.84,
+                        "fora":  0.79,
+                        "gols_sofridos_casa":  2.21,
+                        "gols_sofridos_fora":  1.97
+                    },
+    "Leicester":  {
+                      "casa":  1.0,
+                      "fora":  1.21,
+                      "gols_sofridos_casa":  1.61,
+                      "gols_sofridos_fora":  2.29
+                  },
+    "Luton":  {
+                  "casa":  1.47,
+                  "fora":  1.26,
+                  "gols_sofridos_casa":  1.95,
+                  "gols_sofridos_fora":  2.53
+              },
+    "Sheffield United":  {
+                             "casa":  1.0,
+                             "fora":  0.84,
+                             "gols_sofridos_casa":  3.0,
+                             "gols_sofridos_fora":  2.47
+                         },
+    "Girona":  {
+                   "casa":  1.85,
+                   "fora":  1.21,
+                   "gols_sofridos_casa":  1.37,
+                   "gols_sofridos_fora":  1.5
+               },
+    "Vallecano":  {
+                      "casa":  1.21,
+                      "fora":  0.79,
+                      "gols_sofridos_casa":  1.2,
+                      "gols_sofridos_fora":  1.33
+                  },
+    "Villarreal":  {
+                       "casa":  2.07,
+                       "fora":  1.41,
+                       "gols_sofridos_casa":  1.25,
+                       "gols_sofridos_fora":  1.41
+                   },
+    "Oviedo":  {
+                   "casa":  0.43,
+                   "fora":  0.93,
+                   "gols_sofridos_casa":  1.0,
+                   "gols_sofridos_fora":  2.27
+               },
+    "Mallorca":  {
+                     "casa":  1.13,
+                     "fora":  0.82,
+                     "gols_sofridos_casa":  0.94,
+                     "gols_sofridos_fora":  1.54
+                 },
+    "Barcelona":  {
+                      "casa":  2.49,
+                      "fora":  2.11,
+                      "gols_sofridos_casa":  0.74,
+                      "gols_sofridos_fora":  1.1
+                  },
+    "Alaves":  {
+                   "casa":  1.04,
+                   "fora":  0.94,
+                   "gols_sofridos_casa":  1.0,
+                   "gols_sofridos_fora":  1.57
+               },
+    "Levante":  {
+                    "casa":  1.2,
+                    "fora":  1.14,
+                    "gols_sofridos_casa":  1.73,
+                    "gols_sofridos_fora":  1.57
+                },
+    "Valencia":  {
+                     "casa":  1.3,
+                     "fora":  0.92,
+                     "gols_sofridos_casa":  0.96,
+                     "gols_sofridos_fora":  1.64
+                 },
+    "Sociedad":  {
+                     "casa":  1.39,
+                     "fora":  1.14,
+                     "gols_sofridos_casa":  1.08,
+                     "gols_sofridos_fora":  1.22
+                 },
+    "Celta":  {
+                  "casa":  1.42,
+                  "fora":  1.23,
+                  "gols_sofridos_casa":  1.19,
+                  "gols_sofridos_fora":  1.63
+              },
+    "Getafe":  {
+                   "casa":  0.96,
+                   "fora":  0.93,
+                   "gols_sofridos_casa":  1.01,
+                   "gols_sofridos_fora":  1.35
+               },
+    "Ath Bilbao":  {
+                       "casa":  1.6,
+                       "fora":  1.11,
+                       "gols_sofridos_casa":  0.88,
+                       "gols_sofridos_fora":  1.23
+                   },
+    "Sevilla":  {
+                    "casa":  1.21,
+                    "fora":  1.23,
+                    "gols_sofridos_casa":  1.35,
+                    "gols_sofridos_fora":  1.62
+                },
+    "Espanol":  {
+                    "casa":  1.28,
+                    "fora":  1.15,
+                    "gols_sofridos_casa":  1.43,
+                    "gols_sofridos_fora":  1.69
+                },
+    "Ath Madrid":  {
+                       "casa":  2.21,
+                       "fora":  1.38,
+                       "gols_sofridos_casa":  0.89,
+                       "gols_sofridos_fora":  0.99
+                   },
+    "Elche":  {
+                  "casa":  1.24,
+                  "fora":  0.79,
+                  "gols_sofridos_casa":  1.32,
+                  "gols_sofridos_fora":  2.06
+              },
+    "Betis":  {
+                  "casa":  1.56,
+                  "fora":  1.17,
+                  "gols_sofridos_casa":  1.04,
+                  "gols_sofridos_fora":  1.38
+              },
+    "Real Madrid":  {
+                        "casa":  2.4,
+                        "fora":  1.83,
+                        "gols_sofridos_casa":  0.78,
+                        "gols_sofridos_fora":  0.99
+                    },
+    "Osasuna":  {
+                    "casa":  1.42,
+                    "fora":  0.88,
+                    "gols_sofridos_casa":  1.21,
+                    "gols_sofridos_fora":  1.38
+                },
+    "Las Palmas":  {
+                       "casa":  1.08,
+                       "fora":  0.84,
+                       "gols_sofridos_casa":  1.29,
+                       "gols_sofridos_fora":  1.55
+                   },
+    "Leganes":  {
+                    "casa":  1.21,
+                    "fora":  0.84,
+                    "gols_sofridos_casa":  1.42,
+                    "gols_sofridos_fora":  1.53
+                },
+    "Valladolid":  {
+                       "casa":  0.84,
+                       "fora":  0.71,
+                       "gols_sofridos_casa":  1.5,
+                       "gols_sofridos_fora":  2.53
+                   },
+    "Almeria":  {
+                    "casa":  1.34,
+                    "fora":  1.08,
+                    "gols_sofridos_casa":  1.53,
+                    "gols_sofridos_fora":  2.16
+                },
+    "Cadiz":  {
+                  "casa":  0.92,
+                  "fora":  0.55,
+                  "gols_sofridos_casa":  1.11,
+                  "gols_sofridos_fora":  1.74
+              },
+    "Granada":  {
+                    "casa":  1.26,
+                    "fora":  0.74,
+                    "gols_sofridos_casa":  1.68,
+                    "gols_sofridos_fora":  2.47
+                },
+    "Genoa":  {
+                  "casa":  1.24,
+                  "fora":  0.98,
+                  "gols_sofridos_casa":  1.26,
+                  "gols_sofridos_fora":  1.31
+              },
+    "Lecce":  {
+                  "casa":  0.82,
+                  "fora":  0.75,
+                  "gols_sofridos_casa":  1.4,
+                  "gols_sofridos_fora":  1.35
+              },
+    "Sassuolo":  {
+                     "casa":  1.21,
+                     "fora":  1.17,
+                     "gols_sofridos_casa":  1.47,
+                     "gols_sofridos_fora":  1.85
+                 },
+    "Napoli":  {
+                   "casa":  1.7,
+                   "fora":  1.59,
+                   "gols_sofridos_casa":  0.96,
+                   "gols_sofridos_fora":  0.89
+               },
+    "Milan":  {
+                  "casa":  1.82,
+                  "fora":  1.62,
+                  "gols_sofridos_casa":  0.92,
+                  "gols_sofridos_fora":  1.28
+              },
+    "Cremonese":  {
+                      "casa":  0.82,
+                      "fora":  0.97,
+                      "gols_sofridos_casa":  1.58,
+                      "gols_sofridos_fora":  1.74
+                  },
+    "Roma":  {
+                 "casa":  1.75,
+                 "fora":  1.18,
+                 "gols_sofridos_casa":  0.81,
+                 "gols_sofridos_fora":  1.17
+             },
+    "Bologna":  {
+                    "casa":  1.44,
+                    "fora":  1.36,
+                    "gols_sofridos_casa":  0.86,
+                    "gols_sofridos_fora":  1.42
+                },
+    "Cagliari":  {
+                     "casa":  1.28,
+                     "fora":  0.85,
+                     "gols_sofridos_casa":  1.47,
+                     "gols_sofridos_fora":  1.66
+                 },
+    "Fiorentina":  {
+                       "casa":  1.64,
+                       "fora":  1.26,
+                       "gols_sofridos_casa":  1.14,
+                       "gols_sofridos_fora":  1.28
+                   },
+    "Como":  {
+                 "casa":  1.69,
+                 "fora":  1.3,
+                 "gols_sofridos_casa":  1.06,
+                 "gols_sofridos_fora":  1.12
+             },
+    "Lazio":  {
+                  "casa":  1.51,
+                  "fora":  1.28,
+                  "gols_sofridos_casa":  1.04,
+                  "gols_sofridos_fora":  0.99
+              },
+    "Atalanta":  {
+                     "casa":  1.93,
+                     "fora":  1.63,
+                     "gols_sofridos_casa":  1.08,
+                     "gols_sofridos_fora":  1.06
+                 },
+    "Pisa":  {
+                 "casa":  0.47,
+                 "fora":  1.07,
+                 "gols_sofridos_casa":  1.2,
+                 "gols_sofridos_fora":  2.4
+             },
+    "Juventus":  {
+                     "casa":  1.74,
+                     "fora":  1.32,
+                     "gols_sofridos_casa":  0.75,
+                     "gols_sofridos_fora":  1.03
+                 },
+    "Parma":  {
+                  "casa":  1.06,
+                  "fora":  0.85,
+                  "gols_sofridos_casa":  1.44,
+                  "gols_sofridos_fora":  1.38
+              },
+    "Udinese":  {
+                    "casa":  1.24,
+                    "fora":  0.99,
+                    "gols_sofridos_casa":  1.32,
+                    "gols_sofridos_fora":  1.44
+                },
+    "Verona":  {
+                   "casa":  0.99,
+                   "fora":  0.75,
+                   "gols_sofridos_casa":  1.65,
+                   "gols_sofridos_fora":  1.52
+               },
+    "Inter":  {
+                  "casa":  2.22,
+                  "fora":  2.01,
+                  "gols_sofridos_casa":  0.82,
+                  "gols_sofridos_fora":  0.89
+              },
+    "Torino":  {
+                   "casa":  0.96,
+                   "fora":  1.14,
+                   "gols_sofridos_casa":  0.96,
+                   "gols_sofridos_fora":  1.47
+               },
+    "Empoli":  {
+                   "casa":  0.82,
+                   "fora":  0.91,
+                   "gols_sofridos_casa":  1.26,
+                   "gols_sofridos_fora":  1.58
+               },
+    "Monza":  {
+                  "casa":  1.07,
+                  "fora":  0.95,
+                  "gols_sofridos_casa":  1.39,
+                  "gols_sofridos_fora":  1.63
+              },
+    "Venezia":  {
+                    "casa":  0.89,
+                    "fora":  0.79,
+                    "gols_sofridos_casa":  1.16,
+                    "gols_sofridos_fora":  1.79
+                },
+    "Frosinone":  {
+                      "casa":  1.47,
+                      "fora":  0.84,
+                      "gols_sofridos_casa":  1.68,
+                      "gols_sofridos_fora":  1.95
+                  },
+    "Salernitana":  {
+                        "casa":  1.24,
+                        "fora":  0.87,
+                        "gols_sofridos_casa":  1.68,
+                        "gols_sofridos_fora":  2.08
+                    },
+    "Sampdoria":  {
+                      "casa":  0.63,
+                      "fora":  0.63,
+                      "gols_sofridos_casa":  1.47,
+                      "gols_sofridos_fora":  2.26
+                  },
+    "Spezia":  {
+                   "casa":  0.95,
+                   "fora":  0.68,
+                   "gols_sofridos_casa":  1.58,
+                   "gols_sofridos_fora":  1.68
+               },
+    "Bayern Munich":  {
+                          "casa":  3.31,
+                          "fora":  2.61,
+                          "gols_sofridos_casa":  0.89,
+                          "gols_sofridos_fora":  1.28
+                      },
+    "RB Leipzig":  {
+                       "casa":  2.23,
+                       "fora":  1.59,
+                       "gols_sofridos_casa":  1.09,
+                       "gols_sofridos_fora":  1.44
+                   },
+    "Ein Frankfurt":  {
+                          "casa":  2.0,
+                          "fora":  1.52,
+                          "gols_sofridos_casa":  1.23,
+                          "gols_sofridos_fora":  1.85
+                      },
+    "Werder Bremen":  {
+                          "casa":  1.41,
+                          "fora":  1.43,
+                          "gols_sofridos_casa":  1.61,
+                          "gols_sofridos_fora":  1.83
+                      },
+    "Freiburg":  {
+                     "casa":  1.75,
+                     "fora":  1.11,
+                     "gols_sofridos_casa":  1.33,
+                     "gols_sofridos_fora":  1.75
+                 },
+    "Augsburg":  {
+                     "casa":  1.22,
+                     "fora":  1.27,
+                     "gols_sofridos_casa":  1.45,
+                     "gols_sofridos_fora":  2.03
+                 },
+    "Heidenheim":  {
+                       "casa":  1.27,
+                       "fora":  1.13,
+                       "gols_sofridos_casa":  1.94,
+                       "gols_sofridos_fora":  1.85
+                   },
+    "Wolfsburg":  {
+                      "casa":  1.63,
+                      "fora":  1.3,
+                      "gols_sofridos_casa":  1.68,
+                      "gols_sofridos_fora":  1.66
+                  },
+    "Leverkusen":  {
+                       "casa":  2.25,
+                       "fora":  1.94,
+                       "gols_sofridos_casa":  1.06,
+                       "gols_sofridos_fora":  1.29
+                   },
+    "Hoffenheim":  {
+                       "casa":  1.75,
+                       "fora":  1.57,
+                       "gols_sofridos_casa":  1.73,
+                       "gols_sofridos_fora":  1.83
+                   },
+    "Union Berlin":  {
+                         "casa":  1.38,
+                         "fora":  0.95,
+                         "gols_sofridos_casa":  1.33,
+                         "gols_sofridos_fora":  1.66
+                     },
+    "Stuttgart":  {
+                      "casa":  2.03,
+                      "fora":  1.74,
+                      "gols_sofridos_casa":  1.19,
+                      "gols_sofridos_fora":  1.68
+                  },
+    "St Pauli":  {
+                     "casa":  0.8,
+                     "fora":  0.9,
+                     "gols_sofridos_casa":  1.3,
+                     "gols_sofridos_fora":  1.48
+                 },
+    "Dortmund":  {
+                     "casa":  2.6,
+                     "fora":  1.73,
+                     "gols_sofridos_casa":  1.09,
+                     "gols_sofridos_fora":  1.48
+                 },
+    "Mainz":  {
+                  "casa":  1.46,
+                  "fora":  1.34,
+                  "gols_sofridos_casa":  1.2,
+                  "gols_sofridos_fora":  1.77
+              },
+    "FC Koln":  {
+                    "casa":  1.42,
+                    "fora":  1.0,
+                    "gols_sofridos_casa":  1.5,
+                    "gols_sofridos_fora":  1.89
+                },
+    "M\u0027gladbach":  {
+                            "casa":  1.64,
+                            "fora":  1.4,
+                            "gols_sofridos_casa":  1.42,
+                            "gols_sofridos_fora":  2.06
+                        },
+    "Hamburg":  {
+                    "casa":  1.43,
+                    "fora":  0.85,
+                    "gols_sofridos_casa":  1.21,
+                    "gols_sofridos_fora":  1.77
+                },
+    "Holstein Kiel":  {
+                          "casa":  1.41,
+                          "fora":  1.47,
+                          "gols_sofridos_casa":  2.41,
+                          "gols_sofridos_fora":  2.29
+                      },
+    "Bochum":  {
+                   "casa":  1.37,
+                   "fora":  0.88,
+                   "gols_sofridos_casa":  1.84,
+                   "gols_sofridos_fora":  2.33
+               },
+    "Darmstadt":  {
+                      "casa":  0.88,
+                      "fora":  0.88,
+                      "gols_sofridos_casa":  2.59,
+                      "gols_sofridos_fora":  2.47
+                  },
+    "Hertha":  {
+                   "casa":  1.41,
+                   "fora":  1.06,
+                   "gols_sofridos_casa":  1.59,
+                   "gols_sofridos_fora":  2.47
+               },
+    "Schalke 04":  {
+                       "casa":  1.35,
+                       "fora":  0.71,
+                       "gols_sofridos_casa":  2.12,
+                       "gols_sofridos_fora":  2.06
+                   },
+    "Rennes":  {
+                   "casa":  1.88,
+                   "fora":  1.36,
+                   "gols_sofridos_casa":  1.06,
+                   "gols_sofridos_fora":  1.53
+               },
+    "Marseille":  {
+                      "casa":  2.1,
+                      "fora":  1.61,
+                      "gols_sofridos_casa":  1.15,
+                      "gols_sofridos_fora":  1.3
+                  },
+    "Lens":  {
+                 "casa":  1.76,
+                 "fora":  1.38,
+                 "gols_sofridos_casa":  0.93,
+                 "gols_sofridos_fora":  1.02
+             },
+    "Lyon":  {
+                 "casa":  1.79,
+                 "fora":  1.52,
+                 "gols_sofridos_casa":  1.2,
+                 "gols_sofridos_fora":  1.46
+             },
+    "Monaco":  {
+                   "casa":  2.0,
+                   "fora":  1.73,
+                   "gols_sofridos_casa":  1.22,
+                   "gols_sofridos_fora":  1.47
+               },
+    "Le Havre":  {
+                     "casa":  1.0,
+                     "fora":  1.02,
+                     "gols_sofridos_casa":  1.5,
+                     "gols_sofridos_fora":  1.68
+                 },
+    "Nice":  {
+                 "casa":  1.49,
+                 "fora":  1.3,
+                 "gols_sofridos_casa":  1.03,
+                 "gols_sofridos_fora":  1.36
+             },
+    "Toulouse":  {
+                     "casa":  1.33,
+                     "fora":  1.3,
+                     "gols_sofridos_casa":  1.36,
+                     "gols_sofridos_fora":  1.32
+                 },
+    "Brest":  {
+                  "casa":  1.52,
+                  "fora":  1.24,
+                  "gols_sofridos_casa":  1.12,
+                  "gols_sofridos_fora":  1.67
+              },
+    "Lille":  {
+                  "casa":  1.89,
+                  "fora":  1.28,
+                  "gols_sofridos_casa":  1.08,
+                  "gols_sofridos_fora":  1.15
+              },
+    "Angers":  {
+                   "casa":  1.1,
+                   "fora":  0.7,
+                   "gols_sofridos_casa":  1.71,
+                   "gols_sofridos_fora":  1.74
+               },
+    "Paris FC":  {
+                     "casa":  1.38,
+                     "fora":  1.0,
+                     "gols_sofridos_casa":  1.85,
+                     "gols_sofridos_fora":  1.36
+                 },
+    "Auxerre":  {
+                    "casa":  1.1,
+                    "fora":  1.02,
+                    "gols_sofridos_casa":  1.2,
+                    "gols_sofridos_fora":  1.84
+                },
+    "Lorient":  {
+                    "casa":  1.59,
+                    "fora":  1.08,
+                    "gols_sofridos_casa":  1.43,
+                    "gols_sofridos_fora":  1.8
+                },
+    "Metz":  {
+                 "casa":  1.0,
+                 "fora":  0.97,
+                 "gols_sofridos_casa":  1.67,
+                 "gols_sofridos_fora":  2.19
+             },
+    "Strasbourg":  {
+                       "casa":  1.53,
+                       "fora":  1.3,
+                       "gols_sofridos_casa":  1.18,
+                       "gols_sofridos_fora":  1.61
+                   },
+    "Nantes":  {
+                   "casa":  1.04,
+                   "fora":  0.92,
+                   "gols_sofridos_casa":  1.49,
+                   "gols_sofridos_fora":  1.65
+               },
+    "Paris SG":  {
+                     "casa":  2.51,
+                     "fora":  2.34,
+                     "gols_sofridos_casa":  1.08,
+                     "gols_sofridos_fora":  0.9
+                 },
+    "Reims":  {
+                  "casa":  1.21,
+                  "fora":  1.06,
+                  "gols_sofridos_casa":  1.25,
+                  "gols_sofridos_fora":  1.38
+              },
+    "St Etienne":  {
+                       "casa":  1.41,
+                       "fora":  0.88,
+                       "gols_sofridos_casa":  1.94,
+                       "gols_sofridos_fora":  2.59
+                   },
+    "Montpellier":  {
+                        "casa":  1.25,
+                        "fora":  1.23,
+                        "gols_sofridos_casa":  1.75,
+                        "gols_sofridos_fora":  1.81
+                    },
+    "Clermont":  {
+                     "casa":  0.94,
+                     "fora":  1.03,
+                     "gols_sofridos_casa":  1.53,
+                     "gols_sofridos_fora":  1.5
+                 },
+    "Ajaccio":  {
+                    "casa":  0.53,
+                    "fora":  0.68,
+                    "gols_sofridos_casa":  1.58,
+                    "gols_sofridos_fora":  2.32
+                },
+    "Troyes":  {
+                   "casa":  1.0,
+                   "fora":  1.37,
+                   "gols_sofridos_casa":  1.58,
+                   "gols_sofridos_fora":  2.68
+               },
+    "Internacional":  {
+                          "casa":  1.58,
+                          "fora":  1.03,
+                          "gols_sofridos_casa":  0.95,
+                          "gols_sofridos_fora":  1.18
+                      },
+    "Bahia":  {
+                  "casa":  1.42,
+                  "fora":  1.18,
+                  "gols_sofridos_casa":  0.95,
+                  "gols_sofridos_fora":  1.74
+              },
+    "Criciuma":  {
+                     "casa":  1.34,
+                     "fora":  0.95,
+                     "gols_sofridos_casa":  1.0,
+                     "gols_sofridos_fora":  1.47
+                 },
+    "Juventude":  {
+                      "casa":  1.32,
+                      "fora":  1.05,
+                      "gols_sofridos_casa":  1.05,
+                      "gols_sofridos_fora":  1.32
+                  },
+    "Fluminense":  {
+                       "casa":  1.39,
+                       "fora":  0.82,
+                       "gols_sofridos_casa":  0.89,
+                       "gols_sofridos_fora":  1.37
+                   },
+    "RB Bragantino":  {
+                          "casa":  1.45,
+                          "fora":  1.0,
+                          "gols_sofridos_casa":  0.87,
+                          "gols_sofridos_fora":  1.32
+                      },
+    "SÃ£o Paulo":  {
+                       "casa":  1.58,
+                       "fora":  0.87,
+                       "gols_sofridos_casa":  0.82,
+                       "gols_sofridos_fora":  1.32
+                   },
+    "Fortaleza EC":  {
+                         "casa":  1.58,
+                         "fora":  1.0,
+                         "gols_sofridos_casa":  0.74,
+                         "gols_sofridos_fora":  1.45
+                     },
+    "Corinthians":  {
+                        "casa":  1.66,
+                        "fora":  1.0,
+                        "gols_sofridos_casa":  1.08,
+                        "gols_sofridos_fora":  1.37
+                    },
+    "Atletico Mineiro":  {
+                             "casa":  1.45,
+                             "fora":  1.16,
+                             "gols_sofridos_casa":  1.11,
+                             "gols_sofridos_fora":  1.16
+                         },
+    "Vasco da Gama":  {
+                          "casa":  1.39,
+                          "fora":  0.82,
+                          "gols_sofridos_casa":  1.24,
+                          "gols_sofridos_fora":  1.58
+                      },
+    "Gremio":  {
+                   "casa":  1.58,
+                   "fora":  1.24,
+                   "gols_sofridos_casa":  1.11,
+                   "gols_sofridos_fora":  1.68
+               },
+    "Atletico Paranaense":  {
+                                "casa":  1.5,
+                                "fora":  0.89,
+                                "gols_sofridos_casa":  1.05,
+                                "gols_sofridos_fora":  1.29
+                            },
+    "Cuiaba":  {
+                   "casa":  1.03,
+                   "fora":  0.79,
+                   "gols_sofridos_casa":  1.18,
+                   "gols_sofridos_fora":  1.13
+               },
+    "Atletico Goianiense":  {
+                                "casa":  1.32,
+                                "fora":  0.92,
+                                "gols_sofridos_casa":  1.13,
+                                "gols_sofridos_fora":  1.58
+                            },
+    "Flamengo":  {
+                     "casa":  1.47,
+                     "fora":  1.61,
+                     "gols_sofridos_casa":  0.97,
+                     "gols_sofridos_fora":  1.24
+                 },
+    "Cruzeiro":  {
+                     "casa":  1.13,
+                     "fora":  0.92,
+                     "gols_sofridos_casa":  0.87,
+                     "gols_sofridos_fora":  1.05
+                 },
+    "Botafogo":  {
+                     "casa":  1.76,
+                     "fora":  1.32,
+                     "gols_sofridos_casa":  0.79,
+                     "gols_sofridos_fora":  0.95
+                 },
+    "Vitoria":  {
+                    "casa":  1.37,
+                    "fora":  1.13,
+                    "gols_sofridos_casa":  0.79,
+                    "gols_sofridos_fora":  1.39
+                },
+    "Palmeiras":  {
+                      "casa":  1.82,
+                      "fora":  1.45,
+                      "gols_sofridos_casa":  0.74,
+                      "gols_sofridos_fora":  1.0
+                  },
+    "America Mineiro":  {
+                            "casa":  1.5,
+                            "fora":  0.92,
+                            "gols_sofridos_casa":  1.34,
+                            "gols_sofridos_fora":  1.71
+                        },
+    "Goias":  {
+                  "casa":  1.42,
+                  "fora":  1.0,
+                  "gols_sofridos_casa":  0.97,
+                  "gols_sofridos_fora":  1.26
+              },
+    "Coritiba":  {
+                     "casa":  1.13,
+                     "fora":  1.03,
+                     "gols_sofridos_casa":  1.18,
+                     "gols_sofridos_fora":  1.89
+                 },
+    "Santos":  {
+                   "casa":  1.58,
+                   "fora":  0.95,
+                   "gols_sofridos_casa":  1.08,
+                   "gols_sofridos_fora":  1.45
+               }
 }

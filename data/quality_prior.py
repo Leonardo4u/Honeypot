@@ -1,7 +1,7 @@
 try:
     from .database import buscar_metricas_qualidade_liga_mercado
 except ImportError:
-    from database import buscar_metricas_qualidade_liga_mercado
+    from data.database import buscar_metricas_qualidade_liga_mercado
 
 
 def _clamp(valor, minimo, maximo):

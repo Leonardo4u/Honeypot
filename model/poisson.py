@@ -49,7 +49,7 @@ def _carregar_calibracao_ligas():
         return _calibracao_cache
 
     try:
-        with open(CALIBRACAO_LIGAS_PATH, "r", encoding="utf-8") as f:
+        with open(CALIBRACAO_LIGAS_PATH, "r", encoding="utf-8-sig") as f:
             payload = json.load(f)
         if isinstance(payload, dict):
             # Compatibilidade: aceita tanto {"ligas": {...}} quanto {...} direto.

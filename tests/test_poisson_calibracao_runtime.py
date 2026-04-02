@@ -78,7 +78,7 @@ class TestPoissonCalibracaoRuntime(unittest.TestCase):
             self.assertEqual(rho_calibrado["Premier League"], -0.07)
             self.assertTrue(os.path.exists(path))
 
-            with open(path, "r", encoding="utf-8") as f:
+            with open(path, "r", encoding="utf-8-sig") as f:
                 payload = json.load(f)
 
             self.assertIn("atualizado_em", payload)

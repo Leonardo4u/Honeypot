@@ -2,6 +2,7 @@ import sqlite3
 import json
 import os
 import math
+import logging
 from datetime import datetime, date, timedelta
 from dotenv import load_dotenv
 
@@ -15,6 +16,7 @@ KELLY_FRACAO = 0.25
 TETO_MAXIMO = 0.03
 PISO_MINIMO = 0.005
 DRAWDOWN_ALERTA = 0.20
+logger = logging.getLogger(__name__)
 
 TIER_MULTIPLICADOR = {
     "padrao":  0.8,
@@ -78,9 +80,9 @@ def atualizar_banca(lucro_unidades):
 
     drawdown = (estado["banca_maxima"] - estado["banca_atual"]) / estado["banca_maxima"]
     if drawdown >= DRAWDOWN_ALERTA:
-        print(f"⚠️  ALERTA: Drawdown de {drawdown*100:.1f}% atingido!")
-        print(f"   Banca máxima: R${estado['banca_maxima']:.2f}")
-        print(f"   Banca atual:  R${estado['banca_atual']:.2f}")
+        logger.warning("Drawdown de %.1f%% atingido", drawdown * 100)
+        logger.warning("Banca maxima: R$%.2f", estado["banca_maxima"])
+        logger.warning("Banca atual: R$%.2f", estado["banca_atual"])
 
     salvar_estado_banca(estado)
 

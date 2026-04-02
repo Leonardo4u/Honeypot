@@ -2,7 +2,7 @@ import requests
 import os
 from datetime import datetime, timezone, timedelta
 from dotenv import load_dotenv
-from ingestion_resilience import request_with_retry
+from data.ingestion_resilience import request_with_retry
 
 load_dotenv()
 

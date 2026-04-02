@@ -3,7 +3,7 @@ import os
 import sys
 from datetime import datetime, date, timezone
 from dotenv import load_dotenv
-from ingestion_resilience import request_with_retry
+from data.ingestion_resilience import request_with_retry
 import unicodedata
 
 load_dotenv()

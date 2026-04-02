@@ -302,7 +302,7 @@ def monitorar_jogos_ativos(jogos_com_sinais):
     Monitora odds de todos os jogos com sinais ativos.
     Salva snapshots e detecta steam.
     """
-    from atualizar_stats import carregar_medias
+    from data.atualizar_stats import carregar_medias
 
     resultados = {}
 

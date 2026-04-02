@@ -16,7 +16,7 @@ class TestAnalisarJogo(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         fixture_path = ROOT / "tests" / "fixtures" / "jogo_base.json"
-        with fixture_path.open("r", encoding="utf-8") as f:
+        with fixture_path.open("r", encoding="utf-8-sig") as f:
             cls.base = json.load(f)
 
     def test_descartar_quando_ev_insuficiente(self):

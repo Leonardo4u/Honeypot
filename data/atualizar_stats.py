@@ -43,8 +43,6 @@ def _api_headers():
 def _historico_out_path(league_id):
     if int(league_id) == 71:
         return os.path.join(BOT_DATA_DIR, "historico_BRA1.csv")
-    if int(league_id) == 72:
-        return os.path.join(BOT_DATA_DIR, "historico_BRA2.csv")
     return os.path.join(BOT_DATA_DIR, f"historico_API_{int(league_id)}.csv")
 
 
@@ -133,7 +131,7 @@ def fetch_historico_brasileirao(seasons=3, league_id=71):
         return []
 
     league_id = int(league_id)
-    league_label = "Brasileirao Serie A" if league_id == 71 else "Brasileirao Serie B"
+    league_label = "Brasileirao Serie A" if league_id == 71 else f"Brasileirao {league_id}"
     rows = []
 
     for season in _season_years(seasons_back=seasons):
@@ -210,10 +208,9 @@ def fetch_historico_brasileirao(seasons=3, league_id=71):
 
 
 def fetch_historico_br_ligas(seasons=3):
-    """Executa fetch historico para Serie A (71) e Serie B (72)."""
+    """Executa fetch historico para Serie A (71)."""
     bra1 = fetch_historico_brasileirao(seasons=seasons, league_id=71)
-    bra2 = fetch_historico_brasileirao(seasons=seasons, league_id=72)
-    return {"BRA1": bra1, "BRA2": bra2}
+    return {"BRA1": bra1}
 
 def buscar_stats_api_football(liga_key, temporada=2024):
     if not API_FOOTBALL_KEY:
@@ -333,12 +330,12 @@ def carregar_medias():
         print("Criando arquivo de médias pela primeira vez...")
         return salvar_medias_manuais()
 
-    with open(STATS_PATH, "r", encoding="utf-8") as f:
+    with open(STATS_PATH, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Atualizacao de stats e historico API-Football")
-    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca historico BR Serie A/B via API-Football")
+    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca historico BR Serie A via API-Football")
     parser.add_argument("--seasons", type=int, default=3, help="Qtde de temporadas passadas alem da atual")
     args = parser.parse_args()
 

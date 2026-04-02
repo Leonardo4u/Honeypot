@@ -191,6 +191,6 @@ class XGWeightedELO:
 
     @classmethod
     def load(cls, file_path: str) -> "XGWeightedELO":
-        with open(file_path, "r", encoding="utf-8") as f:
+        with open(file_path, "r", encoding="utf-8-sig") as f:
             payload = json.load(f)
         return cls.from_dict(payload)

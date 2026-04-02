@@ -1,23 +1,31 @@
+import logging
+logging.basicConfig(
+    filename='logs/scheduler_errors.log',
+    level=logging.ERROR,
+    format='%(asctime)s %(levelname)s %(message)s'
+)
+
 import asyncio
 import sys
 import os
 import math
 import re
+import json
+import traceback
 import schedule
 import time
 import sqlite3
 import subprocess
+import random
 import json as _json
 from datetime import datetime, timezone, timedelta
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "model"))
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "data"))
-
-from analisar_jogo import analisar_jogo, formatar_sinal
-from filtros import aplicar_triple_gate
-from database import (
+from model.analisar_jogo import analisar_jogo, formatar_sinal
+from model.filtros import aplicar_triple_gate
+from data.database import (
     DB_PATH,
     buscar_sinais_hoje,
+    contar_sinais_duplicados_mesmo_dia,
     calcular_exposicao_pendente_unidades,
     calcular_perda_diaria_unidades,
     finalizar_execucao_job,
@@ -29,6 +37,11 @@ from database import (
     registrar_alerta_operacional,
     registrar_auditoria_acao,
     registrar_diagnostico_modelo,
+    registrar_fallback_cycle_detail,
+    listar_sinais_duplicados_mesmo_dia,
+    listar_shadow_settled_por_janela,
+    liquidar_shadow_predictions_por_sinal,
+    registrar_shadow_prediction,
     validar_schema_minimo,
     # FIX-11: bootstrap_completo disponível para fresh setup
     bootstrap_completo,
@@ -39,26 +52,26 @@ from database import (
     # via patch('scheduler.atualizar_fixture_referencia') nos testes.
     atualizar_fixture_referencia,
 )
-from coletar_odds import (
+from data.coletar_odds import (
     buscar_jogos_com_odds,
     buscar_jogos_com_odds_com_status,
     formatar_jogos,
     atualizar_contadores_provider_health,
 )
-from atualizar_stats import carregar_medias, atualizar_todas_ligas
-from forma_recente import calcular_ajuste_forma, calcular_confianca_contexto
-from xg_understat import calcular_media_gols_com_xg
-from sos_ajuste import calcular_xg_com_sos
-from clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_fechar, buscar_odd_fechamento_pinnacle, atualizar_clv
-from kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, contar_sinais_mesmo_jogo_abertos, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
-from steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
-from janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
-from quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
-from signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
-from edge_score import MIN_CONFIDENCE_ACTIONABLE
-from picks_log import PickLogger
+from data.atualizar_stats import carregar_medias, atualizar_todas_ligas
+from data.forma_recente import calcular_ajuste_forma, calcular_confianca_contexto
+from data.xg_understat import calcular_media_gols_com_xg
+from data.sos_ajuste import calcular_xg_com_sos
+from data.clv_brier import registrar_aposta_clv, atualizar_brier, buscar_sinais_para_fechar, buscar_odd_fechamento_pinnacle, atualizar_clv
+from data.kelly_banca import calcular_kelly, atualizar_banca, contar_sinais_abertos, contar_sinais_liga_hoje, contar_sinais_mesmo_jogo_abertos, gerar_relatorio_diario, imprimir_relatorio, carregar_estado_banca
+from data.steam_monitor import buscar_odds_todas_casas, salvar_snapshot, buscar_snapshot_abertura, calcular_steam, calcular_bonus_edge_score, salvar_steam_evento, gerar_alerta_steam
+from data.janela_monitoramento import buscar_jogos_janela_expandida, registrar_jogo_monitorado, atualizar_modo_jogos, buscar_jogos_observacao, marcar_notificado, LIGAS_COPA, LIGAS_FIM_DE_SEMANA
+from data.quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
+from model.signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
+from model.edge_score import MIN_CONFIDENCE_ACTIONABLE
+from model.picks_log import PickLogger
 try:
-    from signal_policy_v2 import (
+    from model.signal_policy_v2 import (
         EVMinimoPolicy,
         SteamGatePolicy,
         gate_ev_steam,
@@ -71,9 +84,15 @@ except Exception:
     gate_ev_steam = None
     policy_v2_blocks = None
     log_policy_v2_rejection = None
-from runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
-from module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
-from pipeline_integrador import BettingPipeline
+from model.runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
+from model.module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
+from model.pipeline_integrador import BettingPipeline
+from services.scheduler_services import (
+    DataCollectionService,
+    FallbackEvaluationService,
+    ObservabilityService,
+    DispatchSettlementService,
+)
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -158,10 +177,14 @@ BASE_DIR = os.path.dirname(__file__)
 BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(BASE_DIR, "data"))
 POLICY_V2_ENABLED = os.getenv("EDGE_POLICY_V2_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
 POLICY_V2_SHADOW_MODE = os.getenv("EDGE_POLICY_V2_SHADOW", "1").strip().lower() in ("1", "true", "yes", "on")
+MODEL_SHADOW_MODE = os.getenv("EDGE_MODEL_SHADOW_MODE", "1").strip().lower() in ("1", "true", "yes", "on")
+MODEL_SHADOW_PROMOTION_WINDOW_DAYS = int(os.getenv("EDGE_MODEL_SHADOW_WINDOW_DAYS", "21"))
+MODEL_SHADOW_BOOTSTRAP_ITERS = int(os.getenv("EDGE_MODEL_SHADOW_BOOTSTRAP_ITERS", "2000"))
 MIN_CONFIANCA_EFETIVA = max(float(MIN_CONFIANCA), float(MIN_CONFIDENCE_ACTIONABLE))
 
 EXECUCAO_CICLO = {
     "job_nome": None,
+    "janela_chave": None,
     "status": "ok",
     "reason_codes": [],
 }
@@ -171,6 +194,20 @@ EXECUCAO_STATS = {
     "provider_health": {},
     "total_avaliacoes_mercado": 0,
 }
+
+# Arquitetura proposta (fase 6): scheduler como composição de serviços.
+# - DataCollectionService: coleta e normalização de jogos por liga.
+# - FallbackEvaluationService: avaliação e persistência de fallback detalhado.
+# - ObservabilityService: padronização de warning estruturado com contexto operacional.
+# - DispatchSettlementService: composição do envio/persistência de sinais no runtime.
+DATA_COLLECTION_SERVICE = DataCollectionService(
+    fetcher=buscar_jogos_com_odds_com_status,
+    formatter=formatar_jogos,
+    health_counter=atualizar_contadores_provider_health,
+)
+OBSERVABILITY_SERVICE = None
+FALLBACK_SERVICE = None
+DISPATCH_SERVICE = None
 
 ADVANCED_PIPELINE = None
 ADVANCED_SHARP = SharpMoneyDetector()
@@ -225,23 +262,35 @@ def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=Non
     if MINIMAL_RUNTIME_OUTPUT:
         if categoria == "scheduler" and etapa == "job_guard" and status == "start":
             label = JOB_LABELS.get(entidade, entidade)
-            print(f"{label}...")
+            logging.info("%s...", label)
             return
 
         if categoria == "scheduler" and etapa == "job_guard" and status == "end":
             label = JOB_LABELS.get(entidade, entidade)
-            print(f"{label} -> OK")
+            logging.info("%s -> OK", label)
             return
 
         if categoria == "scheduler" and etapa == "cycle_totals":
             enviados = 0
             if isinstance(detalhes, dict):
                 enviados = int(detalhes.get("enviados", 0) or 0)
-            print(f"enviado {enviados} sinais")
+            logging.info("enviado %s sinais", enviados)
             return
 
         if status in ("failed", "critical"):
-            print("-> FAIL")
+            erro = None
+            if isinstance(detalhes, dict):
+                erro = detalhes.get("erro")
+            if (
+                reason_code == "PB-02"
+                and entidade in ("slo_fallback_rate_breach", "provider_error_rate_high")
+            ):
+                logging.warning("-> ALERT PB-02: %s", entidade)
+                logging.error("ALERT PB-02 em analise: %s", entidade)
+                return
+            motivo = str(erro or reason_code or "runtime_failure")
+            logging.error("-> FAIL: %s", motivo)
+            logging.error("FAIL em analise: %s", motivo)
             return
 
         return
@@ -272,6 +321,14 @@ def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=Non
         return
 
     print(header)
+
+
+OBSERVABILITY_SERVICE = ObservabilityService(log_event)
+FALLBACK_SERVICE = FallbackEvaluationService(
+    registrar_fallback_cycle_detail=registrar_fallback_cycle_detail,
+    observability=OBSERVABILITY_SERVICE,
+)
+DISPATCH_SERVICE = DispatchSettlementService()
 
 
 def _compactar_frame_ascii(frame, max_w, max_h):
@@ -380,6 +437,10 @@ def _esperar_ocioso_com_animacao(segundos):
     if segundos <= 0:
         return
 
+    if os.environ.get('EDGE_IDLE_ASCII_ANIM', 'true').lower() == 'false':
+        time.sleep(segundos)
+        return
+
     if not IDLE_ASCII_ANIM:
         time.sleep(segundos)
         return
@@ -430,11 +491,42 @@ def _esperar_ocioso_com_animacao(segundos):
 
 def resetar_execucao_ciclo(job_nome):
     EXECUCAO_CICLO["job_nome"] = job_nome
+    EXECUCAO_CICLO["janela_chave"] = None
     EXECUCAO_CICLO["status"] = "ok"
     EXECUCAO_CICLO["reason_codes"] = []
     EXECUCAO_STATS["duracao_segundos"] = 0.0
     EXECUCAO_STATS["provider_health"] = {}
     EXECUCAO_STATS["total_avaliacoes_mercado"] = 0
+
+
+def registrar_fallback_stats_medias(jogo, mercado, fonte_dados, source_quality):
+    FALLBACK_SERVICE.persist_fallback_detail(
+        job_nome=EXECUCAO_CICLO.get("job_nome"),
+        janela_chave=EXECUCAO_CICLO.get("janela_chave"),
+        liga=jogo.get("liga"),
+        jogo=jogo.get("jogo"),
+        mercado=mercado,
+        motivo_fallback="fallback_stats_medias",
+        detalhes={
+            "fonte_dados": fonte_dados,
+            "source_quality": source_quality,
+        },
+    )
+
+
+def registrar_fallback_source_quality_low(jogo, mercado, fonte_dados, source_quality):
+    FALLBACK_SERVICE.persist_fallback_detail(
+        job_nome=EXECUCAO_CICLO.get("job_nome"),
+        janela_chave=EXECUCAO_CICLO.get("janela_chave"),
+        liga=jogo.get("liga"),
+        jogo=jogo.get("jogo"),
+        mercado=mercado,
+        motivo_fallback="source_quality_low",
+        detalhes={
+            "fonte_dados": fonte_dados,
+            "source_quality": source_quality,
+        },
+    )
 
 
 def marcar_ciclo_degradado(reason_code, detalhes=None):
@@ -474,6 +566,34 @@ def _garantir_schema_db():
         return False
 
 
+def _split_match_name(match_name):
+    raw = str(match_name or "").strip()
+    if " vs " in raw:
+        home, away = raw.split(" vs ", 1)
+        return home.strip(), away.strip()
+    return raw, ""
+
+
+def _duplicates_skipped_log_path():
+    logs_dir = os.path.join(os.path.dirname(BOT_DATA_DIR), "logs")
+    return logs_dir, os.path.join(logs_dir, "duplicates_skipped.log")
+
+
+def _registrar_duplicate_skip(league, team_home, team_away, market):
+    logs_dir, log_path = _duplicates_skipped_log_path()
+    os.makedirs(logs_dir, exist_ok=True)
+    payload = {
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+        "league": str(league or ""),
+        "team_home": str(team_home or ""),
+        "team_away": str(team_away or ""),
+        "market": str(market or ""),
+        "reason": "duplicate_same_day",
+    }
+    with open(log_path, "a", encoding="utf-8") as f:
+        f.write(_json.dumps(payload, ensure_ascii=False) + "\n")
+
+
 def construir_janela_chave(job_nome, bucket_minutes):
     agora = datetime.now()
     if bucket_minutes >= 60:
@@ -506,6 +626,7 @@ def executar_job_guardado(job_nome, bucket_minutes, executor, force_once=False):
         return
 
     resetar_execucao_ciclo(job_nome)
+    EXECUCAO_CICLO["janela_chave"] = janela_chave
     log_event("scheduler", "job_guard", job_nome, "start", None, {"janela_chave": janela_chave})
     inicio_execucao = time.perf_counter()
 
@@ -1120,10 +1241,7 @@ async def processar_jogos(dry_run=False):
     _odds_cache: dict = {}
 
     for liga_key in LIGAS:
-        fetch_result = buscar_jogos_com_odds_com_status(liga_key)
-        atualizar_contadores_provider_health(provider_health, fetch_result.get("status"))
-        dados_api = fetch_result.get("data", [])
-        jogos = formatar_jogos(dados_api)
+        fetch_result, jogos = DATA_COLLECTION_SERVICE.collect_by_league(liga_key, provider_health)
 
         for jogo in jogos:
             if jogo["jogo"] in jogos_processados:
@@ -1163,8 +1281,15 @@ async def processar_jogos(dry_run=False):
                             media_casa = float(advanced_match_analysis.get("lambda_home", media_casa))
                             media_fora = float(advanced_match_analysis.get("lambda_away", media_fora))
                             fonte_dados = f"{fonte_dados}+HBM_HA_ELO"
-                    except Exception as e:
-                        log_event("runtime", "advanced", jogo.get("jogo", "unknown"), "warning", "advanced_pipeline_failed", {"erro": str(e)})
+                    except (ValueError, TypeError, KeyError, RuntimeError) as e:
+                        OBSERVABILITY_SERVICE.warning_payload(
+                            job_nome=EXECUCAO_CICLO.get("job_nome") or "analise",
+                            jogo=jogo.get("jogo", "unknown"),
+                            mercado="multi",
+                            etapa="advanced_pipeline",
+                            reason_code="advanced_pipeline_failed",
+                            error=e,
+                        )
                         advanced_match_analysis = None
 
                 primeiro_mercado = True
@@ -1239,10 +1364,12 @@ async def processar_jogos(dry_run=False):
                         "banca": 1000
                     }
 
+                    dados_analise["shadow_mode"] = MODEL_SHADOW_MODE
                     analise = analisar_jogo(dados_analise, log_dc=primeiro_mercado)
+                    _registrar_shadow_prediction_runtime(analise, dados_analise)
                     primeiro_mercado = False
 
-                    if analise["decisao"] == "DESCARTAR":
+                    if not DISPATCH_SERVICE.should_dispatch(analise):
                         continue
 
                     _cache_key = f"{home}|{away}|{liga_key}"
@@ -1263,12 +1390,14 @@ async def processar_jogos(dry_run=False):
 
                     if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
                         provider_health["fallback_used"] += 1
+                        registrar_fallback_stats_medias(jogo, mercado, fonte_dados, source_quality)
 
                     if odd_oponente_mercado <= 0:
                         provider_health["missing_odd_oponente"] = provider_health.get("missing_odd_oponente", 0) + 1
                         provider_health["fallback_used"] += 1
                     elif source_quality != "sharp":
                         provider_health["source_quality_low"] = provider_health.get("source_quality_low", 0) + 1
+                        registrar_fallback_source_quality_low(jogo, mercado, fonte_dados, source_quality)
 
                     escalacao_confirmada, origem_escalacao = inferir_escalacao_confirmada(jogo)
                     variacao_odd_gate = calcular_variacao_odd_gate(steam_data)
@@ -1424,15 +1553,20 @@ async def processar_jogos(dry_run=False):
                         )
 
                     analise.setdefault("reasoning_trace", {})
+                    edge_cutoff_runtime = float(analise.get("edge_cutoff_segment", MIN_EDGE_SCORE) or MIN_EDGE_SCORE)
+                    conf_cutoff_runtime = max(
+                        float(MIN_CONFIANCA_EFETIVA),
+                        float(analise.get("confidence_threshold", MIN_CONFIANCA_EFETIVA) or MIN_CONFIANCA_EFETIVA),
+                    )
                     analise["reasoning_trace"]["gate_inputs"] = {
-                        "min_edge_score": MIN_EDGE_SCORE,
-                        "min_confianca_efetiva": MIN_CONFIANCA_EFETIVA,
+                        "min_edge_score": edge_cutoff_runtime,
+                        "min_confianca_efetiva": conf_cutoff_runtime,
                         "edge_score_final": edge_score_final,
                         "confianca": confianca,
                         "filtro_aprovado": bool(filtro.get("aprovado")),
                     }
 
-                    if filtro["aprovado"] and edge_score_final >= MIN_EDGE_SCORE and confianca >= MIN_CONFIANCA_EFETIVA:
+                    if filtro["aprovado"] and edge_score_final >= edge_cutoff_runtime and confianca >= conf_cutoff_runtime:
                         candidatos.append({
                             "analise": analise,
                             "jogo": jogo,
@@ -1457,9 +1591,9 @@ async def processar_jogos(dry_run=False):
                         motivos_gate = []
                         if not filtro["aprovado"]:
                             motivos_gate.append("filtro_reprovado")
-                        if edge_score_final < MIN_EDGE_SCORE:
+                        if edge_score_final < edge_cutoff_runtime:
                             motivos_gate.append("edge_score_abaixo_minimo")
-                        if confianca < MIN_CONFIANCA_EFETIVA:
+                        if confianca < conf_cutoff_runtime:
                             motivos_gate.append("confianca_abaixo_cutoff")
                         analise["reasoning_trace"]["gate_discard"] = motivos_gate
 
@@ -1467,6 +1601,9 @@ async def processar_jogos(dry_run=False):
                 provider_health["connection_error"] += 1
                 if MINIMAL_RUNTIME_OUTPUT:
                     print("-> FAIL")
+                    import traceback
+                    traceback.print_exc()
+                    logging.exception("FAIL em analise")
                 else:
                     print(f"Erro ao processar {jogo['jogo']}: {e}")
 
@@ -1561,6 +1698,32 @@ async def processar_jogos(dry_run=False):
         if not msg:
             continue
 
+        # INTEGRATION: bloqueia sinais já enviados no mesmo dia (mesma liga/jogo/mercado) antes do envio Telegram.
+        if not dry_run:
+            team_home, team_away = _split_match_name(analise.get("jogo", ""))
+            qtd_dup = contar_sinais_duplicados_mesmo_dia(
+                analise.get("liga", ""),
+                team_home,
+                team_away,
+                analise.get("mercado", ""),
+            )
+            if qtd_dup > 0:
+                _registrar_duplicate_skip(
+                    analise.get("liga", ""),
+                    team_home,
+                    team_away,
+                    analise.get("mercado", ""),
+                )
+                log_event(
+                    "runtime",
+                    "duplicates",
+                    analise.get("jogo", ""),
+                    "skip",
+                    "duplicate_same_day",
+                    {"market": analise.get("mercado", "")},
+                )
+                continue
+
         if dry_run:
             sinais_enviados += 1
             print(f"[dry-run] Simulado sinal: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']}")
@@ -1645,8 +1808,8 @@ async def processar_jogos(dry_run=False):
             print(f"Sinal #{sinal_id}: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']} | Kelly:{kelly['kelly_final_pct']}%=R${stake_reais:.2f}{steam_info}")
 
     if not MINIMAL_RUNTIME_OUTPUT:
-        print(f"[{agora}] Concluído. {sinais_enviados} sinais enviados.")
-        print(
+        logging.info("[%s] Concluído. %s sinais enviados.", agora, sinais_enviados)
+        logging.info(
             "Health summary: "
             f"ok={provider_health['ok']} "
             f"timeout={provider_health['timeout']} "
@@ -1938,8 +2101,104 @@ def _sync_picks_log_from_db():
         )
 
 
+def _registrar_shadow_prediction_runtime(analise, dados_analise):
+    if not MODEL_SHADOW_MODE:
+        return
+
+    payload = analise.get("shadow_payload") or {}
+    prob_baseline = payload.get("prob_baseline", analise.get("prob_modelo_raw", analise.get("prob_modelo", 0.5)))
+    prob_advanced = payload.get("prob_advanced", analise.get("prob_modelo", prob_baseline))
+
+    try:
+        registrar_shadow_prediction(
+            liga=str(dados_analise.get("liga") or analise.get("liga") or ""),
+            jogo=str(dados_analise.get("jogo") or analise.get("jogo") or ""),
+            mercado=str(dados_analise.get("mercado") or analise.get("mercado") or ""),
+            prob_baseline=float(prob_baseline),
+            prob_advanced=float(prob_advanced),
+            prediction_id_baseline=payload.get("prediction_id_baseline") or analise.get("prediction_id"),
+            prediction_id_advanced=payload.get("prediction_id_advanced") or analise.get("prediction_id"),
+            shadow_mode=True,
+            detalhes={
+                "ev": analise.get("ev"),
+                "edge_score": analise.get("edge_score"),
+                "segment_threshold": payload.get("segment_threshold"),
+                "market_features": payload.get("market_features"),
+            },
+        )
+    except Exception as e:
+        log_event(
+            "runtime",
+            "shadow",
+            f"{dados_analise.get('jogo', 'unknown')}|{dados_analise.get('mercado', 'unknown')}",
+            "warning",
+            "shadow_register_failed",
+            {"erro": str(e)},
+        )
+
+
+def evaluate_shadow_promotion(window_days=21, bootstrap_iters=2000):
+    rows = listar_shadow_settled_por_janela(dias=window_days)
+    if not rows:
+        return {
+            "n": 0,
+            "mean_brier_gain": 0.0,
+            "mean_clv_gain": 0.0,
+            "p_value": 1.0,
+            "recommend_promote": False,
+            "reason": "insufficient_data",
+        }
+
+    brier_gains = []
+    clv_gains = []
+    for row in rows:
+        brier_base = row[2]
+        brier_adv = row[3]
+        clv_base = row[4]
+        clv_adv = row[5]
+        if brier_base is None or brier_adv is None:
+            continue
+        brier_gains.append(float(brier_base) - float(brier_adv))
+        if clv_base is not None and clv_adv is not None:
+            clv_gains.append(float(clv_adv) - float(clv_base))
+
+    n = len(brier_gains)
+    if n < 30:
+        return {
+            "n": n,
+            "mean_brier_gain": round(sum(brier_gains) / n, 6) if n else 0.0,
+            "mean_clv_gain": round(sum(clv_gains) / len(clv_gains), 6) if clv_gains else 0.0,
+            "p_value": 1.0,
+            "recommend_promote": False,
+            "reason": "insufficient_sample_min_30",
+        }
+
+    mean_brier_gain = sum(brier_gains) / n
+    mean_clv_gain = (sum(clv_gains) / len(clv_gains)) if clv_gains else 0.0
+
+    iters = max(200, int(bootstrap_iters))
+    non_positive_count = 0
+    for _ in range(iters):
+        sample = [brier_gains[random.randrange(n)] for _ in range(n)]
+        sample_mean = sum(sample) / n
+        if sample_mean <= 0.0:
+            non_positive_count += 1
+    p_value = non_positive_count / iters
+
+    recommend = bool(mean_brier_gain > 0.0 and p_value < 0.05 and mean_clv_gain >= 0.0)
+    return {
+        "n": n,
+        "mean_brier_gain": round(mean_brier_gain, 6),
+        "mean_clv_gain": round(mean_clv_gain, 6),
+        "p_value": round(p_value, 6),
+        "recommend_promote": recommend,
+        "reason": "ok" if recommend else "criteria_not_met",
+    }
+
+
 def _atualizar_clv_settlement(sinal_id, jogo, mercado, liga_nome, outcome):
     """Atualiza CLV no fechamento e propaga closing odds para picks_log quando disponível."""
+    odd_fechamento = None
     try:
         liga_key = LIGA_KEY_MAP.get(liga_nome, "soccer_epl")
         odd_fechamento = buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key)
@@ -1960,10 +2219,29 @@ def _atualizar_clv_settlement(sinal_id, jogo, mercado, liga_nome, outcome):
             {"erro": str(e)},
         )
 
+    if MODEL_SHADOW_MODE:
+        try:
+            liquidar_shadow_predictions_por_sinal(
+                liga=liga_nome,
+                jogo=jogo,
+                mercado=mercado,
+                outcome=int(outcome),
+                closing_odds=odd_fechamento,
+            )
+        except Exception as e:
+            log_event(
+                "runtime",
+                "shadow",
+                f"sinal_{sinal_id}",
+                "warning",
+                "shadow_settlement_failed",
+                {"erro": str(e)},
+            )
+
 
 async def verificar_resultados_automatico():
-    from verificar_resultados import buscar_resultado_jogo, avaliar_mercado
-    from exportar_excel import gerar_excel
+    from data.verificar_resultados import buscar_resultado_jogo, avaliar_mercado
+    from data.exportar_excel import gerar_excel
 
     if not _garantir_schema_db():
         return
@@ -2070,6 +2348,30 @@ async def verificar_resultados_automatico():
             print("Excel atualizado.")
         except Exception as e:
             print(f"Erro Excel: {e}")
+
+    if MODEL_SHADOW_MODE:
+        try:
+            promo = evaluate_shadow_promotion(
+                window_days=MODEL_SHADOW_PROMOTION_WINDOW_DAYS,
+                bootstrap_iters=MODEL_SHADOW_BOOTSTRAP_ITERS,
+            )
+            log_event(
+                "runtime",
+                "shadow",
+                "promotion_check",
+                "promote" if promo.get("recommend_promote") else "hold",
+                "shadow_promotion_evaluated",
+                promo,
+            )
+        except Exception as e:
+            log_event(
+                "runtime",
+                "shadow",
+                "promotion_check",
+                "warning",
+                "shadow_promotion_eval_failed",
+                {"erro": str(e)},
+            )
 
 async def enviar_resumo_diario():
     from database import resumo_mensal
@@ -2314,7 +2616,28 @@ def executar_dry_run_once():
         log_event("runtime", "dry_run", "scheduler", "failed", "dry_run_exception", {"erro": str(e)})
         return 1
 
+
+def executar_check_duplicates():
+    if not _garantir_schema_db():
+        return 1
+
+    duplicados = listar_sinais_duplicados_mesmo_dia()
+    if not duplicados:
+        print("Nenhuma duplicidade same-day encontrada em sinais.")
+        return 0
+
+    print("Duplicidades same-day encontradas:")
+    for item in duplicados:
+        print(
+            f"{item['date']} | {item['league']} | {item['team_home']} vs {item['team_away']} "
+            f"| {item['market']} | count={item['count']}"
+        )
+    return 1
+
 if __name__ == "__main__":
+    if "--check-duplicates" in sys.argv:
+        raise SystemExit(executar_check_duplicates())
+
     if "--dry-run-once" in sys.argv:
         raise SystemExit(executar_dry_run_once())
 

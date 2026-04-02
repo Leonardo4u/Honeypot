@@ -21,7 +21,7 @@ LIGAS_UNDERSTAT = {
 def carregar_xg():
     if not os.path.exists(XG_PATH):
         return {}
-    with open(XG_PATH, "r", encoding="utf-8") as f:
+    with open(XG_PATH, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 def calcular_media_liga(xg_dados, campo="xg_marcado_casa"):
@@ -163,7 +163,7 @@ def comparar_probabilidades(xg_casa_bruto, xg_fora_bruto, xg_casa_ajustado, xg_f
         return None
 
 def calcular_xg_com_sos(time_casa, time_fora, liga_key="soccer_epl"):
-    from xg_understat import calcular_media_gols_com_xg
+    from data.xg_understat import calcular_media_gols_com_xg
 
     media_casa, media_fora, fonte = calcular_media_gols_com_xg(time_casa, time_fora)
 

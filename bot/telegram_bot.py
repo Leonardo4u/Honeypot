@@ -1,18 +1,15 @@
 import os
-import sys
 import asyncio
 from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import ApplicationBuilder, CommandHandler, ContextTypes
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "data"))
 
 load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 CANAL_FREE = os.getenv("CANAL_FREE")
 CANAL_VIP = os.getenv("CANAL_VIP")
 
-from database import buscar_sinais_hoje, resumo_mensal, atualizar_resultado
+from data.database import buscar_sinais_hoje, resumo_mensal, atualizar_resultado
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(

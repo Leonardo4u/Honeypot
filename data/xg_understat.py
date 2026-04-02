@@ -144,11 +144,11 @@ def atualizar_xg_todas_ligas():
 def carregar_xg():
     if not os.path.exists(XG_PATH):
         return {}
-    with open(XG_PATH, "r", encoding="utf-8") as f:
+    with open(XG_PATH, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 def calcular_media_gols_com_xg(time_casa, time_fora):
-    from atualizar_stats import carregar_medias
+    from data.atualizar_stats import carregar_medias
     medias = carregar_medias()
     xg = carregar_xg()
 

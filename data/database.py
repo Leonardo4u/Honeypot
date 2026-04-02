@@ -143,10 +143,155 @@ def criar_banco():
             detalhes_json TEXT
         )
     ''')
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS fallback_cycle_details (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            job_nome TEXT,
+            janela_chave TEXT,
+            liga TEXT,
+            jogo TEXT,
+            mercado TEXT,
+            motivo_fallback TEXT,
+            detalhes_json TEXT
+        )
+    ''')
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS shadow_predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            data_ref TEXT NOT NULL,
+            liga TEXT NOT NULL,
+            jogo TEXT NOT NULL,
+            mercado TEXT NOT NULL,
+            prediction_id_baseline TEXT,
+            prediction_id_advanced TEXT,
+            prob_baseline REAL,
+            prob_advanced REAL,
+            outcome INTEGER,
+            brier_baseline REAL,
+            brier_advanced REAL,
+            closing_odds REAL,
+            clv_baseline REAL,
+            clv_advanced REAL,
+            shadow_mode INTEGER DEFAULT 1,
+            detalhes_json TEXT
+        )
+    ''')
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS blend_weights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            liga TEXT,
+            mercado TEXT,
+            w_poisson REAL NOT NULL,
+            w_mercado REAL NOT NULL,
+            min_amostra INTEGER DEFAULT 50,
+            versao TEXT DEFAULT 'v1',
+            gerado_em TEXT NOT NULL,
+            UNIQUE(liga, mercado)
+        )
+    ''')
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS walk_forward_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fold_id TEXT NOT NULL,
+            data_inicio TEXT NOT NULL,
+            data_fim TEXT NOT NULL,
+            brier_val REAL,
+            brier_test REAL,
+            roi_test REAL,
+            n_picks INTEGER,
+            criado_em TEXT NOT NULL,
+            UNIQUE(fold_id)
+        )
+    ''')
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS segment_thresholds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            liga TEXT,
+            mercado TEXT,
+            ev_floor REAL,
+            confidence_floor REAL,
+            edge_cutoff REAL,
+            min_amostra INTEGER DEFAULT 50,
+            versao TEXT DEFAULT 'v1',
+            gerado_em TEXT NOT NULL,
+            UNIQUE(liga, mercado)
+        )
+    ''')
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS reliability_deciles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            referencia_semana TEXT NOT NULL,
+            mercado TEXT NOT NULL,
+            decil INTEGER NOT NULL,
+            p_prevista REAL,
+            p_observada REAL,
+            n INTEGER NOT NULL,
+            ece_contribution REAL,
+            ece REAL,
+            mce REAL,
+            criado_em TEXT NOT NULL,
+            UNIQUE(referencia_semana, mercado, decil)
+        )
+    ''')
+        garantir_indices_desempenho(c)
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
     garantir_tabelas_operacionais()
     print("Banco de dados criado com sucesso.")
+
+
+def garantir_indices_desempenho(cursor=None):
+    statements = [
+        '''
+        CREATE INDEX IF NOT EXISTS idx_sinais_data_status
+        ON sinais(data, status)
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_sinais_status_horario
+        ON sinais(status, horario)
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_sinais_duplicate_lookup
+        ON sinais(
+            date(COALESCE(criado_em, data)),
+            lower(trim(liga)),
+            lower(trim(jogo)),
+            lower(trim(mercado))
+        )
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_fallback_cycle_job_window
+        ON fallback_cycle_details(job_nome, janela_chave, ocorrido_em)
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_shadow_pred_lookup
+        ON shadow_predictions(data_ref, liga, jogo, mercado)
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_shadow_pred_settlement
+        ON shadow_predictions(outcome, ocorrido_em)
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_walk_forward_period
+        ON walk_forward_results(data_inicio, data_fim)
+        ''',
+        '''
+        CREATE INDEX IF NOT EXISTS idx_reliability_market_week
+        ON reliability_deciles(referencia_semana, mercado)
+        ''',
+    ]
+
+    if cursor is not None:
+        for stmt in statements:
+            cursor.execute(stmt)
+        return
+
+    with get_conn() as conn:
+        c = conn.cursor()
+        for stmt in statements:
+            c.execute(stmt)
 
 
 def garantir_colunas_sinais():
@@ -247,6 +392,111 @@ def garantir_tabelas_operacionais():
         )
         '''
     )
+        c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS fallback_cycle_details (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            job_nome TEXT,
+            janela_chave TEXT,
+            liga TEXT,
+            jogo TEXT,
+            mercado TEXT,
+            motivo_fallback TEXT,
+            detalhes_json TEXT
+        )
+        '''
+    )
+        c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS shadow_predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            ocorrido_em TEXT NOT NULL,
+            data_ref TEXT NOT NULL,
+            liga TEXT NOT NULL,
+            jogo TEXT NOT NULL,
+            mercado TEXT NOT NULL,
+            prediction_id_baseline TEXT,
+            prediction_id_advanced TEXT,
+            prob_baseline REAL,
+            prob_advanced REAL,
+            outcome INTEGER,
+            brier_baseline REAL,
+            brier_advanced REAL,
+            closing_odds REAL,
+            clv_baseline REAL,
+            clv_advanced REAL,
+            shadow_mode INTEGER DEFAULT 1,
+            detalhes_json TEXT
+        )
+        '''
+    )
+        c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS blend_weights (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            liga TEXT,
+            mercado TEXT,
+            w_poisson REAL NOT NULL,
+            w_mercado REAL NOT NULL,
+            min_amostra INTEGER DEFAULT 50,
+            versao TEXT DEFAULT 'v1',
+            gerado_em TEXT NOT NULL,
+            UNIQUE(liga, mercado)
+        )
+        '''
+    )
+        c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS walk_forward_results (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            fold_id TEXT NOT NULL,
+            data_inicio TEXT NOT NULL,
+            data_fim TEXT NOT NULL,
+            brier_val REAL,
+            brier_test REAL,
+            roi_test REAL,
+            n_picks INTEGER,
+            criado_em TEXT NOT NULL,
+            UNIQUE(fold_id)
+        )
+        '''
+    )
+        c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS segment_thresholds (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            liga TEXT,
+            mercado TEXT,
+            ev_floor REAL,
+            confidence_floor REAL,
+            edge_cutoff REAL,
+            min_amostra INTEGER DEFAULT 50,
+            versao TEXT DEFAULT 'v1',
+            gerado_em TEXT NOT NULL,
+            UNIQUE(liga, mercado)
+        )
+        '''
+    )
+        c.execute(
+        '''
+        CREATE TABLE IF NOT EXISTS reliability_deciles (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            referencia_semana TEXT NOT NULL,
+            mercado TEXT NOT NULL,
+            decil INTEGER NOT NULL,
+            p_prevista REAL,
+            p_observada REAL,
+            n INTEGER NOT NULL,
+            ece_contribution REAL,
+            ece REAL,
+            mce REAL,
+            criado_em TEXT NOT NULL,
+            UNIQUE(referencia_semana, mercado, decil)
+        )
+        '''
+    )
+        garantir_indices_desempenho(c)
 
 
 def garantir_schema_minimo():
@@ -262,6 +512,7 @@ def garantir_schema_minimo():
     garantir_tabelas_operacionais()
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
+    garantir_indices_desempenho()
 
 
 # FIX-11: ponto único e determinístico de bootstrap de schema
@@ -438,6 +689,76 @@ def inserir_sinal(liga, jogo, mercado, odd, ev, score, stake, message_id_vip=Non
         ''', ((datetime.now(UTC).date().isoformat()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario, os.getenv("EDGE_VERSION", "dev")))
         return c.lastrowid
 
+
+def contar_sinais_duplicados_mesmo_dia(liga, team_home, team_away, mercado, data_ref=None):
+    """Conta sinais com mesmo jogo/mercado registrados no mesmo dia de criação."""
+    data_alvo = data_ref or datetime.now(UTC).date().isoformat()
+    jogo = f"{str(team_home).strip()} vs {str(team_away).strip()}"
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT COUNT(*)
+            FROM sinais
+            WHERE lower(trim(liga)) = lower(trim(?))
+              AND lower(trim(jogo)) = lower(trim(?))
+              AND lower(trim(mercado)) = lower(trim(?))
+              AND date(COALESCE(criado_em, data)) = date(?)
+            ''',
+            (liga, jogo, mercado, data_alvo),
+        )
+        row = c.fetchone()
+        return int(row[0] or 0)
+
+
+def listar_sinais_duplicados_mesmo_dia(data_ref=None):
+    """Lista agrupamentos duplicados por dia para auditoria operacional."""
+    params = []
+    where_data = ""
+    if data_ref:
+        where_data = "WHERE date(COALESCE(criado_em, data)) = date(?)"
+        params.append(data_ref)
+
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            f'''
+            SELECT
+                date(COALESCE(criado_em, data)) AS data_ref,
+                liga,
+                jogo,
+                mercado,
+                COUNT(*) AS total
+            FROM sinais
+            {where_data}
+            GROUP BY data_ref, liga, jogo, mercado
+            HAVING COUNT(*) > 1
+            ORDER BY data_ref DESC, total DESC, liga, jogo, mercado
+            ''',
+            tuple(params),
+        )
+        rows = c.fetchall()
+
+    out = []
+    for row in rows:
+        data_dup, liga, jogo, mercado, total = row
+        jogo_txt = str(jogo or "")
+        if " vs " in jogo_txt:
+            team_home, team_away = jogo_txt.split(" vs ", 1)
+        else:
+            team_home, team_away = jogo_txt, ""
+        out.append(
+            {
+                "date": str(data_dup),
+                "league": str(liga or ""),
+                "team_home": str(team_home).strip(),
+                "team_away": str(team_away).strip(),
+                "market": str(mercado or ""),
+                "count": int(total or 0),
+            }
+        )
+    return out
+
 def atualizar_resultado(sinal_id, resultado, lucro):
     """
     Finaliza um sinal com resultado e lucro.
@@ -568,6 +889,34 @@ def registrar_alerta_operacional(severidade, codigo, playbook_id=None, detalhes=
         )
 
 
+def registrar_fallback_cycle_detail(job_nome, janela_chave, liga, jogo, mercado, motivo_fallback, detalhes=None):
+    garantir_tabelas_operacionais()
+    if not all([job_nome, janela_chave, liga, jogo, mercado, motivo_fallback]):
+        raise ValueError("Campos obrigatorios ausentes em fallback_cycle_details")
+    detalhes_json = None
+    if detalhes is not None:
+        detalhes_json = json.dumps(detalhes, ensure_ascii=False)
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO fallback_cycle_details (
+                ocorrido_em, job_nome, janela_chave, liga, jogo, mercado, motivo_fallback, detalhes_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                datetime.now(UTC).isoformat(),
+                job_nome,
+                janela_chave,
+                liga,
+                jogo,
+                mercado,
+                motivo_fallback,
+                detalhes_json,
+            ),
+        )
+
+
 def obter_slo_disponibilidade_ciclo(dias=7):
     with get_conn() as conn:
         c = conn.cursor()
@@ -634,6 +983,319 @@ def registrar_diagnostico_modelo(
                 detalhes_json,
             ),
         )
+
+
+def registrar_shadow_prediction(
+    liga,
+    jogo,
+    mercado,
+    prob_baseline,
+    prob_advanced,
+    prediction_id_baseline=None,
+    prediction_id_advanced=None,
+    shadow_mode=True,
+    detalhes=None,
+    data_ref=None,
+):
+    garantir_tabelas_operacionais()
+    data_alvo = data_ref or datetime.now(UTC).date().isoformat()
+    detalhes_json = None
+    if detalhes is not None:
+        detalhes_json = json.dumps(detalhes, ensure_ascii=False)
+
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO shadow_predictions (
+                ocorrido_em,
+                data_ref,
+                liga,
+                jogo,
+                mercado,
+                prediction_id_baseline,
+                prediction_id_advanced,
+                prob_baseline,
+                prob_advanced,
+                shadow_mode,
+                detalhes_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''',
+            (
+                datetime.now(UTC).isoformat(),
+                data_alvo,
+                liga,
+                jogo,
+                mercado,
+                prediction_id_baseline,
+                prediction_id_advanced,
+                float(prob_baseline),
+                float(prob_advanced),
+                1 if shadow_mode else 0,
+                detalhes_json,
+            ),
+        )
+        return int(c.lastrowid)
+
+
+def liquidar_shadow_predictions_por_sinal(liga, jogo, mercado, outcome, closing_odds=None, data_ref=None):
+    """Liquida previsoes shadow pendentes para um sinal finalizado no mesmo dia."""
+    data_alvo = data_ref or datetime.now(UTC).date().isoformat()
+    out = int(outcome)
+    if out not in (0, 1):
+        raise ValueError("outcome must be 0 or 1")
+
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT id, prob_baseline, prob_advanced
+            FROM shadow_predictions
+            WHERE lower(trim(liga)) = lower(trim(?))
+              AND lower(trim(jogo)) = lower(trim(?))
+              AND lower(trim(mercado)) = lower(trim(?))
+              AND date(data_ref) = date(?)
+              AND outcome IS NULL
+            ''',
+            (liga, jogo, mercado, data_alvo),
+        )
+        rows = c.fetchall()
+        if not rows:
+            return 0
+
+        atualizados = 0
+        for row in rows:
+            pred_id = int(row[0])
+            p_baseline = float(row[1] or 0.0)
+            p_advanced = float(row[2] or 0.0)
+            brier_baseline = (p_baseline - out) ** 2
+            brier_advanced = (p_advanced - out) ** 2
+
+            clv_baseline = None
+            clv_advanced = None
+            odd_close = None
+            if closing_odds is not None:
+                odd_close = float(closing_odds)
+                # Aqui CLV proxy representa edge no fechamento (EV ao close).
+                clv_baseline = (p_baseline * odd_close) - 1.0
+                clv_advanced = (p_advanced * odd_close) - 1.0
+
+            c.execute(
+                '''
+                UPDATE shadow_predictions
+                SET outcome = ?,
+                    brier_baseline = ?,
+                    brier_advanced = ?,
+                    closing_odds = COALESCE(?, closing_odds),
+                    clv_baseline = ?,
+                    clv_advanced = ?
+                WHERE id = ?
+                ''',
+                (
+                    out,
+                    round(float(brier_baseline), 6),
+                    round(float(brier_advanced), 6),
+                    odd_close,
+                    None if clv_baseline is None else round(float(clv_baseline), 6),
+                    None if clv_advanced is None else round(float(clv_advanced), 6),
+                    pred_id,
+                ),
+            )
+            atualizados += 1
+        return atualizados
+
+
+def listar_shadow_settled_por_janela(dias=21):
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT liga, mercado, brier_baseline, brier_advanced, clv_baseline, clv_advanced, ocorrido_em
+            FROM shadow_predictions
+            WHERE outcome IS NOT NULL
+              AND brier_baseline IS NOT NULL
+              AND brier_advanced IS NOT NULL
+              AND ocorrido_em >= datetime('now', ?)
+            ORDER BY ocorrido_em ASC
+            ''',
+            (f'-{int(max(1, dias))} day',),
+        )
+        return c.fetchall()
+
+
+def upsert_blend_weight(liga, mercado, w_poisson, w_mercado, min_amostra=50, versao='v1'):
+    garantir_tabelas_operacionais()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO blend_weights (liga, mercado, w_poisson, w_mercado, min_amostra, versao, gerado_em)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(liga, mercado)
+            DO UPDATE SET
+                w_poisson = excluded.w_poisson,
+                w_mercado = excluded.w_mercado,
+                min_amostra = excluded.min_amostra,
+                versao = excluded.versao,
+                gerado_em = excluded.gerado_em
+            ''',
+            (
+                liga,
+                mercado,
+                float(w_poisson),
+                float(w_mercado),
+                int(min_amostra),
+                str(versao),
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+
+
+def obter_blend_weight(liga, mercado):
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT w_poisson, w_mercado, min_amostra, versao
+            FROM blend_weights
+                        WHERE ((liga = ?) OR (liga IS NULL AND ? IS NULL))
+                            AND ((mercado = ?) OR (mercado IS NULL AND ? IS NULL))
+            LIMIT 1
+            ''',
+                        (liga, liga, mercado, mercado),
+        )
+        row = c.fetchone()
+        if row:
+            return {
+                'w_poisson': float(row[0]),
+                'w_mercado': float(row[1]),
+                'min_amostra': int(row[2] or 50),
+                'versao': str(row[3] or 'v1'),
+            }
+
+        c.execute(
+            '''
+            SELECT w_poisson, w_mercado, min_amostra, versao
+            FROM blend_weights
+            WHERE liga IS NULL AND mercado IS NULL
+            LIMIT 1
+            '''
+        )
+        row = c.fetchone()
+        if row:
+            return {
+                'w_poisson': float(row[0]),
+                'w_mercado': float(row[1]),
+                'min_amostra': int(row[2] or 50),
+                'versao': str(row[3] or 'v1'),
+            }
+    return None
+
+
+def registrar_walk_forward_result(fold_id, data_inicio, data_fim, brier_val, brier_test, roi_test, n_picks):
+    garantir_tabelas_operacionais()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO walk_forward_results (
+                fold_id, data_inicio, data_fim, brier_val, brier_test, roi_test, n_picks, criado_em
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(fold_id)
+            DO UPDATE SET
+                data_inicio = excluded.data_inicio,
+                data_fim = excluded.data_fim,
+                brier_val = excluded.brier_val,
+                brier_test = excluded.brier_test,
+                roi_test = excluded.roi_test,
+                n_picks = excluded.n_picks,
+                criado_em = excluded.criado_em
+            ''',
+            (
+                str(fold_id),
+                str(data_inicio),
+                str(data_fim),
+                None if brier_val is None else float(brier_val),
+                None if brier_test is None else float(brier_test),
+                None if roi_test is None else float(roi_test),
+                int(n_picks or 0),
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+
+
+def upsert_segment_threshold(liga, mercado, ev_floor, confidence_floor, edge_cutoff, min_amostra=50, versao='v1'):
+    garantir_tabelas_operacionais()
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            INSERT INTO segment_thresholds (
+                liga, mercado, ev_floor, confidence_floor, edge_cutoff, min_amostra, versao, gerado_em
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ON CONFLICT(liga, mercado)
+            DO UPDATE SET
+                ev_floor = excluded.ev_floor,
+                confidence_floor = excluded.confidence_floor,
+                edge_cutoff = excluded.edge_cutoff,
+                min_amostra = excluded.min_amostra,
+                versao = excluded.versao,
+                gerado_em = excluded.gerado_em
+            ''',
+            (
+                liga,
+                mercado,
+                float(ev_floor),
+                float(confidence_floor),
+                float(edge_cutoff),
+                int(min_amostra),
+                str(versao),
+                datetime.now(UTC).isoformat(),
+            ),
+        )
+
+
+def obter_segment_threshold(liga, mercado):
+    with get_conn() as conn:
+        c = conn.cursor()
+        c.execute(
+            '''
+            SELECT ev_floor, confidence_floor, edge_cutoff, min_amostra, versao
+            FROM segment_thresholds
+                        WHERE ((liga = ?) OR (liga IS NULL AND ? IS NULL))
+                            AND ((mercado = ?) OR (mercado IS NULL AND ? IS NULL))
+            LIMIT 1
+            ''',
+                        (liga, liga, mercado, mercado),
+        )
+        row = c.fetchone()
+        if row:
+            return {
+                'ev_floor': float(row[0]),
+                'confidence_floor': float(row[1]),
+                'edge_cutoff': float(row[2]),
+                'min_amostra': int(row[3] or 50),
+                'versao': str(row[4] or 'v1'),
+            }
+
+        c.execute(
+            '''
+            SELECT ev_floor, confidence_floor, edge_cutoff, min_amostra, versao
+            FROM segment_thresholds
+            WHERE liga IS NULL AND mercado IS NULL
+            LIMIT 1
+            '''
+        )
+        row = c.fetchone()
+        if row:
+            return {
+                'ev_floor': float(row[0]),
+                'confidence_floor': float(row[1]),
+                'edge_cutoff': float(row[2]),
+                'min_amostra': int(row[3] or 50),
+                'versao': str(row[4] or 'v1'),
+            }
+    return None
 
 def resumo_mensal():
     with get_conn() as conn:

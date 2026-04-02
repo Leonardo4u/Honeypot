@@ -5,11 +5,11 @@ from datetime import UTC, datetime
 import logging
 from typing import Callable, Optional, Protocol
 
-from module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
-from module_02_elo_xg import XGWeightedELO
-from module_03_home_away import HomeAwayDecomposer, Stadium, TravelInfo
-from module_04_hierarchical_bayes import HierarchicalBayesianModel
-from module_05_06_07_weibull_zip_mc import MonteCarloSimulator, WeibullGoalModel, ZIPModel
+from model.module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
+from model.module_02_elo_xg import XGWeightedELO
+from model.module_03_home_away import HomeAwayDecomposer, Stadium, TravelInfo
+from model.module_04_hierarchical_bayes import HierarchicalBayesianModel
+from model.module_05_06_07_weibull_zip_mc import MonteCarloSimulator, WeibullGoalModel, ZIPModel
 
 
 logger = logging.getLogger(__name__)

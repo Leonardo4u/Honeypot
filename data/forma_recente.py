@@ -100,7 +100,7 @@ def carregar_medias_safe():
         try:
             from .atualizar_stats import carregar_medias
         except ImportError:
-            from atualizar_stats import carregar_medias
+            from data.atualizar_stats import carregar_medias
 
         return carregar_medias()
     except Exception:
@@ -112,7 +112,7 @@ def calcular_confianca_contexto(time_casa, time_fora, liga=None, mercado=None):
         from .database import buscar_historico_time, calcular_confianca_calibrada
         from .quality_prior import calcular_prior_qualidade_mercado_liga
     except ImportError:
-        from database import buscar_historico_time, calcular_confianca_calibrada
+        from data.database import buscar_historico_time, calcular_confianca_calibrada
         from quality_prior import calcular_prior_qualidade_mercado_liga
 
     medias = carregar_medias_safe()
@@ -182,7 +182,7 @@ def calcular_confianca_contexto(time_casa, time_fora, liga=None, mercado=None):
 def carregar_forma():
     if not os.path.exists(FORMA_PATH):
         return {}
-    with open(FORMA_PATH, "r", encoding="utf-8") as f:
+    with open(FORMA_PATH, "r", encoding="utf-8-sig") as f:
         return json.load(f)
 
 if __name__ == "__main__":
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     print("O sistema calcula forma usando o banco de dados local.")
     print("Quanto mais resultados registrados, mais preciso fica.\n")
 
-    from atualizar_stats import carregar_medias
+    from data.atualizar_stats import carregar_medias
     medias = carregar_medias()
 
     times_teste = ["Arsenal", "Liverpool", "Palmeiras", "Flamengo"]

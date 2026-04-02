@@ -1,21 +1,39 @@
 {
   "typeCheckingMode": "off",
-  "reportMissingImports": "none",
+  "reportMissingImports": "warning",
   "include": [
     "**/*.py"
   ],
   "exclude": [
     "**/__pycache__",
-    ".planning/**"
+    ".planning/**",
+    "logs/**",
+    "tests/**"
+  ],
+  "ignore": [
+    "scheduler.py",
+    "main.py",
+    "bot/telegram_bot.py",
+    "model/analisar_jogo.py"
   ],
   "executionEnvironments": [
     {
+      "root": "data",
+      "typeCheckingMode": "basic"
+    },
+    {
+      "root": "scripts",
+      "typeCheckingMode": "basic"
+    },
+    {
       "root": ".",
+      "typeCheckingMode": "off",
       "extraPaths": [
         "model",
-        "data"
+        "data",
+        "services"
       ]
     }
   ],
-  "reportMissingModuleSource": "none"
+  "reportMissingModuleSource": "warning"
 }
