@@ -17,7 +17,6 @@ import tempfile
 import types
 import unittest
 from datetime import datetime, timezone
-from pathlib import Path
 from unittest.mock import patch, AsyncMock, MagicMock
 
 # ── Stubs de dependências externas (padrão já estabelecido no projeto) ────────
@@ -95,12 +94,6 @@ if "numpy" not in sys.modules:
     sys.modules["numpy"] = numpy_stub
 
 # ─────────────────────────────────────────────────────────────────────────────
-
-ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-if str(DATA_DIR) not in sys.path:
-    sys.path.insert(0, str(DATA_DIR))
-
 
 class TestBugDadosSimulados(unittest.TestCase):
     """BUG-01: _dados_simulados deve retornar fixture com data futura."""
@@ -336,6 +329,7 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as td:
             from data import database
+            from services import settlement_service
 
             db_path, original_db = self._criar_banco_com_sinal_finalizado(td, status="finalizado")
 
@@ -391,10 +385,10 @@ class TestSettlementNaoDuplicaFinalizacao(unittest.TestCase):
                         "exportar_excel": fake_excel,
                     },
                     clear=False,
-                ), patch("scheduler.sqlite3.connect", return_value=_ConnStub()), \
+                ), patch("services.settlement_service.sqlite3.connect", return_value=_ConnStub()), \
                    patch("scheduler.atualizar_fixture_referencia"), \
                    patch("scheduler.atualizar_resultado") as mock_atualizar_resultado, \
-                   patch("scheduler._registrar_settlement", return_value=False) as mock_registrar:
+                   patch("services.settlement_service._registrar_settlement", return_value=False) as mock_registrar:
                     # _registrar_settlement retorna False — simula banco rejeitando
                     # a atualização porque o sinal já estava finalizado.
                     asyncio.run(scheduler.verificar_resultados_automatico())
@@ -478,6 +472,7 @@ class TestFix05LogEventTelegramReaction(unittest.TestCase):
         com categoria 'telegram' e reason_code 'telegram_reaction_error'.
         """
         import scheduler
+        from services import settlement_service
 
         chamadas_log = []
 
@@ -495,7 +490,17 @@ class TestFix05LogEventTelegramReaction(unittest.TestCase):
 
         with patch("scheduler.log_event", side_effect=_fake_log):
             asyncio.run(
-                scheduler._executar_side_effects_pos_settlement(
+                settlement_service._executar_side_effects_pos_settlement(
+                    context={
+                        "atualizar_banca": lambda *_a, **_k: {"banca_atual": 100.0},
+                        "atualizar_brier": lambda *_a, **_k: None,
+                        "CANAL_VIP": "vip",
+                        "CANAL_FREE": "free",
+                        "log_event": scheduler.log_event,
+                        "carregar_estado_banca": lambda: {"banca_atual": 100.0},
+                        "atualizar_excel": lambda *_a, **_k: None,
+                        "MINIMAL_RUNTIME_OUTPUT": True,
+                    },
                     sinal_id=77,
                     avaliacao={"resultado": "verde", "lucro": 0.9},
                     bot=_BotComFalha(),

@@ -2,19 +2,13 @@ import unittest
 from datetime import UTC, datetime, date
 import os
 import tempfile
-import sys
 
-ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-MODEL_DIR = os.path.join(ROOT, "model")
-if MODEL_DIR not in sys.path:
-    sys.path.insert(0, MODEL_DIR)
-
-from module_01_sharp_money import CLVTracker, SharpMoneyDetector, MarketLine, OddsSnapshot
-from module_02_elo_xg import XGWeightedELO, MatchResult
-from module_03_home_away import HomeAwayDecomposer, Stadium, TravelInfo
-from module_04_hierarchical_bayes import HierarchicalBayesianModel
-from module_05_06_07_weibull_zip_mc import WeibullGoalModel, ZIPModel, MonteCarloSimulator
-from pipeline_integrador import BettingPipeline
+from model.module_01_sharp_money import CLVTracker, SharpMoneyDetector, MarketLine, OddsSnapshot
+from model.module_02_elo_xg import XGWeightedELO, MatchResult
+from model.module_03_home_away import HomeAwayDecomposer, Stadium, TravelInfo
+from model.module_04_hierarchical_bayes import HierarchicalBayesianModel
+from model.module_05_06_07_weibull_zip_mc import WeibullGoalModel, ZIPModel, MonteCarloSimulator
+from model.pipeline_integrador import BettingPipeline
 
 
 class TestAdvancedPipelineModules(unittest.TestCase):

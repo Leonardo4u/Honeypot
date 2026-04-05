@@ -1,13 +1,6 @@
 import unittest
-import os
-import sys
 
-ROOT_DIR = os.path.dirname(os.path.dirname(__file__))
-MODEL_DIR = os.path.join(ROOT_DIR, "model")
-if MODEL_DIR not in sys.path:
-    sys.path.insert(0, MODEL_DIR)
-
-import poisson
+from model import poisson
 
 
 class TestPoissonOverUnderDC(unittest.TestCase):

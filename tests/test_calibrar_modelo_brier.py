@@ -5,8 +5,8 @@ from contextlib import redirect_stdout
 import pandas as pd
 
 import calibrar_modelo as calibrador
-import poisson
-import xg_understat
+from model import poisson
+from data import xg_understat
 
 
 class TestCalibrarModeloBrier(unittest.TestCase):

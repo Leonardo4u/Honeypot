@@ -8,7 +8,7 @@ from types import SimpleNamespace
 import pandas as pd
 
 import calibrar_modelo
-import poisson
+from model import poisson
 
 
 class TestPoissonCalibracaoRuntime(unittest.TestCase):
@@ -71,7 +71,7 @@ class TestPoissonCalibracaoRuntime(unittest.TestCase):
             path = os.path.join(td, "calibracao_ligas.json")
             calibrar_modelo.CALIBRACAO_LIGAS_PATH = path
 
-            with patch("poisson.estimar_rho", side_effect=[-0.03, -0.07]):
+            with patch("model.poisson.estimar_rho", side_effect=[-0.03, -0.07]):
                 rho_calibrado = calibrar_modelo.calibrar_rho_por_liga(df)
 
             self.assertEqual(rho_calibrado["La Liga"], -0.03)
@@ -92,7 +92,7 @@ class TestPoissonCalibracaoRuntime(unittest.TestCase):
             [{"liga": "Premier League", "gols_casa": 2, "gols_fora": 1}]
         )
 
-        with patch("poisson.estimar_rho", return_value=-0.04):
+        with patch("model.poisson.estimar_rho", return_value=-0.04):
             with patch("calibrar_modelo.json.dump", side_effect=OSError("falha")):
                 saida = calibrar_modelo.calibrar_rho_por_liga(df)
 
@@ -102,7 +102,7 @@ class TestPoissonCalibracaoRuntime(unittest.TestCase):
         dados = [{"gols_casa": 1 + (i % 3), "gols_fora": i % 2} for i in range(60)]
 
         fake_result = SimpleNamespace(success=True, x=[-0.08], nit=7)
-        with patch("poisson.minimize", return_value=fake_result):
+        with patch("model.poisson.minimize", return_value=fake_result):
             with patch("builtins.print") as mocked_print:
                 rho = poisson.estimar_rho(dados, league_name="Bundesliga", debug=True)
 
@@ -117,7 +117,7 @@ class TestPoissonCalibracaoRuntime(unittest.TestCase):
         def _fake_minimize(_func, x0=None, method=None, bounds=None):
             return SimpleNamespace(success=True, x=[float(x0[0])], nit=1)
 
-        with patch("poisson.minimize", side_effect=_fake_minimize):
+        with patch("model.poisson.minimize", side_effect=_fake_minimize):
             with patch("builtins.print") as mocked_print:
                 _ = poisson.estimar_rho(dados, league_name="La Liga", debug=True)
 

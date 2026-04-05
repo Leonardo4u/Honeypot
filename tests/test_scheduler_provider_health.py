@@ -2,13 +2,7 @@ import unittest
 from unittest.mock import patch
 import sys
 import types
-from pathlib import Path
 from datetime import datetime, timedelta, timezone
-
-ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-if str(DATA_DIR) not in sys.path:
-    sys.path.insert(0, str(DATA_DIR))
 
 if "requests" not in sys.modules:
     requests_stub = types.ModuleType("requests")

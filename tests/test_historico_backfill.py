@@ -8,8 +8,8 @@ import pandas as pd
 
 import calibrar_modelo
 from data import database
-import poisson
-import xg_understat
+from model import poisson
+from data import xg_understat
 
 
 class TestHistoricoSchemaSafety(unittest.TestCase):

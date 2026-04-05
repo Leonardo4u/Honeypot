@@ -1,19 +1,12 @@
-import sys
 import os
 import json
 import tempfile
 import unittest
-from pathlib import Path
 from unittest.mock import patch
 
-ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = ROOT / "model"
-if str(MODEL_DIR) not in sys.path:
-    sys.path.insert(0, str(MODEL_DIR))
-
-import filtros
-from filtros import aplicar_triple_gate
-from signal_policy import (
+from model import filtros
+from model.filtros import aplicar_triple_gate
+from model.signal_policy import (
     REJECT_CODE_LINEUP_UNCONFIRMED,
     REJECT_CODE_PASSED,
     REJECT_REASON_CODES,

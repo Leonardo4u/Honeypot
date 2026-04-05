@@ -1,18 +1,11 @@
 import csv
 import os
 import sqlite3
-import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = ROOT / "model"
-if str(MODEL_DIR) not in sys.path:
-    sys.path.insert(0, str(MODEL_DIR))
-
-from picks_log import PickLogger
+from model.picks_log import PickLogger
 
 
 class TestPickLogger(unittest.TestCase):

@@ -1,15 +1,11 @@
 import copy
 import json
-import sys
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = ROOT / "model"
-if str(MODEL_DIR) not in sys.path:
-    sys.path.insert(0, str(MODEL_DIR))
 
-from analisar_jogo import analisar_jogo
+from model.analisar_jogo import analisar_jogo
 
 
 class TestAnalisarJogo(unittest.TestCase):

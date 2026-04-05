@@ -1,13 +1,8 @@
+import importlib
 import sys
 import types
 import unittest
 from unittest.mock import patch
-from pathlib import Path
-
-ROOT = Path(__file__).resolve().parents[1]
-DATA_DIR = ROOT / "data"
-if str(DATA_DIR) not in sys.path:
-    sys.path.insert(0, str(DATA_DIR))
 
 if "requests" not in sys.modules:
     requests_stub = types.ModuleType("requests")
@@ -21,14 +16,18 @@ if "dotenv" not in sys.modules:
     dotenv_stub.load_dotenv = lambda *args, **kwargs: None
     sys.modules["dotenv"] = dotenv_stub
 
-from data.verificar_resultados import buscar_resultado_jogo, obter_janela_settlement_dias
+from data import verificar_resultados as _verificar_resultados
 
 
 class TestSettlementFixtureResolution(unittest.TestCase):
+    def setUp(self):
+        # Isolamento defensivo: garante modulo limpo mesmo apos testes que mexem em sys.modules.
+        self._vr = importlib.reload(_verificar_resultados)
+
     def test_obter_janela_settlement_por_competicao(self):
-        self.assertEqual(obter_janela_settlement_dias("UEFA Champions League"), 4)
-        self.assertEqual(obter_janela_settlement_dias("soccer_uefa_europa_league"), 4)
-        self.assertEqual(obter_janela_settlement_dias("Premier League"), 2)
+        self.assertEqual(self._vr.obter_janela_settlement_dias("UEFA Champions League"), 4)
+        self.assertEqual(self._vr.obter_janela_settlement_dias("soccer_uefa_europa_league"), 4)
+        self.assertEqual(self._vr.obter_janela_settlement_dias("Premier League"), 2)
 
     @patch("data.verificar_resultados.request_with_retry")
     def test_resolver_prioriza_fixture_id_quando_disponivel(self, mocked_retry):
@@ -52,7 +51,7 @@ class TestSettlementFixtureResolution(unittest.TestCase):
             },
         }
 
-        resultado = buscar_resultado_jogo(
+        resultado = self._vr.buscar_resultado_jogo(
             time_casa="Arsenal",
             time_fora="Chelsea",
             fixture_id="9001",
@@ -115,7 +114,7 @@ class TestSettlementFixtureResolution(unittest.TestCase):
 
         mocked_retry.side_effect = fake_retry
 
-        resultado = buscar_resultado_jogo(
+        resultado = self._vr.buscar_resultado_jogo(
             time_casa="Arsenal",
             time_fora="Chelsea",
             horario="2026-03-21T17:30:00Z",
@@ -130,7 +129,7 @@ class TestSettlementFixtureResolution(unittest.TestCase):
     def test_resolver_retorna_none_quando_nao_acha_candidato(self, mocked_retry):
         mocked_retry.return_value = {"ok": True, "data": {"response": []}}
 
-        resultado = buscar_resultado_jogo(
+        resultado = self._vr.buscar_resultado_jogo(
             time_casa="Arsenal",
             time_fora="Chelsea",
             horario="2026-03-21T17:30:00Z",
@@ -142,7 +141,7 @@ class TestSettlementFixtureResolution(unittest.TestCase):
     def test_janela_maior_para_competicao_aumenta_busca_por_datas(self, mocked_retry):
         mocked_retry.return_value = {"ok": True, "data": {"response": []}}
 
-        resultado = buscar_resultado_jogo(
+        resultado = self._vr.buscar_resultado_jogo(
             time_casa="Arsenal",
             time_fora="Chelsea",
             horario="2026-03-21T17:30:00Z",

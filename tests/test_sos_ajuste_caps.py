@@ -1,3 +1,4 @@
+import importlib
 import unittest
 from unittest.mock import patch
 
@@ -5,6 +6,10 @@ from data import sos_ajuste
 
 
 class TestSOSAjusteCaps(unittest.TestCase):
+    def setUp(self):
+        # Isolamento defensivo: recarrega o modulo para evitar residuos de monkeypatch/stubs.
+        importlib.reload(sos_ajuste)
+
     def test_faixa_conservadora_para_medias(self):
         fake_sos = {
             "media_liga_xg_concedido": 1.2,

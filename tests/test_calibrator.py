@@ -1,15 +1,8 @@
 import os
-import sys
 import tempfile
 import unittest
-from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-MODEL_DIR = ROOT / "model"
-if str(MODEL_DIR) not in sys.path:
-    sys.path.insert(0, str(MODEL_DIR))
-
-from calibrator import BucketCalibrator
+from model.calibrator import BucketCalibrator
 
 
 class TestBucketCalibrator(unittest.TestCase):
