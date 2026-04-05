@@ -2,18 +2,24 @@ import json
 import logging
 import sqlite3
 import traceback
+from typing import Any, Callable, Dict, List, Tuple
 
 
 logger = logging.getLogger(__name__)
 
 
 class DataCollectionService:
-    def __init__(self, fetcher, formatter, health_counter):
+    def __init__(
+        self,
+        fetcher: Callable[[str], Dict[str, Any]],
+        formatter: Callable[[List[Dict[str, Any]]], List[Dict[str, Any]]],
+        health_counter: Callable[[Dict[str, int], Any], Any],
+    ) -> None:
         self._fetcher = fetcher
         self._formatter = formatter
         self._health_counter = health_counter
 
-    def collect_by_league(self, liga_key, provider_health):
+    def collect_by_league(self, liga_key: str, provider_health: Dict[str, int]) -> Tuple[Dict[str, Any], List[Dict[str, Any]]]:
         fetch_result = self._fetcher(liga_key)
         self._health_counter(provider_health, fetch_result.get("status"))
         dados_api = fetch_result.get("data", [])
@@ -22,10 +28,18 @@ class DataCollectionService:
 
 
 class ObservabilityService:
-    def __init__(self, log_event_fn):
+    def __init__(self, log_event_fn: Callable[..., Any]) -> None:
         self._log_event = log_event_fn
 
-    def warning_payload(self, job_nome, jogo, mercado, etapa, reason_code, error):
+    def warning_payload(
+        self,
+        job_nome: str,
+        jogo: str,
+        mercado: str,
+        etapa: str,
+        reason_code: str,
+        error: Exception,
+    ) -> None:
         payload = {
             "job_nome": job_nome,
             "jogo": jogo,
@@ -47,11 +61,20 @@ class ObservabilityService:
 
 
 class FallbackEvaluationService:
-    def __init__(self, registrar_fallback_cycle_detail, observability):
+    def __init__(self, registrar_fallback_cycle_detail: Callable[..., Any], observability: ObservabilityService) -> None:
         self._registrar = registrar_fallback_cycle_detail
         self._observability = observability
 
-    def persist_fallback_detail(self, job_nome, janela_chave, liga, jogo, mercado, motivo_fallback, detalhes):
+    def persist_fallback_detail(
+        self,
+        job_nome: str,
+        janela_chave: str,
+        liga: str,
+        jogo: str,
+        mercado: str,
+        motivo_fallback: str,
+        detalhes: Dict[str, Any],
+    ) -> None:
         try:
             self._registrar(
                 job_nome=job_nome,
@@ -74,5 +97,5 @@ class FallbackEvaluationService:
 
 
 class DispatchSettlementService:
-    def should_dispatch(self, analise):
+    def should_dispatch(self, analise: Dict[str, Any]) -> bool:
         return bool(analise and analise.get("decisao") != "DESCARTAR")
