@@ -18,7 +18,8 @@ import sqlite3
 import subprocess
 import random
 import json as _json
-from datetime import datetime, timezone, timedelta
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeout
+from datetime import datetime, timezone
 
 from model.analisar_jogo import analisar_jogo, formatar_sinal
 from model.filtros import aplicar_triple_gate
@@ -69,7 +70,6 @@ from data.janela_monitoramento import buscar_jogos_janela_expandida, registrar_j
 from data.quality_telemetry import registrar_snapshot_qualidade_semanal, avaliar_drift_historico
 from model.signal_policy import MIN_EDGE_SCORE, MIN_CONFIANCA
 from model.edge_score import MIN_CONFIDENCE_ACTIONABLE
-from model.picks_log import PickLogger
 try:
     from model.signal_policy_v2 import (
         EVMinimoPolicy,
@@ -93,6 +93,7 @@ from services.scheduler_services import (
     ObservabilityService,
     DispatchSettlementService,
 )
+from services import alert_service, dispatch_service, settlement_service
 
 from dotenv import load_dotenv
 from telegram import Bot
@@ -169,6 +170,11 @@ SLO_CYCLE_LATENCY_MAX_SECONDS = float(os.getenv("SLO_CYCLE_LATENCY_MAX_SECONDS",
 SLO_DRIFT_MAX_BRIER = float(os.getenv("SLO_DRIFT_MAX_BRIER", "0.25"))
 CANARY_RATIO = float(os.getenv("EDGE_CANARY_RATIO", "1.0"))
 CANARY_MODE_ENABLED = os.getenv("EDGE_CANARY_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+QUALITY_CANARY_MIN_EDGE = 0.75
+QUALITY_CANARY_MIN_SCORE = 82.0
+QUALITY_CANARY_STAKE_FRACTION = 0.01
+ANALISE_JOGO_TIMEOUT_SEGUNDOS = int(os.getenv("ANALISE_JOGO_TIMEOUT", "30"))
+CICLO_TIMEOUT_SEGUNDOS = int(os.getenv("CICLO_TIMEOUT", "110"))
 ADVANCED_PIPELINE_ENABLED = os.getenv("EDGE_ADVANCED_PIPELINE_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
 ADVANCED_PIPELINE_MC_SIMS = int(os.getenv("EDGE_ADVANCED_PIPELINE_MC_SIMS", "2000"))
 PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
@@ -181,6 +187,7 @@ MODEL_SHADOW_MODE = os.getenv("EDGE_MODEL_SHADOW_MODE", "1").strip().lower() in 
 MODEL_SHADOW_PROMOTION_WINDOW_DAYS = int(os.getenv("EDGE_MODEL_SHADOW_WINDOW_DAYS", "21"))
 MODEL_SHADOW_BOOTSTRAP_ITERS = int(os.getenv("EDGE_MODEL_SHADOW_BOOTSTRAP_ITERS", "2000"))
 MIN_CONFIANCA_EFETIVA = max(float(MIN_CONFIANCA), float(MIN_CONFIDENCE_ACTIONABLE))
+DRY_RUN_RELAXED_GATES = os.getenv("EDGE_DRY_RUN_RELAXED_GATES", "0").strip().lower() in ("1", "true", "yes", "on")
 
 EXECUCAO_CICLO = {
     "job_nome": None,
@@ -805,6 +812,112 @@ def aplicar_canary_operacional(selecionados, ratio=1.0, enabled=False):
     return selecionados[:permitidos], selecionados[permitidos:]
 
 
+def _quality_canary_enabled():
+    return os.getenv("EDGE_QUALITY_CANARY_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+
+
+def _is_quality_canary_candidate(source_quality_low, edge, score):
+    if not _quality_canary_enabled():
+        return False
+    try:
+        edge_v = float(edge or 0.0)
+        score_v = float(score or 0.0)
+    except (TypeError, ValueError):
+        return False
+    return bool(source_quality_low) and edge_v >= QUALITY_CANARY_MIN_EDGE and score_v >= QUALITY_CANARY_MIN_SCORE
+
+
+def _apply_quality_canary_stake_override(kelly_payload):
+    banca = kelly_payload.get("banca_atual")
+    if banca is None:
+        banca = carregar_estado_banca().get("banca_atual", 0.0)
+    try:
+        banca_num = float(banca)
+    except (TypeError, ValueError):
+        banca_num = 0.0
+
+    stake_pct = QUALITY_CANARY_STAKE_FRACTION * 100.0
+    stake_reais = round(max(0.0, banca_num * QUALITY_CANARY_STAKE_FRACTION), 2)
+    return round(stake_pct, 2), stake_reais
+
+
+def _emit_quality_canary_log(edge, score):
+    mensagem = f"[CANARY] source_quality_low bypass: edge={float(edge or 0.0):.2%} score={float(score or 0.0):.1f} stake=1%"
+    logging.info(mensagem)
+    print(mensagem)
+    return mensagem
+
+
+def _ler_timeout_env(var_name, fallback):
+    try:
+        return max(1, int(os.getenv(var_name, str(fallback))))
+    except (TypeError, ValueError):
+        return int(fallback)
+
+
+def _timeout_analise_jogo_segundos():
+    return _ler_timeout_env("ANALISE_JOGO_TIMEOUT", ANALISE_JOGO_TIMEOUT_SEGUNDOS)
+
+
+def _timeout_ciclo_segundos():
+    return _ler_timeout_env("CICLO_TIMEOUT", CICLO_TIMEOUT_SEGUNDOS)
+
+
+def analisar_jogo_com_timeout(
+    dados_analise,
+    *,
+    jogo,
+    mercado,
+    log_dc=True,
+    timeout=None,
+    analisar_fn=None,
+    registrar_alerta_fn=None,
+):
+    timeout_segundos = int(timeout if timeout is not None else _timeout_analise_jogo_segundos())
+    if analisar_fn is None:
+        analisar_fn = analisar_jogo
+    if registrar_alerta_fn is None:
+        registrar_alerta_fn = registrar_alerta_operacional
+    jogo_nome = str(jogo.get("jogo", dados_analise.get("jogo", "jogo_desconhecido")))
+    home = str(jogo.get("home_team", ""))
+    away = str(jogo.get("away_team", ""))
+    confronto = f"{home} vs {away}" if home and away else jogo_nome
+
+    executor = ThreadPoolExecutor(max_workers=1)
+    future = executor.submit(analisar_fn, dados_analise, log_dc=log_dc)
+    try:
+        return future.result(timeout=timeout_segundos)
+    except FuturesTimeout:
+        mensagem = (
+            f"[WATCHDOG] Timeout de {timeout_segundos}s ao analisar "
+            f"{confronto} ({mercado}) - jogo pulado"
+        )
+        print(mensagem)
+        logging.error(mensagem)
+        if registrar_alerta_fn is not None:
+            registrar_alerta_fn(
+                severidade="warning",
+                codigo="watchdog_timeout",
+                playbook_id="PB-03",
+                detalhes={
+                    "evento": "watchdog_timeout",
+                    "jogo": confronto,
+                    "mercado": mercado,
+                    "timeout_segundos": timeout_segundos,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                },
+            )
+        return None
+    except Exception as exc:
+        mensagem = f"[WATCHDOG] Erro ao analisar jogo {confronto} ({mercado}): {exc}"
+        print(mensagem)
+        logging.error(mensagem)
+        return None
+    finally:
+        future.cancel()
+        executor.shutdown(wait=False, cancel_futures=True)
+
+
 def avaliar_guardrails_hard_limits():
     perda_diaria = calcular_perda_diaria_unidades()
     exposicao_pendente = calcular_exposicao_pendente_unidades(janela_horas=EXPOSURE_WINDOW_HOURS)
@@ -909,116 +1022,26 @@ def avaliar_slo_alertas(provider_health, total_avaliacoes_mercado, ciclo_duracao
     return alertas
 
 
-def emitir_alerta_operacional(alerta):
-    detalhes = dict(alerta.get("detalhes") or {})
-    detalhes["playbook_link"] = PLAYBOOK_LINK
-    registrar_alerta_operacional(
-        severidade=alerta.get("severidade", "warning"),
-        codigo=alerta.get("codigo", "unknown_alert"),
-        playbook_id=alerta.get("playbook"),
-        detalhes=detalhes,
+async def emitir_alerta_operacional(alerta):
+    await alert_service.emitir_alerta_operacional(
+        alerta=alerta,
+        token=TOKEN,
+        chat_id=CANAL_VIP,
+        playbook_link=PLAYBOOK_LINK,
+        registrar_alerta_fn=registrar_alerta_operacional,
+        log_event_fn=log_event,
+        bot_cls=Bot,
     )
-    log_event(
-        "runtime",
-        "slo",
-        alerta.get("codigo", "unknown"),
-        alerta.get("severidade", "warning"),
-        alerta.get("playbook"),
-        detalhes,
-    )
-
-    if not TOKEN or not CANAL_VIP:
-        return
-
-    texto = (
-        f"ALERTA OPERACIONAL [{alerta.get('severidade', 'warning').upper()}]\n"
-        f"Codigo: {alerta.get('codigo', 'unknown_alert')}\n"
-        f"Playbook: {alerta.get('playbook', 'n/a')}\n"
-        f"Link: {detalhes.get('playbook_link', PLAYBOOK_LINK)}\n"
-        f"Detalhes: {_json.dumps(detalhes, ensure_ascii=False)}"
-    )
-
-    async def _send_alert():
-        await Bot(token=TOKEN).send_message(chat_id=CANAL_VIP, text=texto)
-
-    def _log_alert_task_exception(task):
-        try:
-            if task.cancelled():
-                return
-            exc = task.exception()
-        except asyncio.CancelledError:
-            return
-        except Exception as cb_err:
-            log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(cb_err)})
-            return
-
-        if exc:
-            log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(exc)})
-
-    try:
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            asyncio.run(_send_alert())
-            return
-
-        task = loop.create_task(_send_alert())
-        task.add_done_callback(_log_alert_task_exception)
-    except Exception as e:
-        log_event("runtime", "slo", "telegram", "warning", "alert_send_failed", {"erro": str(e)})
 
 
 def enviar_alerta_drift_historico(alerta):
-    if not alerta:
-        return
-    if not TOKEN or not CANAL_VIP:
-        return
-
-    msg = (
-        "ALERTA DRIFT (rolling)\n\n"
-        f"Metrica: {alerta.get('metrica')}\n"
-        f"Segmento: {alerta.get('segmento_tipo')}={alerta.get('segmento_valor')}\n"
-        f"Periodo: {alerta.get('periodo_inicio')} ate {alerta.get('periodo_fim')}\n"
-        f"Persistencia minima: {alerta.get('min_persistencia')} semanas\n"
-        f"Valor atual: {alerta.get('valor_atual')}"
+    alert_service.emitir_alerta_drift_historico(
+        alerta=alerta,
+        token=TOKEN,
+        chat_id=CANAL_VIP,
+        log_event_fn=log_event,
+        bot_cls=Bot,
     )
-
-    def _log_task_exception(task):
-        try:
-            exc = task.exception()
-        except Exception as cb_err:
-            log_event(
-                "runtime",
-                "drift",
-                "telegram",
-                "warning",
-                "drift_alert_send_failed",
-                {"erro": str(cb_err)},
-            )
-            return
-
-        if exc:
-            log_event(
-                "runtime",
-                "drift",
-                "telegram",
-                "warning",
-                "drift_alert_send_failed",
-                {"erro": str(exc)},
-            )
-
-    try:
-        bot = Bot(token=TOKEN)
-        try:
-            loop = asyncio.get_running_loop()
-        except RuntimeError:
-            asyncio.run(bot.send_message(chat_id=CANAL_VIP, text=msg))
-            return
-
-        task = loop.create_task(bot.send_message(chat_id=CANAL_VIP, text=msg))
-        task.add_done_callback(_log_task_exception)
-    except Exception as e:
-        log_event("runtime", "drift", "telegram", "warning", "drift_alert_send_failed", {"erro": str(e)})
 
 def obter_media_gols(time_casa, time_fora, liga_key="soccer_epl"):
     xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
@@ -1113,61 +1136,43 @@ def executar_preflight():
     )
 
 def formatar_sinal_kelly(analise, kelly):
-    if analise["decisao"] == "DESCARTAR":
-        return None
-
-    emoji_tier = {"elite": "🔥", "premium": "⚡", "padrao": "✅"}
-    emoji = emoji_tier.get(kelly["tier"], "✅")
-
-    mercados_legivel = {
-        "1x2_casa": "Vitória do time da casa",
-        "1x2_fora": "Vitória do time visitante",
-        "over_2.5":  "Mais de 2.5 gols na partida",
-        "under_2.5": "Menos de 2.5 gols na partida",
-    }
-    mercado_texto = mercados_legivel.get(analise["mercado"], analise["mercado"])
-
-    horario_raw = analise.get("horario", "")
-    try:
-        dt = datetime.strptime(horario_raw, "%Y-%m-%dT%H:%M:%SZ")
-        dt_brasil = dt - timedelta(hours=3)
-        horario_formatado = dt_brasil.strftime("%d/%m/%Y — %H:%M")
-    except Exception:
-        horario_formatado = horario_raw
-
-    estado = carregar_estado_banca()
-    banca_atual = estado["banca_atual"]
-
-    steam_linha = ""
-    if analise.get("steam_bonus", 0) > 0:
-        steam_linha = f"🔥 Steam: +{analise['steam_bonus']}pts (sharp money)\n"
-
-    sos_linha = ""
-    if "+SOS" in analise.get("fonte_dados", ""):
-        sos_linha = f"📐 SOS: força do adversário ajustada\n"
-
-    msg = (
-        f"{emoji} SINAL EDGE PROTOCOL — {kelly['tier'].upper()}\n\n"
-        f"🏆 {analise['liga']}\n"
-        f"⚽ {analise['jogo']}\n"
-        f"📅 {horario_formatado}\n\n"
-        f"📌 Aposta: {mercado_texto}\n"
-        f"💰 Odd: {analise['odd']}\n"
-        f"📊 EDGE Score: {analise['edge_score']}/100\n"
-        f"🎯 EV: {analise['ev_percentual']}\n"
-        f"{steam_linha}"
-        f"{sos_linha}"
-        f"\n🏦 Kelly: {kelly['kelly_final_pct']}% da banca\n"
-        f"💵 Valor: R${analise['stake_reais']:.2f}\n"
-        f"   (Banca: R${banca_atual:.2f})\n\n"
-        f"━━━━━━━━━━━━━━━\n"
-        f"⚡ Edge Protocol"
-    )
-    return msg
+    return dispatch_service.formatar_pick(analise, kelly, carregar_estado_banca)
 
 
 async def processar_jogos(dry_run=False):
     ciclo_inicio = time.perf_counter()
+    ciclo_inicio_watchdog = time.monotonic()
+    ciclo_watchdog_disparado = False
+
+    def ciclo_timeout_excedido(contexto):
+        nonlocal ciclo_watchdog_disparado
+        timeout_segundos = _timeout_ciclo_segundos()
+        decorrido = time.monotonic() - ciclo_inicio_watchdog
+        if decorrido < timeout_segundos:
+            return False
+
+        if not ciclo_watchdog_disparado:
+            mensagem = f"[WATCHDOG] Ciclo ultrapassou {timeout_segundos}s - forçando encerramento"
+            print(mensagem)
+            logging.error(mensagem)
+            detalhes = {
+                "evento": "watchdog_cycle_timeout",
+                "timeout_segundos": timeout_segundos,
+                "duracao_segundos": round(decorrido, 3),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "contexto": contexto,
+            }
+            if not dry_run:
+                registrar_alerta_operacional(
+                    severidade="critical",
+                    codigo="watchdog_cycle_timeout",
+                    playbook_id="PB-03",
+                    detalhes=detalhes,
+                )
+            log_event("runtime", "watchdog", "cycle", "critical", "watchdog_cycle_timeout", detalhes)
+            ciclo_watchdog_disparado = True
+        return True
+
     if not _garantir_schema_db():
         if not dry_run:
             return
@@ -1230,6 +1235,18 @@ async def processar_jogos(dry_run=False):
 
     jogos_processados = set()
     candidatos = []
+    dry_run_discard_counts = {}
+
+    def registrar_descarte_dry_run(jogo_nome, mercado_nome, motivo, detalhes=None):
+        if not dry_run:
+            return
+        chave_motivo = str(motivo or "descarte_indefinido")
+        dry_run_discard_counts[chave_motivo] = dry_run_discard_counts.get(chave_motivo, 0) + 1
+        sufixo = ""
+        if detalhes:
+            sufixo = f" | {detalhes}"
+        print(f"[dry-run][descartado] {jogo_nome} | {mercado_nome} | {chave_motivo}{sufixo}")
+
     provider_health = {
         "ok": 0,
         "timeout": 0,
@@ -1250,6 +1267,9 @@ async def processar_jogos(dry_run=False):
     _odds_cache: dict = {}
 
     for liga_key in LIGAS:
+        if ciclo_timeout_excedido({"etapa": "liga", "liga_key": liga_key}):
+            break
+
         fetch_result = buscar_jogos_com_odds_com_status(liga_key)
         status = (fetch_result or {}).get("status")
         if status in provider_health:
@@ -1259,6 +1279,9 @@ async def processar_jogos(dry_run=False):
         jogos = formatar_jogos((fetch_result or {}).get("data", []))
 
         for jogo in jogos:
+            if ciclo_timeout_excedido({"etapa": "jogo", "liga_key": liga_key, "jogo": jogo.get("jogo", "desconhecido")}):
+                break
+
             if jogo["jogo"] in jogos_processados:
                 continue
             jogos_processados.add(jogo["jogo"])
@@ -1309,6 +1332,16 @@ async def processar_jogos(dry_run=False):
 
                 primeiro_mercado = True
                 for market_cfg in listar_mercados_runtime():
+                    if ciclo_timeout_excedido(
+                        {
+                            "etapa": "mercado",
+                            "liga_key": liga_key,
+                            "jogo": jogo.get("jogo", "desconhecido"),
+                            "mercado": market_cfg.get("mercado"),
+                        }
+                    ):
+                        break
+
                     mercado = market_cfg["mercado"]
                     odd_key = market_cfg["odd_key"]
                     odd_oponente_key = market_cfg["odd_oponente_key"]
@@ -1354,12 +1387,23 @@ async def processar_jogos(dry_run=False):
                     valid_entrada, motivo_entrada = validar_entrada_analise(jogo, odd)
                     if not valid_entrada:
                         provider_health["invalid_input"] += 1
+                        registrar_descarte_dry_run(
+                            jogo.get("jogo", "desconhecido"),
+                            mercado,
+                            motivo_entrada,
+                            f"odd={odd}",
+                        )
                         if not MINIMAL_RUNTIME_OUTPUT:
                             print(f"Skip entrada {motivo_entrada}: {jogo.get('jogo', 'desconhecido')} | {mercado}")
                         continue
 
                     chave = f"{jogo['jogo']}|{mercado}"
                     if chave in ja_enviados:
+                        registrar_descarte_dry_run(
+                            jogo.get("jogo", "desconhecido"),
+                            mercado,
+                            "ja_enviado_no_dia",
+                        )
                         continue
 
                     dados_analise = {
@@ -1380,9 +1424,23 @@ async def processar_jogos(dry_run=False):
                     }
 
                     dados_analise["shadow_mode"] = MODEL_SHADOW_MODE
-                    analise = analisar_jogo(dados_analise, log_dc=primeiro_mercado)
-                    _registrar_shadow_prediction_runtime(analise, dados_analise)
+                    analise = analisar_jogo_com_timeout(
+                        dados_analise,
+                        jogo=jogo,
+                        mercado=mercado,
+                        log_dc=primeiro_mercado,
+                    )
                     primeiro_mercado = False
+
+                    if analise is None:
+                        registrar_descarte_dry_run(
+                            jogo.get("jogo", "desconhecido"),
+                            mercado,
+                            "watchdog_timeout_analise",
+                        )
+                        continue
+
+                    _registrar_shadow_prediction_runtime(analise, dados_analise)
 
                     if not DISPATCH_SERVICE.should_dispatch(analise):
                         continue
@@ -1408,13 +1466,22 @@ async def processar_jogos(dry_run=False):
                         if not dry_run:
                             registrar_fallback_stats_medias(jogo, mercado, fonte_dados, source_quality)
 
+                    source_quality_low = False
                     if odd_oponente_mercado <= 0:
                         provider_health["missing_odd_oponente"] = provider_health.get("missing_odd_oponente", 0) + 1
                         provider_health["fallback_used"] += 1
+                        source_quality_low = True
                     elif source_quality != "sharp":
                         provider_health["source_quality_low"] = provider_health.get("source_quality_low", 0) + 1
                         if not dry_run:
                             registrar_fallback_source_quality_low(jogo, mercado, fonte_dados, source_quality)
+                        source_quality_low = True
+
+                    quality_canary_pre_filter = _is_quality_canary_candidate(
+                        source_quality_low=source_quality_low,
+                        edge=analise.get("ev", 0.0),
+                        score=(float(analise.get("edge_score", 0.0) or 0.0) + float(steam_bonus or 0.0)),
+                    )
 
                     escalacao_confirmada, origem_escalacao = inferir_escalacao_confirmada(jogo)
                     variacao_odd_gate = calcular_variacao_odd_gate(steam_data)
@@ -1436,7 +1503,13 @@ async def processar_jogos(dry_run=False):
                         "time_fora": away,
                     }, sinais_hoje=sinais_hoje_gate)
 
-                    if not filtro.get("aprovado"):
+                    if not filtro.get("aprovado") and not quality_canary_pre_filter:
+                        registrar_descarte_dry_run(
+                            jogo.get("jogo", "desconhecido"),
+                            mercado,
+                            filtro.get("reason_code") or "filtro_reprovado",
+                            filtro.get("motivo"),
+                        )
                         log_event(
                             "runtime",
                             "gate",
@@ -1455,6 +1528,10 @@ async def processar_jogos(dry_run=False):
                             },
                         )
                         continue
+                    elif not filtro.get("aprovado") and quality_canary_pre_filter:
+                        filtro = dict(filtro)
+                        filtro["aprovado"] = True
+                        filtro["reason_code"] = "source_quality_low_bypass_canary"
 
                     policy_v2_result = None
                     if POLICY_V2_ENABLED and gate_ev_steam is not None and EV_POLICY_V2 is not None and STEAM_POLICY_V2 is not None:
@@ -1527,6 +1604,12 @@ async def processar_jogos(dry_run=False):
                         else:
                             should_block = policy_v2_blocks(policy_v2_result, POLICY_V2_SHADOW_MODE)
                         if should_block:
+                            registrar_descarte_dry_run(
+                                jogo.get("jogo", "desconhecido"),
+                                mercado,
+                                "policy_v2_gate_reject",
+                                policy_v2_result.motivo_final,
+                            )
                             continue
 
                     penalizacao = filtro.get("penalizacao_score", 0)
@@ -1570,15 +1653,14 @@ async def processar_jogos(dry_run=False):
                         )
 
                     analise.setdefault("reasoning_trace", {})
-                    if dry_run:
+                    edge_cutoff_runtime = float(analise.get("edge_cutoff_segment", MIN_EDGE_SCORE) or MIN_EDGE_SCORE)
+                    conf_cutoff_runtime = max(
+                        float(MIN_CONFIANCA_EFETIVA),
+                        float(analise.get("confidence_threshold", MIN_CONFIANCA_EFETIVA) or MIN_CONFIANCA_EFETIVA),
+                    )
+                    if dry_run and DRY_RUN_RELAXED_GATES:
                         edge_cutoff_runtime = -1.0
                         conf_cutoff_runtime = -1.0
-                    else:
-                        edge_cutoff_runtime = float(analise.get("edge_cutoff_segment", MIN_EDGE_SCORE) or MIN_EDGE_SCORE)
-                        conf_cutoff_runtime = max(
-                            float(MIN_CONFIANCA_EFETIVA),
-                            float(analise.get("confidence_threshold", MIN_CONFIANCA_EFETIVA) or MIN_CONFIANCA_EFETIVA),
-                        )
                     analise["reasoning_trace"]["gate_inputs"] = {
                         "min_edge_score": edge_cutoff_runtime,
                         "min_confianca_efetiva": conf_cutoff_runtime,
@@ -1587,7 +1669,23 @@ async def processar_jogos(dry_run=False):
                         "filtro_aprovado": bool(filtro.get("aprovado")),
                     }
 
-                    if filtro["aprovado"] and edge_score_final >= edge_cutoff_runtime and confianca >= conf_cutoff_runtime:
+                    quality_canary_active = _is_quality_canary_candidate(
+                        source_quality_low=source_quality_low,
+                        edge=analise.get("ev", 0.0),
+                        score=edge_score_final,
+                    )
+                    analise["reasoning_trace"]["quality_canary"] = {
+                        "enabled": _quality_canary_enabled(),
+                        "activated": bool(quality_canary_active),
+                        "source_quality_low": bool(source_quality_low),
+                        "edge": float(analise.get("ev", 0.0) or 0.0),
+                        "score": float(edge_score_final or 0.0),
+                    }
+
+                    passou_gate_runtime = bool(
+                        filtro["aprovado"] and edge_score_final >= edge_cutoff_runtime and confianca >= conf_cutoff_runtime
+                    )
+                    if passou_gate_runtime or quality_canary_active:
                         candidatos.append({
                             "analise": analise,
                             "jogo": jogo,
@@ -1605,6 +1703,8 @@ async def processar_jogos(dry_run=False):
                                 "aprovado": (policy_v2_result.aprovado if policy_v2_result is not None else None),
                                 "shadow_mode": POLICY_V2_SHADOW_MODE,
                             },
+                            "canary_quality": bool(quality_canary_active),
+                            "canary_reason": "source_quality_low_bypass_canary" if quality_canary_active else None,
                             "liga_key": liga_key,
                             "dados_odds": dados_odds
                         })
@@ -1617,6 +1717,15 @@ async def processar_jogos(dry_run=False):
                         if confianca < conf_cutoff_runtime:
                             motivos_gate.append("confianca_abaixo_cutoff")
                         analise["reasoning_trace"]["gate_discard"] = motivos_gate
+                        registrar_descarte_dry_run(
+                            jogo.get("jogo", "desconhecido"),
+                            mercado,
+                            "+".join(motivos_gate) if motivos_gate else "gate_discard",
+                            (
+                                f"score={edge_score_final:.1f}/min={edge_cutoff_runtime:.1f}; "
+                                f"conf={confianca}/min={conf_cutoff_runtime:.1f}"
+                            ),
+                        )
 
             except Exception as e:
                 provider_health["connection_error"] += 1
@@ -1627,6 +1736,9 @@ async def processar_jogos(dry_run=False):
                     logging.exception("FAIL em analise")
                 else:
                     print(f"Erro ao processar {jogo['jogo']}: {e}")
+
+        if ciclo_watchdog_disparado:
+            break
 
     candidatos = aplicar_penalizacao_correlacao_ranking(candidatos)
     candidatos = aplicar_cap_por_jogo(candidatos)
@@ -1682,33 +1794,54 @@ async def processar_jogos(dry_run=False):
         )
 
         if not isinstance(kelly, dict):
+            registrar_descarte_dry_run(jogo.get("jogo", "desconhecido"), item.get("mercado", "?"), "kelly_payload_invalido")
             if not MINIMAL_RUNTIME_OUTPUT:
                 print(f"Kelly inválido: {jogo['jogo']} — resposta não é dict")
             continue
 
-        if not kelly.get("aprovado"):
+        quality_canary_pick = bool(item.get("canary_quality"))
+
+        if not kelly.get("aprovado") and not quality_canary_pick:
+            registrar_descarte_dry_run(
+                jogo.get("jogo", "desconhecido"),
+                item.get("mercado", "?"),
+                "kelly_reprovado",
+                kelly.get("motivo", "motivo_indefinido"),
+            )
             if not MINIMAL_RUNTIME_OUTPUT:
                 print(f"Kelly bloqueou: {jogo['jogo']} — {kelly.get('motivo', 'motivo_indefinido')}")
             continue
 
-        required_fields = ["tier", "kelly_final_pct", "valor_reais"]
-        if any(field not in kelly for field in required_fields):
-            if not MINIMAL_RUNTIME_OUTPUT:
-                print(f"Kelly inválido: {jogo['jogo']} — payload incompleto")
-            continue
+        if quality_canary_pick:
+            kelly_final_pct, valor_reais = _apply_quality_canary_stake_override(kelly)
+            kelly["aprovado"] = True
+            kelly["kelly_final_pct"] = kelly_final_pct
+            kelly["valor_reais"] = valor_reais
+            kelly["tier"] = kelly.get("tier") or "padrao"
+            kelly["motivo"] = item.get("canary_reason") or "source_quality_low_bypass_canary"
+            _emit_quality_canary_log(analise.get("ev", 0.0), analise.get("edge_score", 0.0))
+        else:
+            required_fields = ["tier", "kelly_final_pct", "valor_reais"]
+            if any(field not in kelly for field in required_fields):
+                registrar_descarte_dry_run(jogo.get("jogo", "desconhecido"), item.get("mercado", "?"), "kelly_payload_incompleto")
+                if not MINIMAL_RUNTIME_OUTPUT:
+                    print(f"Kelly inválido: {jogo['jogo']} — payload incompleto")
+                continue
 
-        try:
-            kelly_final_pct = float(kelly["kelly_final_pct"])
-            valor_reais = float(kelly["valor_reais"])
-        except (TypeError, ValueError):
-            if not MINIMAL_RUNTIME_OUTPUT:
-                print(f"Kelly inválido: {jogo['jogo']} — valores não numéricos")
-            continue
+            try:
+                kelly_final_pct = float(kelly["kelly_final_pct"])
+                valor_reais = float(kelly["valor_reais"])
+            except (TypeError, ValueError):
+                registrar_descarte_dry_run(jogo.get("jogo", "desconhecido"), item.get("mercado", "?"), "kelly_valor_nao_numerico")
+                if not MINIMAL_RUNTIME_OUTPUT:
+                    print(f"Kelly inválido: {jogo['jogo']} — valores não numéricos")
+                continue
 
-        if not math.isfinite(kelly_final_pct) or not math.isfinite(valor_reais) or kelly_final_pct < 0 or valor_reais < 0:
-            if not MINIMAL_RUNTIME_OUTPUT:
-                print(f"Kelly inválido: {jogo['jogo']} — stake fora da faixa segura")
-            continue
+            if not math.isfinite(kelly_final_pct) or not math.isfinite(valor_reais) or kelly_final_pct < 0 or valor_reais < 0:
+                registrar_descarte_dry_run(jogo.get("jogo", "desconhecido"), item.get("mercado", "?"), "kelly_stake_fora_faixa")
+                if not MINIMAL_RUNTIME_OUTPUT:
+                    print(f"Kelly inválido: {jogo['jogo']} — stake fora da faixa segura")
+                continue
 
         stake_reais = valor_reais
         stake_unidades = round(kelly_final_pct / 1, 2)
@@ -1771,7 +1904,8 @@ async def processar_jogos(dry_run=False):
                 stake=stake_unidades,
                 message_id_vip=message_id_vip,
                 message_id_free=message_id_free,
-                horario=jogo["horario"]
+                horario=jogo["horario"],
+                canary_tag="canary_quality" if quality_canary_pick else None,
             )
         except Exception as e:
             marcar_ciclo_degradado("critical_persistence_insert_sinal", {"jogo": analise.get("jogo"), "erro": str(e)})
@@ -1843,6 +1977,10 @@ async def processar_jogos(dry_run=False):
             f"missing_odd_oponente={provider_health.get('missing_odd_oponente', 0)} "
             f"source_quality_low={provider_health.get('source_quality_low', 0)}"
         )
+    if dry_run and dry_run_discard_counts:
+        print("[dry-run][resumo_descartes]")
+        for motivo, qtd in sorted(dry_run_discard_counts.items(), key=lambda x: (-x[1], x[0])):
+            print(f"  - {motivo}: {qtd}")
     drift_alert = avaliar_alerta_drift_minimo(provider_health, total_avaliacoes_mercado)
     if drift_alert:
         log_event(
@@ -1863,7 +2001,7 @@ async def processar_jogos(dry_run=False):
                 "limiar": PROVIDER_ERROR_RATE_MAX,
             },
         )
-        emitir_alerta_operacional(
+        await emitir_alerta_operacional(
             {
                 "severidade": "critical",
                 "codigo": "provider_error_rate_high",
@@ -1888,7 +2026,7 @@ async def processar_jogos(dry_run=False):
             ciclo_duracao_segundos=ciclo_duracao,
             drift_alerta=drift_alert,
         ):
-            emitir_alerta_operacional(alerta)
+            await emitir_alerta_operacional(alerta)
 
     log_event(
         "scheduler",
@@ -2002,125 +2140,6 @@ async def verificar_clv_fechamento():
 # FIX-10: settlement com side-effects extraídos em funções auxiliares
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _registrar_settlement(sinal_id, avaliacao):
-    """
-    Persiste o resultado do settlement no banco.
-    Retorna True se persistido com sucesso, False caso contrário.
-    Usa atualizar_resultado do namespace do módulo para ser mockável via
-    patch('scheduler.atualizar_resultado') nos testes existentes.
-    """
-    try:
-        atualizar_resultado(sinal_id, avaliacao["resultado"], avaliacao["lucro"])
-        return True
-    except Exception as e:
-        marcar_ciclo_degradado(
-            "critical_persistence_update_resultado",
-            {"sinal_id": sinal_id, "erro": str(e)},
-        )
-        return False
-
-
-async def _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_msg):
-    """
-    Executa os side-effects após settlement confirmado:
-      - atualização de banca
-      - cálculo de Brier
-      - reações Telegram (VIP e FREE)
-      - update de Excel
-    Cada etapa é isolada em try/except para não bloquear as demais.
-    """
-    # Banca
-    try:
-        estado = atualizar_banca(avaliacao["lucro"])
-        print(f"Banca: R${estado['banca_atual']:.2f}")
-    except Exception as e:
-        print(f"Erro banca: {e}")
-
-    # Brier Score
-    try:
-        acertou = avaliacao["resultado"] == "verde"
-        brier = atualizar_brier(sinal_id, acertou)
-        if brier is not None:
-            print(f"Brier #{sinal_id}: {brier:.4f} {'✅' if brier < 0.25 else '⚠️'}")
-    except Exception as e:
-        print(f"Erro Brier: {e}")
-
-    # Reação Telegram
-    if ids_msg:
-        reacao = "✅" if avaliacao["resultado"] == "verde" else "❌"
-        if ids_msg[0]:
-            try:
-                await bot.set_message_reaction(
-                    chat_id=CANAL_VIP,
-                    message_id=ids_msg[0],
-                    reaction=[reacao]
-                )
-            except Exception as e:
-                log_event(
-                    "telegram", "reaction", f"sinal_{sinal_id}", "failed",
-                    "telegram_reaction_error",
-                    {"erro": str(e), "canal": "VIP", "sinal_id": sinal_id},
-                )
-        if ids_msg[1]:
-            try:
-                await bot.set_message_reaction(
-                    chat_id=CANAL_FREE,
-                    message_id=ids_msg[1],
-                    reaction=[reacao]
-                )
-            except Exception as e:
-                log_event(
-                    "telegram", "reaction", f"sinal_{sinal_id}", "failed",
-                    "telegram_reaction_error",
-                    {"erro": str(e), "canal": "FREE", "sinal_id": sinal_id},
-                )
-
-    # Update Excel
-    try:
-        estado_banca = carregar_estado_banca()
-        atualizar_excel({
-            "acao": "resultado",
-            "aposta": {
-                "id": str(sinal_id),
-                "odd_fechamento": None,
-                "resultado": avaliacao["resultado"].capitalize(),
-                "retorno": avaliacao["lucro"],
-                "banca_apos": estado_banca["banca_atual"],
-                "data": datetime.now().strftime("%Y-%m-%d")
-            }
-        })
-    except Exception as e:
-        if not MINIMAL_RUNTIME_OUTPUT:
-            print(f"Erro update Excel (resultado): {e}")
-
-
-def _sync_picks_log_from_db():
-    """Sincroniza outcomes finalizados do SQLite para `picks_log.csv` com tolerancia a falhas."""
-    # INTEGRATION: settlement -> picks_log sync para preencher outcome/closing_odds.
-    csv_path = os.path.join(BOT_DATA_DIR, "picks_log.csv")
-    db_candidates = [
-        os.path.join(BOT_DATA_DIR, "edge_protocol.db"),
-        DB_PATH,
-    ]
-    db_path = next((p for p in db_candidates if p and os.path.exists(p)), DB_PATH)
-    try:
-        summary = PickLogger(csv_path).sync_from_db(db_path)
-        if summary.get("updated", 0) > 0:
-            print(
-                "picks_log sync: "
-                f"{summary['updated']} atualizados "
-                f"(matched={summary['matched']}, unmatched={summary['unmatched']})"
-            )
-    except Exception as e:
-        log_event(
-            "runtime",
-            "settlement",
-            "picks_log_sync",
-            "warning",
-            "picks_log_sync_failed",
-            {"erro": str(e)},
-        )
-
 
 def _registrar_shadow_prediction_runtime(analise, dados_analise):
     if not MODEL_SHADOW_MODE:
@@ -2217,197 +2236,39 @@ def evaluate_shadow_promotion(window_days=21, bootstrap_iters=2000):
     }
 
 
-def _atualizar_clv_settlement(sinal_id, jogo, mercado, liga_nome, outcome):
-    """Atualiza CLV no fechamento e propaga closing odds para picks_log quando disponível."""
-    odd_fechamento = None
-    try:
-        liga_key = LIGA_KEY_MAP.get(liga_nome, "soccer_epl")
-        odd_fechamento = buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key)
-        if odd_fechamento:
-            atualizar_clv(
-                sinal_id,
-                odd_fechamento,
-                outcome=outcome,
-                db_path=DB_PATH,
-            )
-    except Exception as e:
-        log_event(
-            "runtime",
-            "settlement",
-            f"sinal_{sinal_id}",
-            "warning",
-            "clv_update_failed",
-            {"erro": str(e)},
-        )
-
-    if MODEL_SHADOW_MODE:
-        try:
-            liquidar_shadow_predictions_por_sinal(
-                liga=liga_nome,
-                jogo=jogo,
-                mercado=mercado,
-                outcome=int(outcome),
-                closing_odds=odd_fechamento,
-            )
-        except Exception as e:
-            log_event(
-                "runtime",
-                "shadow",
-                f"sinal_{sinal_id}",
-                "warning",
-                "shadow_settlement_failed",
-                {"erro": str(e)},
-            )
-
-
 async def verificar_resultados_automatico():
-    import sys
-
-    if "verificar_resultados" in sys.modules:
-        _vr = sys.modules["verificar_resultados"]
-    else:
-        from data import verificar_resultados as _vr
-
-    buscar_resultado_jogo = _vr.buscar_resultado_jogo
-    avaliar_mercado = _vr.avaliar_mercado
-
-    bot = Bot(token=TOKEN)
-    conn = sqlite3.connect(DB_PATH)
-    c = conn.cursor()
-    c.execute(
-        """
-        SELECT id, jogo, mercado, odd, horario, fixture_id_api, fixture_data_api, liga
-        FROM sinais
-        WHERE status = 'pendente'
-        """
-    )
-    pendentes = c.fetchall()
-    conn.close()
-
-    if not pendentes:
-        return
-
-    print(f"\nVerificando {len(pendentes)} sinais pendentes...")
-    resultado_registrado = False
-
-    for sinal in pendentes:
-        if len(sinal) < 7:
-            log_event(
-                "runtime",
-                "settlement",
-                "pending_row",
-                "warning",
-                "pending_row_shape_invalid",
-                {"row_len": len(sinal)},
-            )
-            continue
-
-        sinal_id = sinal[0]
-        jogo = sinal[1]
-        mercado = sinal[2]
-        odd = sinal[3]
-        horario = sinal[4]
-        fixture_id_api = sinal[5]
-        fixture_data_api = sinal[6]
-        liga = sinal[7] if len(sinal) >= 8 else None
-        try:
-            times = jogo.split(" vs ")
-            if len(times) != 2:
-                continue
-
-            time_casa, time_fora = times
-            resultado = buscar_resultado_jogo(
-                time_casa.strip(),
-                time_fora.strip(),
-                data=fixture_data_api,
-                horario=horario,
-                fixture_id=fixture_id_api,
-                liga=liga,
-            )
-
-            if resultado and (resultado.get("fixture_id_api") or resultado.get("fixture_data_api")):
-                try:
-                    atualizar_fixture_referencia(
-                        sinal_id,
-                        fixture_id_api=resultado.get("fixture_id_api"),
-                        fixture_data_api=resultado.get("fixture_data_api"),
-                    )
-                except Exception as e:
-                    print(f"Erro persistindo fixture #{sinal_id}: {e}")
-
-            if not resultado or resultado["status"] != "finalizado":
-                continue
-
-            avaliacao = avaliar_mercado(resultado, mercado, odd)
-            if not avaliacao:
-                continue
-
-            if not _registrar_settlement(sinal_id, avaliacao):
-                continue
-            resultado_registrado = True
-
-            # INTEGRATION: atualizar CLV/closing odds antes do sync DB->picks_log.
-            outcome = 1 if str(avaliacao.get("resultado", "")).lower() == "verde" else 0
-            _atualizar_clv_settlement(sinal_id, jogo, mercado, liga, outcome)
-
-            # INTEGRATION: sincroniza outcomes no picks_log apos fixture finalizada.
-            _sync_picks_log_from_db()
-
-            conn2 = sqlite3.connect(DB_PATH)
-            c2 = conn2.cursor()
-            c2.execute("SELECT message_id_vip, message_id_free FROM sinais WHERE id = ?",
-                       (sinal_id,))
-            ids_msg = c2.fetchone()
-            conn2.close()
-
-            await _executar_side_effects_pos_settlement(sinal_id, avaliacao, bot, ids_msg)
-
-            print(f"Resultado: #{sinal_id} — {avaliacao['resultado'].upper()}")
-
-        except Exception as e:
-            print(f"Erro #{sinal_id}: {e}")
-
-    if resultado_registrado:
-        try:
-            if "exportar_excel" in sys.modules:
-                gerar_excel = sys.modules["exportar_excel"].gerar_excel
-            else:
-                from data.exportar_excel import gerar_excel
-            gerar_excel()
-            print("Excel atualizado.")
-        except Exception as e:
-            print(f"Erro Excel: {e}")
-
-    if MODEL_SHADOW_MODE:
-        try:
-            promo = evaluate_shadow_promotion(
-                window_days=MODEL_SHADOW_PROMOTION_WINDOW_DAYS,
-                bootstrap_iters=MODEL_SHADOW_BOOTSTRAP_ITERS,
-            )
-            log_event(
-                "runtime",
-                "shadow",
-                "promotion_check",
-                "promote" if promo.get("recommend_promote") else "hold",
-                "shadow_promotion_evaluated",
-                promo,
-            )
-        except Exception as e:
-            log_event(
-                "runtime",
-                "shadow",
-                "promotion_check",
-                "warning",
-                "shadow_promotion_eval_failed",
-                {"erro": str(e)},
-            )
+    contexto_settlement = {
+        "TOKEN": TOKEN,
+        "CANAL_VIP": CANAL_VIP,
+        "CANAL_FREE": CANAL_FREE,
+        "DB_PATH": DB_PATH,
+        "BOT_DATA_DIR": BOT_DATA_DIR,
+        "MINIMAL_RUNTIME_OUTPUT": MINIMAL_RUNTIME_OUTPUT,
+        "MODEL_SHADOW_MODE": MODEL_SHADOW_MODE,
+        "MODEL_SHADOW_PROMOTION_WINDOW_DAYS": MODEL_SHADOW_PROMOTION_WINDOW_DAYS,
+        "MODEL_SHADOW_BOOTSTRAP_ITERS": MODEL_SHADOW_BOOTSTRAP_ITERS,
+        "LIGA_KEY_MAP": LIGA_KEY_MAP,
+        "log_event": log_event,
+        "marcar_ciclo_degradado": marcar_ciclo_degradado,
+        "atualizar_resultado": atualizar_resultado,
+        "atualizar_banca": atualizar_banca,
+        "atualizar_brier": atualizar_brier,
+        "carregar_estado_banca": carregar_estado_banca,
+        "atualizar_excel": atualizar_excel,
+        "atualizar_fixture_referencia": atualizar_fixture_referencia,
+        "buscar_odd_fechamento_pinnacle": buscar_odd_fechamento_pinnacle,
+        "atualizar_clv": atualizar_clv,
+        "liquidar_shadow_predictions_por_sinal": liquidar_shadow_predictions_por_sinal,
+        "evaluate_shadow_promotion": evaluate_shadow_promotion,
+        "gerar_excel": lambda: __import__("data.exportar_excel", fromlist=["gerar_excel"]).gerar_excel(),
+    }
+    await settlement_service.processar_settlement(contexto_settlement)
 
 async def enviar_resumo_diario():
-    from database import resumo_mensal
-    from database import resumo_calibracao
-    from clv_brier import calcular_metricas
+    from data.database import resumo_mensal
+    from data.database import resumo_calibracao
+    from data.clv_brier import calcular_metricas
 
-    bot = Bot(token=TOKEN)
     resumo = resumo_mensal()
     total = resumo[0] or 0
     vitorias = resumo[1] or 0
@@ -2441,23 +2302,23 @@ async def enviar_resumo_diario():
     else:
         calibracao_linha = ""
 
-    msg = (
-        f"📊 RESUMO DO DIA\n\n"
-        f"Sinais: {total} | ✅ {vitorias} | ❌ {derrotas}\n"
-        f"Win Rate: {win_rate:.0f}%\n"
-        f"Lucro: {lucro:+.1f} unidades\n\n"
-        f"💰 Banca: R${b['atual']:.2f}\n"
-        f"📈 ROI: {relatorio['performance']['roi_acumulado_pct']:+.2f}%\n"
-        f"📉 Drawdown: {b['drawdown_atual_pct']:.1f}%\n"
-        f"{clv_linha}"
-        f"{brier_linha}"
-        f"{calibracao_linha}"
-        f"\n━━━━━━━━━━━━━━━\n"
-        f"⚡ Edge Protocol"
+    msg = dispatch_service.formatar_resumo_diario(
+        {
+            "total": total,
+            "vitorias": vitorias,
+            "derrotas": derrotas,
+            "lucro": lucro,
+            "win_rate": win_rate,
+            "banca": b["atual"],
+            "roi": relatorio["performance"]["roi_acumulado_pct"],
+            "drawdown": b["drawdown_atual_pct"],
+            "clv_linha": clv_linha,
+            "brier_linha": brier_linha,
+            "calibracao_linha": calibracao_linha,
+        }
     )
 
-    await bot.send_message(chat_id=CANAL_VIP, text=msg)
-    await bot.send_message(chat_id=CANAL_FREE, text=msg)
+    await dispatch_service.enviar_resumo(msg, token=TOKEN, canal_vip=CANAL_VIP, canal_free=CANAL_FREE)
 
     try:
         atualizar_excel({"acao": "full_refresh"})
@@ -2471,7 +2332,7 @@ def rodar_analise():
     executar_job_guardado("analise", 60, lambda: asyncio.run(processar_jogos()))
 
 def rodar_verificacao():
-    executar_job_guardado("verificacao", 30, lambda: asyncio.run(verificar_resultados_automatico()))
+    executar_job_guardado("verificacao", 5, lambda: asyncio.run(verificar_resultados_automatico()))
 
 def rodar_resumo():
     executar_job_guardado("resumo", 60, lambda: asyncio.run(enviar_resumo_diario()))
@@ -2502,7 +2363,7 @@ def atualizar_stats_semanalmente():
     print("Atualizando médias de gols...")
     atualizar_todas_ligas()
     print("Atualizando xG...")
-    from xg_understat import atualizar_xg_todas_ligas
+    from data.xg_understat import atualizar_xg_todas_ligas
     atualizar_xg_todas_ligas()
 
     try:
@@ -2602,7 +2463,7 @@ def iniciar_scheduler():
         print("  A cada 2h — Monitoramento janela expandida (silencioso)")
         print("  A cada 5min — CLV fechamento")
         print("  A cada 30min — Steam monitoring")
-        print("  A cada 30min (17h-23h) — Verificação de resultados")
+        print("  A cada 5min (17h-23h) — Verificação de resultados")
         print("  23:30 — Resumo diário + Excel full refresh")
         print("  Segunda 06:00 — Atualização de stats + xG")
         print("  Segunda 06:30 — Backtest janela móvel + promoção")
@@ -2615,8 +2476,8 @@ def iniciar_scheduler():
     schedule.every(30).minutes.do(rodar_steam)
 
     for hora in range(17, 24):
-        for minuto in ["00", "30"]:
-            horario = f"{hora:02d}:{minuto}"
+        for minuto in range(0, 60, 5):
+            horario = f"{hora:02d}:{minuto:02d}"
             if horario == "23:30":
                 schedule.every().day.at("23:30").do(rodar_resumo)
             else:
