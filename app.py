@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import sqlite3
 from datetime import datetime
 from pathlib import Path
@@ -11,6 +12,7 @@ from flask import Flask, jsonify, render_template, request
 
 BASE_DIR = Path(__file__).resolve().parent
 DB_PATH = BASE_DIR / "data" / "edge_protocol.db"
+FLASK_DEBUG_ENABLED = os.getenv("FLASK_DEBUG", "0").strip().lower() in ("1", "true", "yes", "on")
 
 app = Flask(__name__)
 
@@ -639,4 +641,4 @@ def api_health():
 
 
 if __name__ == "__main__":
-    app.run(debug=True, host="127.0.0.1", port=5050)
+    app.run(debug=FLASK_DEBUG_ENABLED, host="127.0.0.1", port=5050)

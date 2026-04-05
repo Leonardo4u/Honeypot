@@ -3,13 +3,8 @@ import os
 import sys
 import argparse
 
-
 ROOT = os.path.dirname(os.path.abspath(__file__))
-MODEL_DIR = os.path.join(ROOT, "model")
-if MODEL_DIR not in sys.path:
-    sys.path.insert(0, MODEL_DIR)
-
-from calibrator import BucketCalibrator, CalibratorRegistry
+from model.calibrator import BucketCalibrator, CalibratorRegistry
 
 
 BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(ROOT, "data"))
