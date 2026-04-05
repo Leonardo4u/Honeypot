@@ -1,0 +1,914 @@
+2026-04-02 09:28:13,397 ERROR FAIL em analise
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 254, in log_event
+    raise Exception((detalhes or {}).get("erro", reason_code or "runtime_failure"))
+Exception: PB-02
+2026-04-02 09:30:42,461 ERROR FAIL em analise
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 1183, in processar_jogos
+    media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
+                                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 950, in obter_media_gols
+    xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
+                              ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\sos_ajuste.py", line 168, in calcular_xg_com_sos
+    media_casa, media_fora, fonte = calcular_media_gols_com_xg(time_casa, time_fora)
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\xg_understat.py", line 152, in calcular_media_gols_com_xg
+    medias = carregar_medias()
+  File "C:\Users\Leo\edge_protocol\data\atualizar_stats.py", line 334, in carregar_medias
+    return json.load(f)
+           ~~~~~~~~~^^^
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 341, in loads
+    raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                          s, 0)
+json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+2026-04-02 09:30:42,467 ERROR FAIL em analise
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 1183, in processar_jogos
+    media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
+                                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 950, in obter_media_gols
+    xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
+                              ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\sos_ajuste.py", line 168, in calcular_xg_com_sos
+    media_casa, media_fora, fonte = calcular_media_gols_com_xg(time_casa, time_fora)
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\xg_understat.py", line 152, in calcular_media_gols_com_xg
+    medias = carregar_medias()
+  File "C:\Users\Leo\edge_protocol\data\atualizar_stats.py", line 334, in carregar_medias
+    return json.load(f)
+           ~~~~~~~~~^^^
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 341, in loads
+    raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                          s, 0)
+json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+2026-04-02 09:30:42,471 ERROR FAIL em analise
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 1183, in processar_jogos
+    media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
+                                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 950, in obter_media_gols
+    xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
+                              ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\sos_ajuste.py", line 168, in calcular_xg_com_sos
+    media_casa, media_fora, fonte = calcular_media_gols_com_xg(time_casa, time_fora)
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\xg_understat.py", line 152, in calcular_media_gols_com_xg
+    medias = carregar_medias()
+  File "C:\Users\Leo\edge_protocol\data\atualizar_stats.py", line 334, in carregar_medias
+    return json.load(f)
+           ~~~~~~~~~^^^
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 341, in loads
+    raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                          s, 0)
+json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+2026-04-02 09:30:42,476 ERROR FAIL em analise
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 1183, in processar_jogos
+    media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
+                                          ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 950, in obter_media_gols
+    xg_casa, xg_fora, fonte = calcular_xg_com_sos(time_casa, time_fora, liga_key)
+                              ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\sos_ajuste.py", line 168, in calcular_xg_com_sos
+    media_casa, media_fora, fonte = calcular_media_gols_com_xg(time_casa, time_fora)
+                                    ~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Leo\edge_protocol\data\xg_understat.py", line 152, in calcular_media_gols_com_xg
+    medias = carregar_medias()
+  File "C:\Users\Leo\edge_protocol\data\atualizar_stats.py", line 334, in carregar_medias
+    return json.load(f)
+           ~~~~~~~~~^^^
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 298, in load
+    return loads(fp.read(),
+        cls=cls, object_hook=object_hook,
+        parse_float=parse_float, parse_int=parse_int,
+        parse_constant=parse_constant, object_pairs_hook=object_pairs_hook, **kw)
+  File "C:\Users\Leo\AppData\Local\Programs\Python\Python314\Lib\json\__init__.py", line 341, in loads
+    raise JSONDecodeError("Unexpected UTF-8 BOM (decode using utf-8-sig)",
+                          s, 0)
+json.decoder.JSONDecodeError: Unexpected UTF-8 BOM (decode using utf-8-sig): line 1 column 1 (char 0)
+2026-04-02 09:39:28,469 ERROR FAIL em analise
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\scheduler.py", line 254, in log_event
+    raise Exception((detalhes or {}).get("erro", reason_code or "runtime_failure"))
+Exception: PB-02
+2026-04-02 09:40:40,896 ERROR FAIL em analise: PB-02
+2026-04-02 09:42:25,389 ERROR FAIL em analise: PB-02
+2026-04-02 09:53:39,266 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-02 11:42:27,581 ERROR -> FAIL: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-02 11:42:27,582 ERROR FAIL em analise: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-02 11:42:27,811 ERROR -> FAIL: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-02 11:42:27,811 ERROR FAIL em analise: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-02 12:09:19,006 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-02 12:14:08,302 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-02 12:14:08,902 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-02 12:14:08,903 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-02 12:16:39,808 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,808 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,829 ERROR FAIL em analise
+2026-04-02 12:16:39,834 ERROR FAIL em analise
+2026-04-02 12:16:39,838 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,838 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,839 ERROR FAIL em analise
+2026-04-02 12:16:39,843 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,843 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,844 ERROR FAIL em analise
+2026-04-02 12:16:39,848 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,848 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:16:39,849 ERROR FAIL em analise
+2026-04-02 12:16:40,565 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:16:40,565 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:16:40,569 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:16:40,569 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:16:40,572 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:16:40,572 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:04,128 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:04,128 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:04,130 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:04,130 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:04,132 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:04,132 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:22,368 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:22,369 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:22,371 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:22,371 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:22,375 ERROR -> FAIL: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:19:22,375 ERROR FAIL em analise: '_ConnectionStub' object has no attribute 'rollback'
+2026-04-02 12:21:38,491 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:21:38,492 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:21:38,498 ERROR FAIL em analise
+2026-04-02 12:24:13,605 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,605 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,611 ERROR FAIL em analise
+2026-04-02 12:24:13,616 ERROR FAIL em analise
+2026-04-02 12:24:13,619 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,619 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,620 ERROR FAIL em analise
+2026-04-02 12:24:13,623 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,623 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,624 ERROR FAIL em analise
+2026-04-02 12:24:13,626 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,626 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:24:13,628 ERROR FAIL em analise
+2026-04-02 12:25:00,582 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,582 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,587 ERROR FAIL em analise
+2026-04-02 12:25:00,592 ERROR FAIL em analise
+2026-04-02 12:25:00,596 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,596 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,597 ERROR FAIL em analise
+2026-04-02 12:25:00,601 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,601 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,602 ERROR FAIL em analise
+2026-04-02 12:25:00,605 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,605 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:00,606 ERROR FAIL em analise
+2026-04-02 12:25:15,360 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:15,361 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:15,366 ERROR FAIL em analise
+2026-04-02 12:25:35,888 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,888 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,896 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,897 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,900 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,900 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,903 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:35,903 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,849 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,849 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,858 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,858 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,861 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,861 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,864 ERROR -> FAIL: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:25:49,864 ERROR FAIL em analise: '_ConnStub' object has no attribute 'rollback'
+2026-04-02 12:26:09,285 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-02 12:26:09,871 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-02 12:26:09,872 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 16:01:20,772 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-04 16:56:57,895 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-04 17:00:52,562 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:00:53,158 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:00:53,159 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:08:05,925 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:08:06,575 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:08:06,577 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:08:44,373 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:08:44,989 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:08:44,990 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:13:25,780 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:13:26,370 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:13:26,371 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:14:06,122 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:14:06,846 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:14:06,848 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:14:35,827 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:14:36,448 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:14:36,449 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:15:19,423 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:15:20,127 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:15:20,128 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:15:45,958 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 181, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:15:46,600 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 150, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:15:46,601 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\data\..\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 115, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:30:46,460 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 174, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:30:47,064 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 143, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:30:47,065 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 108, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:32:05,057 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:32:05,658 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:32:05,659 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:32:50,053 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:32:50,766 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:32:50,767 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:47:33,779 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:47:34,373 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:47:34,374 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 17:54:07,952 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 17:54:08,533 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 17:54:08,534 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 18:05:01,525 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 18:05:02,157 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 18:05:02,158 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 18:16:42,049 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 18:16:42,786 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 18:16:42,788 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-04 23:34:18,893 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-04 23:34:19,526 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-04 23:34:19,527 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-05 09:37:19,454 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-05 09:37:20,051 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-05 09:37:20,052 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-05 09:51:57,874 ERROR -> FAIL: PB-03
+2026-04-05 09:51:57,875 ERROR FAIL em analise: PB-03
+2026-04-05 10:05:25,529 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-05 10:05:26,129 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-05 10:05:26,131 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-05 10:07:19,352 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-05 10:07:19,951 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-05 10:07:19,952 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-05 10:09:34,535 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-05 10:09:35,111 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-05 10:09:35,113 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
+2026-04-05 10:16:24,227 ERROR calibrated_lambdas_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 170, in analyze_match
+    lambdas = self.calibrated_lambdas(home_team, away_team, division, country, 1.35, 1.10)
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 128, in calibrated_lambdas
+    pred = self.hbm.predict_lambdas(home_team, away_team, division, country)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 175, in predict_lambdas
+    raise RuntimeError("hbm fail")
+RuntimeError: hbm fail
+2026-04-05 10:16:24,822 ERROR diagnostic_hook_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 277, in analyze_match
+    self.diagnostic_hook(
+    ~~~~~~~~~~~~~~~~~~~~^
+        {
+        ^
+    ...<6 lines>...
+        }
+        ^
+    )
+    ^
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 144, in broken_hook
+    raise RuntimeError("broken hook")
+RuntimeError: broken hook
+2026-04-05 10:16:24,824 ERROR mc_run_failed
+Traceback (most recent call last):
+  File "C:\Users\Leo\edge_protocol\model\pipeline_integrador.py", line 207, in analyze_match
+    mc = self.mc.run(lambda_home, lambda_away)
+  File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
+    raise RuntimeError("sim error")
+RuntimeError: sim error
