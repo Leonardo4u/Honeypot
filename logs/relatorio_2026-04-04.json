@@ -1,0 +1,17 @@
+{
+  "data": "2026-04-04",
+  "banca": {
+    "atual": 1169.47,
+    "inicial": 1000.0,
+    "maxima": 1181.28,
+    "drawdown_atual_pct": 1.0
+  },
+  "performance": {
+    "roi_acumulado_pct": 16.95,
+    "roi_30_dias_pct": 2.71,
+    "maior_sequencia_wins": 3,
+    "maior_sequencia_losses": 2
+  },
+  "apostas_hoje": [],
+  "total_apostas_hoje": 0
+}

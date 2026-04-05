@@ -97,3 +97,16 @@
 [2026-04-02 11:42:28] Iniciando ação: resultado
 [2026-04-02 11:42:28] Histórico banca: dia 2026-04-02 adicionado — R$1,169.47
 [2026-04-02 11:42:28] Arquivo salvo: C:\Users\Leo\edge_protocol\logs\bot_apostas.xlsx
+[2026-04-04 23:30:37] Iniciando ação: full_refresh
+[2026-04-04 23:30:37] full_refresh: regenerando arquivo completo...
+[2026-04-04 23:30:37] full_refresh ERRO: No module named 'data'
+[2026-04-04 23:33:13] ERRO JSON: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)
+[2026-04-04 23:33:20] Iniciando ação: full_refresh
+[2026-04-04 23:33:20] full_refresh: regenerando arquivo completo...
+[2026-04-04 23:33:20] full_refresh ERRO: No module named 'data'
+[2026-04-04 23:33:50] Iniciando ação: full_refresh
+[2026-04-04 23:33:50] full_refresh: regenerando arquivo completo...
+[2026-04-04 23:33:51] full_refresh concluído: C:\Users\Leo\edge_protocol\data\..\logs\edge_protocol_resultados.xlsx
+[2026-04-05 09:51:56] Iniciando ação: nova_aposta
+[2026-04-05 09:51:56] Nova aposta inserida: #83 — Le Havre vs Auxerre [over_2.5]
+[2026-04-05 09:51:56] Arquivo salvo: C:\Users\Leo\edge_protocol\logs\bot_apostas.xlsx
