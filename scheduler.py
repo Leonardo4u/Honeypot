@@ -86,7 +86,6 @@ except Exception:
     log_policy_v2_rejection = None
 from model.runtime_gate_context import inferir_escalacao_confirmada, calcular_variacao_odd_gate, calcular_sinais_hoje_gate
 from model.module_01_sharp_money import MarketLine, OddsSnapshot, SharpMoneyDetector
-from model.pipeline_integrador import BettingPipeline
 from services.scheduler_services import (
     DataCollectionService,
     FallbackEvaluationService,
@@ -181,7 +180,8 @@ QUALITY_CANARY_MIN_SCORE = 82.0
 QUALITY_CANARY_STAKE_FRACTION = 0.01
 ANALISE_JOGO_TIMEOUT_SEGUNDOS = int(os.getenv("ANALISE_JOGO_TIMEOUT", "30"))
 CICLO_TIMEOUT_SEGUNDOS = int(os.getenv("CICLO_TIMEOUT", "110"))
-ADVANCED_PIPELINE_ENABLED = os.getenv("EDGE_ADVANCED_PIPELINE_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
+_advanced_pipeline_env_raw = os.getenv("EDGE_ADVANCED_PIPELINE_ENABLED", os.getenv("ADVANCED_PIPELINE_ENABLED", "0"))
+ADVANCED_PIPELINE_ENABLED = _advanced_pipeline_env_raw.strip().lower() in ("1", "true", "yes", "on")
 ADVANCED_PIPELINE_MC_SIMS = int(os.getenv("EDGE_ADVANCED_PIPELINE_MC_SIMS", "2000"))
 PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
@@ -228,6 +228,8 @@ EV_POLICY_V2 = EVMinimoPolicy(execucao_automatizada=True) if EVMinimoPolicy is n
 STEAM_POLICY_V2 = SteamGatePolicy() if SteamGatePolicy is not None else None
 if ADVANCED_PIPELINE_ENABLED:
     try:
+        from model.pipeline_integrador import BettingPipeline
+
         ADVANCED_PIPELINE = BettingPipeline(
             mc_simulations=ADVANCED_PIPELINE_MC_SIMS,
             alert_hook=lambda severidade, codigo, detalhes=None: registrar_alerta_operacional(
@@ -2443,21 +2445,6 @@ def iniciar_scheduler():
     executar_preflight()
     garantir_tabela_execucoes()
     if SHOW_STARTUP_BANNER:
-        print(
-            MAGENTA
-            + """
-                                                                          
-                                                          
-                                                   
-                                                     
-                    
-                                   
-            
-                                                                       
-                                                                      
-"""
-                        + ANSI_RESET
-        )
         print(f"Score mínimo: {MIN_EDGE_SCORE}/100")
         print(f"Confiança mínima: {MIN_CONFIANCA}/100")
         print(f"Kelly fracionado: 1/4 com teto 3%")

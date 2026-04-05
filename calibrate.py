@@ -31,20 +31,21 @@ def _read_csv(path):
     rows = []
     with open(path, "r", encoding="utf-8") as f:
         reader = csv.DictReader(f)
-        required = {"prediction_id", "raw_prob", "outcome"}
+        required = {"prediction_id", "raw_prob_model", "outcome"}
         missing = required - set(reader.fieldnames or [])
         if missing:
             raise ValueError(f"CSV sem colunas obrigatórias: {sorted(missing)}")
 
         for row in reader:
-            raw_prob = float(row["raw_prob"])
-            outcome = int(row["outcome"])
-            if outcome not in (0, 1):
-                raise ValueError(f"outcome inválido para prediction_id={row.get('prediction_id')}: {outcome}")
+            raw_prob = float(row["raw_prob_model"])
+            outcome_raw = (row.get("outcome") or "").strip()
+            if outcome_raw not in ("0", "1"):
+                continue
+            outcome = int(outcome_raw)
             rows.append(
                 {
                     "prediction_id": row.get("prediction_id", ""),
-                    "raw_prob": raw_prob,
+                    "raw_prob_model": raw_prob,
                     "outcome": outcome,
                     "league": (row.get("league") or row.get("liga") or "").strip(),
                     "market": (row.get("market") or row.get("mercado") or "").strip(),
@@ -75,7 +76,7 @@ def main(argv=None):
     args = _parse_args(argv)
 
     rows = _read_csv(args.csv_path)
-    predictions = [r["raw_prob"] for r in rows]
+    predictions = [r["raw_prob_model"] for r in rows]
     outcomes = [r["outcome"] for r in rows]
     calibrator = BucketCalibrator(n_buckets=10, k=20).fit(predictions, outcomes)
 
@@ -102,7 +103,7 @@ def main(argv=None):
             if len(grp) < max(1, int(args.segment_fit_min)):
                 continue
             cal = BucketCalibrator(n_buckets=10, k=20).fit(
-                [g["raw_prob"] for g in grp],
+                [g["raw_prob_model"] for g in grp],
                 [g["outcome"] for g in grp],
             )
             reg.set_league(liga, cal, n_samples=len(grp))
@@ -111,7 +112,7 @@ def main(argv=None):
             if len(grp) < max(1, int(args.segment_fit_min)):
                 continue
             cal = BucketCalibrator(n_buckets=10, k=20).fit(
-                [g["raw_prob"] for g in grp],
+                [g["raw_prob_model"] for g in grp],
                 [g["outcome"] for g in grp],
             )
             reg.set_league_market(liga, mercado, cal, n_samples=len(grp))

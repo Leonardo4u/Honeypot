@@ -114,6 +114,63 @@ class PickLogger:
             return raw[:10]
         return ""
 
+    @staticmethod
+    def _safe_float_str(value) -> str:
+        try:
+            return str(float(value))
+        except Exception:
+            return ""
+
+    @staticmethod
+    def _build_backfill_row(
+        *,
+        sinal_id: int,
+        liga: str,
+        jogo: str,
+        mercado: str,
+        odd: Optional[float],
+        outcome: int,
+        odd_closing: Optional[float],
+        ts_ref: Optional[str],
+    ) -> dict:
+        home, away = PickLogger.split_match_teams(str(jogo or ""))
+        ts = str(ts_ref or "").strip()
+        if not ts:
+            ts = datetime.now(timezone.utc).isoformat()
+
+        implied = ""
+        try:
+            odd_f = float(odd)
+            if odd_f > 0:
+                implied = str(1.0 / odd_f)
+        except Exception:
+            pass
+
+        return {
+            "prediction_id": f"db-sinal-{int(sinal_id)}",
+            "timestamp": ts,
+            "league": str(liga or ""),
+            "market": str(mercado or ""),
+            "team_home": home,
+            "team_away": away,
+            "odds_at_pick": PickLogger._safe_float_str(odd),
+            "implied_prob": implied,
+            "raw_prob_model": implied,
+            "calibrated_prob_model": implied,
+            "calibrator_fitted": "False",
+            "confidence_dados": "",
+            "estabilidade_odd": "",
+            "contexto_jogo": "",
+            "edge_score": "",
+            "kelly_fraction": "",
+            "kelly_stake": "",
+            "bank_used": "",
+            "recomendacao_acao": "backfill_sync",
+            "gate_reason": "sync_from_db_no_match",
+            "outcome": str(int(outcome)),
+            "closing_odds": PickLogger._safe_float_str(odd_closing),
+        }
+
     def append_pick(
         self,
         *,
@@ -273,6 +330,7 @@ class PickLogger:
                     id,
                     liga,
                     jogo,
+                    mercado,
                     resultado,
                     odd,
                     {closing_select},
@@ -292,7 +350,7 @@ class PickLogger:
         unmatched = 0
 
         for row_db in finais:
-            sinal_id, liga, jogo, resultado, odd_db, odd_fechamento_db, prediction_id_db, ts_ref = row_db
+            sinal_id, liga, jogo, mercado_db, resultado, odd_db, odd_fechamento_db, prediction_id_db, ts_ref = row_db
             outcome = self._map_resultado_to_outcome(resultado)
             if outcome is None:
                 unmatched += 1
@@ -333,9 +391,23 @@ class PickLogger:
                             chosen_idx = best_idx
 
             if chosen_idx is None:
-                unmatched += 1
+                odd_closing = odd_fechamento_db if odd_fechamento_db is not None else odd_db
+                backfill_row = self._build_backfill_row(
+                    sinal_id=int(sinal_id),
+                    liga=str(liga or ""),
+                    jogo=str(jogo or ""),
+                    mercado=str(mercado_db or ""),
+                    odd=odd_db,
+                    outcome=int(outcome),
+                    odd_closing=odd_closing,
+                    ts_ref=str(ts_ref or ""),
+                )
+
+                rows.append(backfill_row)
+                matched += 1
+                updated += 1
                 print(
-                    f"[picks_log.sync] sinal_id={sinal_id} sem match (prediction_id ou tuple+tempo)",
+                    f"[picks_log.sync] sinal_id={sinal_id} sem match, backfill adicionado no CSV",
                     file=sys.stderr,
                 )
                 continue

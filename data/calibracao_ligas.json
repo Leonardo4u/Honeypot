@@ -1,0 +1,32 @@
+{
+  "Brasileirao Serie A": {
+    "rho": -0.0248,
+    "home_advantage": 1.3438,
+    "recency_halflife": 38
+  },
+  "Bundesliga": {
+    "rho": -0.05,
+    "home_advantage": 1.2467,
+    "recency_halflife": 38
+  },
+  "La Liga": {
+    "rho": -0.05,
+    "home_advantage": 1.318,
+    "recency_halflife": 38
+  },
+  "Ligue 1": {
+    "rho": -0.05,
+    "home_advantage": 1.1848,
+    "recency_halflife": 38
+  },
+  "Premier League": {
+    "rho": -0.1411,
+    "home_advantage": 1.2034,
+    "recency_halflife": 38
+  },
+  "Serie A": {
+    "rho": -0.05,
+    "home_advantage": 1.1702,
+    "recency_halflife": 38
+  }
+}

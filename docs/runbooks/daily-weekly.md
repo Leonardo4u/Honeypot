@@ -16,6 +16,29 @@
    - `EDGE_MAX_DAILY_LOSS_UNITS`
    - `EDGE_MAX_EXPOSURE_WINDOW_UNITS`
 
+## Sync semanal de outcomes
+
+**Quando:** toda segunda-feira antes de rodar o calibrate.py  
+**Comando:**
+python picks_log.py --sync-db data/edge_protocol.db
+
+**Verificacao obrigatoria pos-sync:**
+python -c "
+import csv
+rows = list(csv.DictReader(open('data/picks_log.csv')))
+settled = [r for r in rows if r.get('outcome') in ('0','1')]
+print(f'Settled: {len(settled)} | Total: {len(rows)}')
+"
+
+**Threshold para calibracao:** minimo 30 settled antes de rodar calibrate.py  
+**Se pending > 0:** verificar se jogos ainda nao foram finalizados no banco ou se ha falha de match por prediction_id
+
+## Ordem semanal de execucao (calibracao)
+1. `python picks_log.py --sync-db data/edge_protocol.db`
+2. Verificar volume settled
+3. `python calibrate.py ...` (somente se settled >= 30)
+4. `python calibrar_modelo.py --build-ligas --min-matches 50`
+
 ## Cadencia de manutencao
 - Segunda 06:00: stats + xG.
 - Segunda 06:30: backtest janela movel.
