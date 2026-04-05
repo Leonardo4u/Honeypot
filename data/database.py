@@ -4,6 +4,7 @@ import json
 import logging
 from contextlib import contextmanager
 from datetime import datetime, UTC
+from typing import Any, Dict, List, Optional
 
 DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")
 logger = logging.getLogger(__name__)
@@ -17,6 +18,7 @@ COLUNAS_SINAIS_ALLOWLIST = {
     "fixture_id_api": "TEXT",
     "fixture_data_api": "TEXT",
     "app_version": "TEXT DEFAULT 'dev'",
+    "canary_tag": "TEXT DEFAULT NULL",
 }
 
 
@@ -32,7 +34,7 @@ def _adicionar_coluna_segura(cursor, tabela, coluna, tipo):
 
 
 @contextmanager
-def get_conn(db_path=None):
+def get_conn(db_path: Optional[str] = None):
     """Context manager original — mantido para compatibilidade total."""
     path = db_path or DB_PATH
     conn = sqlite3.connect(path)
@@ -53,7 +55,7 @@ def get_conn(db_path=None):
 # FIX-08: context manager simples para hot paths que não precisam
 # de row_factory nem de WAL tracking — reduz overhead de connect/close
 @contextmanager
-def get_db_connection(db_path=None):
+def get_db_connection(db_path: Optional[str] = None):
     """
     Context manager leve para hot paths de leitura/escrita simples.
     Não configura row_factory nem WAL (use get_conn para operações
@@ -72,8 +74,11 @@ def get_db_connection(db_path=None):
 
 
 def criar_banco():
+    schema_ja_existia = False
     with get_conn() as conn:
         c = conn.cursor()
+        c.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='sinais'")
+        schema_ja_existia = c.fetchone() is not None
         c.execute('''
         CREATE TABLE IF NOT EXISTS sinais (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -94,6 +99,7 @@ def criar_banco():
             horario TEXT,
             fixture_id_api TEXT,
             fixture_data_api TEXT,
+            canary_tag TEXT DEFAULT NULL,
             criado_em TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     ''')
@@ -239,7 +245,8 @@ def criar_banco():
     garantir_colunas_sinais()
     garantir_schema_historico_sinais()
     garantir_tabelas_operacionais()
-    print("Banco de dados criado com sucesso.")
+    if not schema_ja_existia:
+        print("Banco de dados criado com sucesso.")
 
 
 def garantir_indices_desempenho(cursor=None):
@@ -547,9 +554,16 @@ def bootstrap_completo(db_path=None):
 
 def _bootstrap_em_path(db_path):
     """Executa bootstrap em um caminho de banco específico (para testes)."""
-    garantir_schema_historico_sinais(db_path=db_path)
-    garantir_tabela_execucoes()
-    garantir_tabelas_operacionais()
+    original_db_path = DB_PATH
+    try:
+        globals()["DB_PATH"] = db_path
+        criar_banco()
+        garantir_colunas_sinais()
+        garantir_schema_historico_sinais(db_path=db_path)
+        garantir_tabela_execucoes()
+        garantir_tabelas_operacionais()
+    finally:
+        globals()["DB_PATH"] = original_db_path
 
 
 def validar_schema_minimo(tabelas_criticas=None):
@@ -680,14 +694,28 @@ def finalizar_execucao_job(job_nome, janela_chave, status, reason_code=None, det
         )
     return buscar_execucao_job(job_nome, janela_chave)
 
-def inserir_sinal(liga, jogo, mercado, odd, ev, score, stake, message_id_vip=None, message_id_free=None, horario=None):
+def inserir_sinal(
+    liga: str,
+    jogo: str,
+    mercado: str,
+    odd: float,
+    ev: float,
+    score: float,
+    stake: float,
+    message_id_vip: Optional[int] = None,
+    message_id_free: Optional[int] = None,
+    horario: Optional[str] = None,
+    canary_tag: Optional[str] = None,
+) -> int:
     with get_conn() as conn:
         c = conn.cursor()
         c.execute('''
-            INSERT INTO sinais (data, liga, jogo, mercado, odd, ev_estimado, edge_score, stake_unidades, message_id_vip, message_id_free, horario, app_version)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', ((datetime.now(UTC).date().isoformat()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario, os.getenv("EDGE_VERSION", "dev")))
-        return c.lastrowid
+            INSERT INTO sinais (data, liga, jogo, mercado, odd, ev_estimado, edge_score, stake_unidades, message_id_vip, message_id_free, horario, app_version, canary_tag)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', ((datetime.now(UTC).date().isoformat()), liga, jogo, mercado, odd, ev, score, stake, message_id_vip, message_id_free, horario, os.getenv("EDGE_VERSION", "dev"), canary_tag))
+        if c.lastrowid is None:
+            raise RuntimeError("Falha ao inserir sinal: lastrowid ausente")
+        return int(c.lastrowid)
 
 
 def contar_sinais_duplicados_mesmo_dia(liga, team_home, team_away, mercado, data_ref=None):
@@ -759,7 +787,7 @@ def listar_sinais_duplicados_mesmo_dia(data_ref=None):
         )
     return out
 
-def atualizar_resultado(sinal_id, resultado, lucro):
+def atualizar_resultado(sinal_id: int, resultado: str, lucro: float) -> None:
     """
     Finaliza um sinal com resultado e lucro.
     BUG-04: UPDATE condicional — só atualiza se status ainda é 'pendente'.
@@ -774,7 +802,11 @@ def atualizar_resultado(sinal_id, resultado, lucro):
         ''', (resultado, lucro, sinal_id))
 
 
-def atualizar_fixture_referencia(sinal_id, fixture_id_api=None, fixture_data_api=None):
+def atualizar_fixture_referencia(
+    sinal_id: int,
+    fixture_id_api: Optional[str] = None,
+    fixture_data_api: Optional[str] = None,
+) -> None:
     with get_conn() as conn:
         c = conn.cursor()
         c.execute(
@@ -806,7 +838,7 @@ def verificar_status_sinal(sinal_id):
         row = c.fetchone()
         return row[0] if row else None
 
-def buscar_sinais_hoje():
+def buscar_sinais_hoje() -> List[Any]:
     with get_conn() as conn:
         c = conn.cursor()
         c.execute("SELECT * FROM sinais WHERE data = ?", (datetime.now(UTC).date().isoformat(),))
@@ -873,7 +905,12 @@ def registrar_auditoria_acao(actor, acao, efeito, detalhes=None):
         )
 
 
-def registrar_alerta_operacional(severidade, codigo, playbook_id=None, detalhes=None):
+def registrar_alerta_operacional(
+    severidade: str,
+    codigo: str,
+    playbook_id: Optional[str] = None,
+    detalhes: Optional[Dict[str, Any]] = None,
+) -> None:
     garantir_tabelas_operacionais()
     detalhes_json = None
     if detalhes is not None:
@@ -889,7 +926,15 @@ def registrar_alerta_operacional(severidade, codigo, playbook_id=None, detalhes=
         )
 
 
-def registrar_fallback_cycle_detail(job_nome, janela_chave, liga, jogo, mercado, motivo_fallback, detalhes=None):
+def registrar_fallback_cycle_detail(
+    job_nome: str,
+    janela_chave: str,
+    liga: str,
+    jogo: str,
+    mercado: str,
+    motivo_fallback: str,
+    detalhes: Optional[Dict[str, Any]] = None,
+) -> None:
     garantir_tabelas_operacionais()
     if not all([job_nome, janela_chave, liga, jogo, mercado, motivo_fallback]):
         raise ValueError("Campos obrigatorios ausentes em fallback_cycle_details")
@@ -917,7 +962,7 @@ def registrar_fallback_cycle_detail(job_nome, janela_chave, liga, jogo, mercado,
         )
 
 
-def obter_slo_disponibilidade_ciclo(dias=7):
+def obter_slo_disponibilidade_ciclo(dias: int = 7) -> Dict[str, Any]:
     with get_conn() as conn:
         c = conn.cursor()
         c.execute(
@@ -986,18 +1031,20 @@ def registrar_diagnostico_modelo(
 
 
 def registrar_shadow_prediction(
-    liga,
-    jogo,
-    mercado,
-    prob_baseline,
-    prob_advanced,
-    prediction_id_baseline=None,
-    prediction_id_advanced=None,
-    shadow_mode=True,
-    detalhes=None,
-    data_ref=None,
-):
+    liga: str,
+    jogo: str,
+    mercado: str,
+    prob_baseline: Optional[float],
+    prob_advanced: Optional[float],
+    prediction_id_baseline: Optional[str] = None,
+    prediction_id_advanced: Optional[str] = None,
+    shadow_mode: bool = True,
+    detalhes: Optional[Dict[str, Any]] = None,
+    data_ref: Optional[str] = None,
+) -> int:
     garantir_tabelas_operacionais()
+    if prob_baseline is None or prob_advanced is None:
+        raise ValueError("prob_baseline/prob_advanced must not be None")
     data_alvo = data_ref or datetime.now(UTC).date().isoformat()
     detalhes_json = None
     if detalhes is not None:
@@ -1035,12 +1082,23 @@ def registrar_shadow_prediction(
                 detalhes_json,
             ),
         )
+        if c.lastrowid is None:
+            raise RuntimeError("Falha ao persistir shadow_prediction: lastrowid ausente")
         return int(c.lastrowid)
 
 
-def liquidar_shadow_predictions_por_sinal(liga, jogo, mercado, outcome, closing_odds=None, data_ref=None):
+def liquidar_shadow_predictions_por_sinal(
+    liga: str,
+    jogo: str,
+    mercado: str,
+    outcome: Optional[int],
+    closing_odds: Optional[float] = None,
+    data_ref: Optional[str] = None,
+) -> int:
     """Liquida previsoes shadow pendentes para um sinal finalizado no mesmo dia."""
     data_alvo = data_ref or datetime.now(UTC).date().isoformat()
+    if outcome is None:
+        raise ValueError("outcome must not be None")
     out = int(outcome)
     if out not in (0, 1):
         raise ValueError("outcome must be 0 or 1")

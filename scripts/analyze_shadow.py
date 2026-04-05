@@ -5,6 +5,7 @@ import csv
 import json
 import math
 import os
+import sqlite3
 from collections import Counter, defaultdict
 
 
@@ -17,6 +18,7 @@ else:
 
 SHADOW_LOG_PATH = os.path.join(LOGS_DIR, "policy_v2_shadow.log")
 PICKS_LOG_PATH = os.path.join(BOT_DATA_DIR, "picks_log.csv")
+DB_PATH = os.path.join(BOT_DATA_DIR, "edge_protocol.db")
 
 
 def _to_float(value, default=None):
@@ -64,7 +66,99 @@ def _calc_clv_from_row(row):
     return math.log(odd_pick / odd_close)
 
 
-def build_report(min_picks=20, shadow_log_path=SHADOW_LOG_PATH, picks_log_path=PICKS_LOG_PATH):
+def _table_has_column(conn, table_name, column_name):
+    cur = conn.execute(f"PRAGMA table_info({table_name})")
+    return any(str(row[1]) == str(column_name) for row in cur.fetchall())
+
+
+def _build_canary_quality_report(min_picks=20, db_path=DB_PATH):
+    base = {
+        "total_canary_picks": 0,
+        "settled": 0,
+        "win_rate_pct": 0.0,
+        "mean_clv_pct": None,
+        "mean_edge_declarado_pct": None,
+        "verdict": "WAIT",
+    }
+
+    if not os.path.exists(db_path):
+        return base
+
+    try:
+        conn = sqlite3.connect(db_path)
+    except Exception:
+        return base
+
+    try:
+        has_tag = _table_has_column(conn, "sinais", "canary_tag")
+        if not has_tag:
+            return base
+
+        cur = conn.cursor()
+        cur.execute(
+            '''
+            SELECT id, resultado, ev_estimado
+            FROM sinais
+            WHERE canary_tag = 'canary_quality'
+            '''
+        )
+        rows = cur.fetchall()
+        if not rows:
+            return base
+
+        base["total_canary_picks"] = len(rows)
+
+        settled_rows = [r for r in rows if str(r[1] or "").strip().lower() in ("verde", "red", "void")]
+        base["settled"] = len(settled_rows)
+
+        if settled_rows:
+            wins = sum(1 for r in settled_rows if str(r[1] or "").strip().lower() == "verde")
+            base["win_rate_pct"] = round(100.0 * wins / float(len(settled_rows)), 2)
+
+            edges = []
+            for _, _, ev in settled_rows:
+                try:
+                    edges.append(float(ev) * 100.0)
+                except (TypeError, ValueError):
+                    continue
+            if edges:
+                base["mean_edge_declarado_pct"] = round(sum(edges) / len(edges), 2)
+
+            clv_values = []
+            has_clv = _table_has_column(conn, "clv_tracking", "clv_percentual")
+            if has_clv:
+                settled_ids = [int(r[0]) for r in settled_rows]
+                placeholders = ",".join("?" for _ in settled_ids)
+                cur.execute(
+                    f"SELECT clv_percentual FROM clv_tracking WHERE sinal_id IN ({placeholders})",
+                    settled_ids,
+                )
+                for (v,) in cur.fetchall():
+                    try:
+                        clv_values.append(float(v))
+                    except (TypeError, ValueError):
+                        continue
+            if clv_values:
+                base["mean_clv_pct"] = round(sum(clv_values) / len(clv_values), 2)
+
+        if base["settled"] < int(min_picks):
+            base["verdict"] = "WAIT"
+        else:
+            wr = float(base["win_rate_pct"] or 0.0)
+            clv = float(base["mean_clv_pct"] or 0.0)
+            if wr >= 52.0 and clv >= 0.0:
+                base["verdict"] = "PROMOTE"
+            elif wr < 45.0 or clv < -3.0:
+                base["verdict"] = "DEMOTE"
+            else:
+                base["verdict"] = "WAIT"
+
+        return base
+    finally:
+        conn.close()
+
+
+def build_report(min_picks=20, shadow_log_path=SHADOW_LOG_PATH, picks_log_path=PICKS_LOG_PATH, db_path=DB_PATH):
     """Gera relatório e veredito PROMOTE/WAIT/DO NOT PROMOTE para policy v2."""
     blocked_events = _read_jsonl(shadow_log_path)
     picks_rows = _read_picks(picks_log_path)
@@ -151,6 +245,7 @@ def build_report(min_picks=20, shadow_log_path=SHADOW_LOG_PATH, picks_log_path=P
         "settled_picks_for_clv": settled_picks_for_clv,
         "min_picks_required": int(min_picks),
         "verdict": verdict,
+        "canary_quality": _build_canary_quality_report(min_picks=min_picks, db_path=db_path),
     }
 
 
@@ -195,6 +290,17 @@ def main(argv=None):
     )
 
     print(f"\nPromotion verdict: {report['verdict']}")
+
+    canary = report.get("canary_quality") or {}
+    print("\nCanary quality picks")
+    print(f"Total canary picks: {int(canary.get('total_canary_picks', 0))}")
+    print(f"Settled: {int(canary.get('settled', 0))}")
+    print(f"Win rate: {float(canary.get('win_rate_pct', 0.0)):.2f}%")
+    mean_clv = canary.get("mean_clv_pct")
+    mean_edge = canary.get("mean_edge_declarado_pct")
+    print(f"Mean CLV: {'n/a' if mean_clv is None else f'{float(mean_clv):.2f}%'}")
+    print(f"Mean edge declarado: {'n/a' if mean_edge is None else f'{float(mean_edge):.2f}%'}")
+    print(f"Verdict: {canary.get('verdict', 'WAIT')}")
     return 0
 
 

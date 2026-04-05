@@ -397,17 +397,23 @@ def avaliar_drift_historico(
     if len(historico) < int(min_persistencia):
         return None
 
+    def _as_float(value, default=0.0):
+        try:
+            return float(value)
+        except (TypeError, ValueError):
+            return float(default)
+
     janela_recente = historico[-int(min_persistencia) :]
-    fallback_series = [float(item.get("fallback_rate") or 0.0) for item in janela_recente]
+    fallback_series = [_as_float(item.get("fallback_rate"), 0.0) for item in janela_recente]
     has_fallback_telemetry = any(v > 0 for v in fallback_series)
 
     checks = {
         "brier_medio": all(
-            item.get("brier_medio") is not None and float(item.get("brier_medio")) >= float(brier_limite)
+            item.get("brier_medio") is not None and _as_float(item.get("brier_medio")) >= float(brier_limite)
             for item in janela_recente
         ),
         "win_rate": all(
-            item.get("win_rate") is not None and float(item.get("win_rate")) <= float(win_rate_limite)
+            item.get("win_rate") is not None and _as_float(item.get("win_rate")) <= float(win_rate_limite)
             for item in janela_recente
         ),
         "fallback_rate": has_fallback_telemetry and all(v >= float(fallback_limite) for v in fallback_series),

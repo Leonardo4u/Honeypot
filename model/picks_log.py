@@ -6,7 +6,7 @@ import os
 import sqlite3
 import sys
 from datetime import datetime, timezone
-from typing import Optional
+from typing import Dict, Optional
 
 
 class PickLogger:
@@ -188,7 +188,7 @@ class PickLogger:
             writer.writerow(row)
         return True
 
-    def update_outcome(self, prediction_id: str, outcome: int, closing_odds: Optional[float]):
+    def update_outcome(self, prediction_id: str, outcome: int, closing_odds: Optional[float]) -> bool:
         """Atualiza outcome e closing_odds de um prediction_id ja registrado."""
         if outcome not in (0, 1):
             raise ValueError("outcome must be 0 or 1")
@@ -217,7 +217,7 @@ class PickLogger:
             return 0
         return None
 
-    def sync_from_db(self, db_path: str, timestamp_tolerance_seconds: int = 60) -> dict:
+    def sync_from_db(self, db_path: str, timestamp_tolerance_seconds: int = 60) -> Dict[str, int]:
         """Sincroniza outcomes finalizados de `sinais` para `picks_log.csv`."""
         rows = self._read_rows()
         if not rows:
@@ -241,13 +241,28 @@ class PickLogger:
             cur = conn.cursor()
             cur.execute("PRAGMA table_info(sinais)")
             colunas = {str(r[1]) for r in cur.fetchall()}
+            cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='clv_tracking'")
+            has_clv_tracking = cur.fetchone() is not None
             if "prediction_id" in colunas:
                 prediction_select = "prediction_id"
             else:
                 prediction_select = "NULL AS prediction_id"
+            if has_clv_tracking:
+                closing_select = """
+                    (
+                        SELECT ct.odd_fechamento
+                        FROM clv_tracking ct
+                        WHERE ct.sinal_id = sinais.id
+                        LIMIT 1
+                    ) AS odd_fechamento
+                """
+            else:
+                closing_select = "NULL AS odd_fechamento"
 
             ts_cols = [c for c in ("horario", "criado_em", "data") if c in colunas]
-            if ts_cols:
+            if len(ts_cols) == 1:
+                ts_select = f"{ts_cols[0]} AS ts_ref"
+            elif len(ts_cols) > 1:
                 ts_select = "COALESCE(" + ", ".join(ts_cols) + ") AS ts_ref"
             else:
                 ts_select = "NULL AS ts_ref"
@@ -260,6 +275,7 @@ class PickLogger:
                     jogo,
                     resultado,
                     odd,
+                    {closing_select},
                     {prediction_select},
                                         {ts_select}
                 FROM sinais
@@ -276,7 +292,7 @@ class PickLogger:
         unmatched = 0
 
         for row_db in finais:
-            sinal_id, liga, jogo, resultado, odd_db, prediction_id_db, ts_ref = row_db
+            sinal_id, liga, jogo, resultado, odd_db, odd_fechamento_db, prediction_id_db, ts_ref = row_db
             outcome = self._map_resultado_to_outcome(resultado)
             if outcome is None:
                 unmatched += 1
@@ -313,7 +329,7 @@ class PickLogger:
                             if best_delta is None or delta < best_delta:
                                 best_delta = delta
                                 best_idx = c_idx
-                        if best_idx is not None and best_delta <= float(timestamp_tolerance_seconds):
+                        if best_idx is not None and best_delta is not None and best_delta <= float(timestamp_tolerance_seconds):
                             chosen_idx = best_idx
 
             if chosen_idx is None:
@@ -329,7 +345,9 @@ class PickLogger:
             before_outcome = str(r.get("outcome") or "").strip()
             before_closing = str(r.get("closing_odds") or "").strip()
             r["outcome"] = str(int(outcome))
-            r["closing_odds"] = "" if odd_db is None else str(float(odd_db))
+            if not before_closing:
+                odd_closing = odd_fechamento_db if odd_fechamento_db is not None else odd_db
+                r["closing_odds"] = "" if odd_closing is None else str(float(odd_closing))
             if before_outcome != r["outcome"] or before_closing != r["closing_odds"]:
                 updated += 1
 
