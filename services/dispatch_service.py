@@ -13,8 +13,8 @@ def formatar_pick(
     if analise["decisao"] == "DESCARTAR":
         return None
 
-    emoji_tier = {"elite": "🔥", "premium": "⚡", "padrao": "✅"}
-    emoji = emoji_tier.get(kelly["tier"], "✅")
+    emoji_tier = {"elite": "", "premium": "", "padrao": "[OK]"}
+    emoji = emoji_tier.get(kelly["tier"], "[OK]")
 
     mercados_legivel = {
         "1x2_casa": "Vitoria do time da casa",
@@ -41,7 +41,7 @@ def formatar_pick(
 
     sos_linha = ""
     if "+SOS" in analise.get("fonte_dados", ""):
-        sos_linha = "📐 SOS: forca do adversario ajustada\n"
+        sos_linha = " SOS: forca do adversario ajustada\n"
 
     return (
         f"{emoji} SINAL EDGE PROTOCOL - {kelly['tier'].upper()}\n\n"

@@ -7,12 +7,12 @@ class BucketCalibrator:
     """
     Bucket calibrator com 10 buckets de largura igual no intervalo [0, 1].
 
-    Matemática aplicada por bucket b:
+    Matemtica aplicada por bucket b:
       - taxa_laplace_b = (wins_b + 1) / (n_b + 2)
       - w_b = n_b / (n_b + k)
       - taxa_final_b = w_b * taxa_laplace_b + (1 - w_b) * base_rate_global
 
-    Quando não ajustado (fit não executado), predict é identidade (pass-through).
+    Quando no ajustado (fit no executado), predict  identidade (pass-through).
     """
 
     VERSION = 1
@@ -145,14 +145,14 @@ class _CalibratorRef:
 
 
 class CalibratorRegistry:
-    """Registry hierárquico de calibradores com fallback por liga/mercado.
+    """Registry hierrquico de calibradores com fallback por liga/mercado.
 
-    Ordem de predição:
+    Ordem de predio:
       1) liga+mercado (quando n >= min_segment_samples)
       2) liga
       3) global
 
-    Para baixa amostra no segmento, aplica shrinkage para o nível superior.
+    Para baixa amostra no segmento, aplica shrinkage para o nvel superior.
     """
 
     VERSION = 1

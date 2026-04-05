@@ -1,17 +1,17 @@
 """
-update_excel.py — Edge Protocol
-Atualiza o arquivo bot_apostas.xlsx após cada aposta.
+update_excel.py  Edge Protocol
+Atualiza o arquivo bot_apostas.xlsx aps cada aposta.
 
 USO:
     python update_excel.py '{"acao":"nova_aposta","aposta":{...}}'
     python update_excel.py '{"acao":"resultado","aposta":{...}}'
     python update_excel.py '{"acao":"full_refresh"}'
 
-AÇÕES:
-    nova_aposta   — insere nova linha na aba Sinais Completos
-    resultado     — atualiza resultado, CLV e Brier de uma aposta
-    atualizar_odds — atualiza odds na aba Monitoramento 72h
-    full_refresh   — regenera o arquivo completo com todos os dados
+AES:
+    nova_aposta    insere nova linha na aba Sinais Completos
+    resultado      atualiza resultado, CLV e Brier de uma aposta
+    atualizar_odds  atualiza odds na aba Monitoramento 72h
+    full_refresh    regenera o arquivo completo com todos os dados
 """
 
 import sys
@@ -26,11 +26,11 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 if BASE_DIR not in sys.path:
     sys.path.insert(0, BASE_DIR)
 
-# ── CONFIG ────────────────────────────────────────────────────
+# -- CONFIG ------------
 EXCEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bot_apostas.xlsx")
 LOG_PATH   = "update_log.txt"
 
-# ── PALETA ────────────────────────────────────────────────────
+# -- PALETA ------------
 AZUL      = "1a3a5c"
 AZUL_MED  = "2E75B6"
 AZUL_CLR  = "DEEAF1"
@@ -57,7 +57,7 @@ def log(msg):
     with open(LOG_PATH, "a", encoding="utf-8") as f:
         f.write(linha + "\n")
 
-# ── HELPERS ───────────────────────────────────────────────────
+# -- HELPERS ------------
 def cor_resultado(v):
     if v == "Green":   return VERDE_CLR, VERDE_TXT
     elif v == "Red":   return VERM_CLR,  VERM_TXT
@@ -74,7 +74,7 @@ def formatar_celula(c, v, bold=False, bg=None, fg="000000",
     if border:
         c.border = bf()
 
-# ── MONTA LINHA DA APOSTA ─────────────────────────────────────
+# -- MONTA LINHA DA APOSTA ------------
 def linha_aposta(a):
     clv = None
     if a.get("odd_fechamento") and a.get("odd_entrada"):
@@ -105,17 +105,17 @@ def linha_aposta(a):
         a.get("notas",""),
     ]
 
-# ── AÇÃO: NOVA APOSTA ─────────────────────────────────────────
+# -- AO: NOVA APOSTA ------------
 def nova_aposta(wb, aposta):
     ws = wb["Sinais Completos"]
 
-    # Encontra última linha com dados
+    # Encontra ltima linha com dados
     max_row = ws.max_row
-    # Insere linha após o cabeçalho (linha 1), empurrando as demais
+    # Insere linha aps o cabealho (linha 1), empurrando as demais
     ws.insert_rows(2)
 
     vals = linha_aposta(aposta)
-    bg_novo = CINZA  # primeira linha sempre começa cinza
+    bg_novo = CINZA  # primeira linha sempre comea cinza
 
     for j, v in enumerate(vals):
         c = ws.cell(row=2, column=j+1, value=v)
@@ -126,7 +126,7 @@ def nova_aposta(wb, aposta):
             vertical="center"
         )
 
-        # Coloração especial
+        # Colorao especial
         if j == 18:  # Resultado
             bg, fg = cor_resultado(str(v))
             c.fill = F(bg)
@@ -139,8 +139,8 @@ def nova_aposta(wb, aposta):
                 bold=True, size=10, name="Calibri"
             )
         elif j == 12:  # Tier
-            tc = {"Elite":"FFD700","Premium":AZUL_CLR,"Padrão":CINZA}
-            tf = {"Elite":"000000","Premium":AZUL,"Padrão":"000000"}
+            tc = {"Elite":"FFD700","Premium":AZUL_CLR,"Padro":CINZA}
+            tf = {"Elite":"000000","Premium":AZUL,"Padro":"000000"}
             c.fill = F(tc.get(str(v), CINZA))
             c.font = Font(
                 bold=str(v)=="Elite",
@@ -152,7 +152,7 @@ def nova_aposta(wb, aposta):
 
     log(f"Nova aposta inserida: #{aposta.get('id','')} — {aposta.get('jogo','')} [{aposta.get('mercado','')}]")
 
-# ── AÇÃO: RESULTADO ───────────────────────────────────────────
+# -- AO: RESULTADO ------------
 def atualizar_resultado(wb, aposta):
     ws = wb["Sinais Completos"]
     sinal_id = str(aposta.get("id",""))
@@ -189,7 +189,7 @@ def atualizar_resultado(wb, aposta):
             if aposta.get("retorno") is not None:
                 ws.cell(row=r, column=20).value = f"{aposta['retorno']:+.2f}u"
 
-            # Banca após (col U = 21)
+            # Banca aps (col U = 21)
             if aposta.get("banca_apos"):
                 ws.cell(row=r, column=21).value = f"R${aposta['banca_apos']:,.2f}"
 
@@ -197,12 +197,12 @@ def atualizar_resultado(wb, aposta):
                 f"{'R$'+str(aposta.get('retorno','')) if aposta.get('retorno') else ''}")
             break
 
-    # Atualiza histórico de banca
+    # Atualiza histrico de banca
     _atualizar_historico_banca(wb, aposta)
 
-# ── ATUALIZA HISTÓRICO DE BANCA ───────────────────────────────
+# -- ATUALIZA HISTRICO DE BANCA ------------
 def _atualizar_historico_banca(wb, aposta):
-    ws = wb["Gestão de Banca"]
+    ws = wb["Gesto de Banca"]
     if not aposta.get("banca_apos") or not aposta.get("retorno"):
         return
 
@@ -221,7 +221,7 @@ def _atualizar_historico_banca(wb, aposta):
             row[4].value = f"R${aposta['banca_apos']:,.2f}"
             return
 
-    # Não achou o dia — insere nova linha
+    # No achou o dia  insere nova linha
     r = ws.max_row + 1
     banca_inicio = aposta.get("banca_apos", 1000) - aposta.get("retorno", 0)
     vals = [
@@ -243,7 +243,7 @@ def _atualizar_historico_banca(wb, aposta):
 
     log(f"Histórico banca: dia {hoje} adicionado — R${aposta.get('banca_apos',0):,.2f}")
 
-# ── AÇÃO: ATUALIZAR ODDS (MONITORAMENTO 72H) ──────────────────
+# -- AO: ATUALIZAR ODDS (MONITORAMENTO 72H) ------------
 def atualizar_odds(wb, aposta):
     ws = wb["Monitoramento 72h"]
     jogo = aposta.get("jogo","")
@@ -257,18 +257,18 @@ def atualizar_odds(wb, aposta):
                 steam = aposta["steam"]
                 # Atualiza status baseado no steam
                 if steam < -8:
-                    status = "🎯 FECHANDO"
+                    status = " FECHANDO"
                 elif steam < 0:
-                    status = "⚡ ATIVO"
+                    status = " ATIVO"
                 else:
-                    status = "👁️ OBSERVAÇÃO"
+                    status = " OBSERVAO"
                 ws.cell(row=r, column=6).value = status
             log(f"Odds atualizadas: {jogo}")
             return
 
     log(f"Jogo não encontrado para atualizar odds: {jogo}")
 
-# ── MAIN ──────────────────────────────────────────────────────
+# -- MAIN ------------
 def main():
     if len(sys.argv) < 2:
         print(__doc__)
@@ -295,19 +295,19 @@ def main():
 
         if acao == "nova_aposta":
             if not aposta:
-                log("ERRO: campo 'aposta' obrigatório para nova_aposta")
+                log("ERRO: campo 'aposta' obrigatrio para nova_aposta")
                 sys.exit(1)
             nova_aposta(wb, aposta)
 
         elif acao == "resultado":
             if not aposta:
-                log("ERRO: campo 'aposta' obrigatório para resultado")
+                log("ERRO: campo 'aposta' obrigatrio para resultado")
                 sys.exit(1)
             atualizar_resultado(wb, aposta)
 
         elif acao == "atualizar_odds":
             if not aposta:
-                log("ERRO: campo 'aposta' obrigatório para atualizar_odds")
+                log("ERRO: campo 'aposta' obrigatrio para atualizar_odds")
                 sys.exit(1)
             atualizar_odds(wb, aposta)
 

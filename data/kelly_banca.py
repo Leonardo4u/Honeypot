@@ -109,7 +109,7 @@ def calcular_kelly(
     sinais_mesmo_jogo_abertos=0,
 ):
     """
-    Calcula stake via Kelly fracionado com todas as regras de segurança.
+    Calcula stake via Kelly fracionado com todas as regras de segurana.
     Retorna dict com stake em % e em reais.
     """
     try:
@@ -157,7 +157,7 @@ def calcular_kelly(
     kelly_completo = (prob_modelo * odd - 1) / (odd - 1)
 
     if kelly_completo <= 0:
-        return {"aprovado": False, "motivo": "Kelly negativo — sem edge real"}
+        return {"aprovado": False, "motivo": "Kelly negativo  sem edge real"}
 
     kelly_fracionado = kelly_completo * KELLY_FRACAO
 
@@ -185,7 +185,7 @@ def calcular_kelly(
     if exposicao_atual + kelly_ajustado > 0.15:
         kelly_ajustado = max(0, 0.15 - exposicao_atual)
         if kelly_ajustado < PISO_MINIMO:
-            return {"aprovado": False, "motivo": "Exposição máxima de 15% atingida"}
+            return {"aprovado": False, "motivo": "Exposio mxima de 15% atingida"}
 
     kelly_ajustado = min(kelly_ajustado, TETO_MAXIMO)
 
@@ -367,7 +367,7 @@ def imprimir_relatorio(relatorio):
     print(f"  Maior sequência losses: {p['maior_sequencia_losses']}")
     print(f"\n📋 APOSTAS HOJE ({relatorio['total_apostas_hoje']})")
     for a in relatorio["apostas_hoje"]:
-        emoji = "✅" if a["resultado"] == "verde" else "❌" if a["resultado"] == "vermelho" else "⏳"
+        emoji = "[OK]" if a["resultado"] == "verde" else "[ERRO]" if a["resultado"] == "vermelho" else ""
         lucro = f"{a['lucro_unidades']:+.2f}u" if a["lucro_unidades"] else "-"
         print(f"  {emoji} {a['jogo']} | {a['mercado']} @ {a['odd']} | {lucro}")
     print("="*50)
@@ -377,7 +377,7 @@ if __name__ == "__main__":
     print("Sistema Kelly iniciado.")
     print(f"Banca atual: R${carregar_estado_banca()['banca_atual']:.2f}")
 
-    print("\nTeste de cálculo Kelly:")
+    print("\nTeste de clculo Kelly:")
     resultado = calcular_kelly(
         prob_modelo=0.60,
         odd=1.92,

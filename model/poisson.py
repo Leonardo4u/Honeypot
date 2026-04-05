@@ -4,7 +4,7 @@ import math
 import json
 import os
 
-# ── RHO POR LIGA (estimativas empíricas) ──────────────────────
+# -- RHO POR LIGA (estimativas empricas) ------------
 RHO_POR_LIGA = {
     "Premier League":          0.00,
     "EPL":                     0.00,
@@ -15,7 +15,7 @@ RHO_POR_LIGA = {
     "UEFA Champions League":  -0.09,
     "UEFA Europa League":     -0.10,
     "Brasileirao Serie A":    -0.11,
-    "Brazil Série A":         -0.11,
+    "Brazil Srie A":         -0.11,
 }
 RHO_DEFAULT = -0.10
 HOME_ADVANTAGE_DEFAULT = 1.0
@@ -118,7 +118,7 @@ def _build_recency_weights(n: int, recency_halflife=None):
 
 def _poisson_pmf(k, lam):
     """
-    PMF de Poisson local para evitar dependência de stubs externos em testes.
+    PMF de Poisson local para evitar dependncia de stubs externos em testes.
     """
     try:
         k_int = int(k)
@@ -152,7 +152,7 @@ def _matriz_probabilidades_dc(lambda_casa, lambda_fora, max_gols, rho):
 
 
 def _matriz_probabilidades_independente(lambda_casa, lambda_fora, max_gols):
-    """Fallback sem correção Dixon-Coles quando a matriz DC colapsa."""
+    """Fallback sem correo Dixon-Coles quando a matriz DC colapsa."""
     matriz = np.zeros((max_gols + 1, max_gols + 1))
     for i in range(max_gols + 1):
         for j in range(max_gols + 1):
@@ -172,8 +172,8 @@ def _normalizar_probabilidades(par_a, par_b):
 
 def _matriz_dc_robusta(lambda_casa, lambda_fora, max_gols, rho):
     """
-    Tenta matriz DC e cai para matriz independente se houver soma inválida.
-    Evita assert de soma=0 em cenários extremos de rho/tau.
+    Tenta matriz DC e cai para matriz independente se houver soma invlida.
+    Evita assert de soma=0 em cenrios extremos de rho/tau.
     """
     matriz = _matriz_probabilidades_dc(lambda_casa, lambda_fora, max_gols, rho)
     total = float(matriz.sum())
@@ -181,12 +181,12 @@ def _matriz_dc_robusta(lambda_casa, lambda_fora, max_gols, rho):
         return matriz
     return _matriz_probabilidades_independente(lambda_casa, lambda_fora, max_gols)
 
-# ── FUNÇÃO TAU (fator de correção Dixon-Coles) ────────────────
+# -- FUNO TAU (fator de correo Dixon-Coles) ------------
 def tau(i, j, lambda_casa, lambda_fora, rho):
     """
-    Fator de correção Dixon-Coles para placares baixos.
-    Corrige a subestimação de 0x0/1x1 e superestimação de 1x0/0x1
-    pelo modelo Poisson padrão.
+    Fator de correo Dixon-Coles para placares baixos.
+    Corrige a subestimao de 0x0/1x1 e superestimao de 1x0/0x1
+    pelo modelo Poisson padro.
     """
     if i == 0 and j == 0:
         return 1 - lambda_casa * lambda_fora * rho
@@ -199,14 +199,14 @@ def tau(i, j, lambda_casa, lambda_fora, rho):
     else:
         return 1.0
 
-# ── ESTIMAÇÃO DE RHO POR MÁXIMA VEROSSIMILHANÇA ───────────────
+# -- ESTIMAO DE RHO POR MXIMA VEROSSIMILHANA ------------
 def estimar_rho(dados_historicos, recency_halflife=None, league_name=None, debug=False):
     """
-    Estima o parâmetro rho por máxima verossimilhança.
+    Estima o parmetro rho por mxima verossimilhana.
 
     dados_historicos: lista de dicts com keys 'gols_casa' e 'gols_fora'
     Retorna: float rho otimizado (entre -0.35 e -0.01)
-    Fallback: RHO_DEFAULT se < 50 jogos disponíveis
+    Fallback: RHO_DEFAULT se < 50 jogos disponveis
     """
     if not dados_historicos or len(dados_historicos) < 50:
         return RHO_DEFAULT
@@ -289,31 +289,31 @@ def estimar_rho(dados_historicos, recency_halflife=None, league_name=None, debug
 
     return round(float(rho_otimo), 4)
 
-# ── MODELO POISSON COM CORREÇÃO DIXON-COLES ───────────────────
+# -- MODELO POISSON COM CORREO DIXON-COLES ------------
 def calcular_probabilidades(media_gols_casa, media_gols_fora,
                              max_gols=6, liga=None, rho=None):
     """
-    Modelo Poisson Bivariado com correção Dixon-Coles.
+    Modelo Poisson Bivariado com correo Dixon-Coles.
 
-    Parâmetros:
-        media_gols_casa  — xG esperado do time da casa
-        media_gols_fora  — xG esperado do time visitante
-        max_gols         — limite da matriz de placares (default 6)
-        liga             — nome da liga para usar rho específico
-        rho              — rho manual (sobrescreve liga e default)
+    Parmetros:
+        media_gols_casa   xG esperado do time da casa
+        media_gols_fora   xG esperado do time visitante
+        max_gols          limite da matriz de placares (default 6)
+        liga              nome da liga para usar rho especfico
+        rho               rho manual (sobrescreve liga e default)
 
     Retorna dict com:
-        prob_casa, prob_empate, prob_fora  — com correção DC
-        prob_casa_raw, prob_empate_raw, prob_fora_raw  — sem correção
-        dc_delta_empate  — quanto a correção mudou o empate
-        rho_usado        — valor de rho aplicado
+        prob_casa, prob_empate, prob_fora   com correo DC
+        prob_casa_raw, prob_empate_raw, prob_fora_raw   sem correo
+        dc_delta_empate   quanto a correo mudou o empate
+        rho_usado         valor de rho aplicado
     """
     rho_usado, home_advantage, recency_halflife = _resolver_rho_e_home_advantage(liga=liga, rho=rho)
 
     lc = media_gols_casa * home_advantage
     lf = media_gols_fora
 
-    # ── Poisson padrão (sem correção) ────────────────────────
+    # -- Poisson padro (sem correo) ------------
     prob_casa_raw  = 0.0
     prob_empate_raw = 0.0
     prob_fora_raw  = 0.0
@@ -344,7 +344,7 @@ def calcular_probabilidades(media_gols_casa, media_gols_fora,
             else:
                 prob_fora += matriz[i][j]
 
-    # Verifica soma ≈ 1.0
+    # Verifica soma  1.0
     soma = prob_casa + prob_empate + prob_fora
     if soma > 0 and math.isfinite(soma):
         prob_casa /= soma
@@ -439,7 +439,7 @@ def ajuste_contextual(prob, fator):
 
 def log_comparacao(jogo, lc, lf, resultado):
     """
-    Loga comparação antes/depois da correção Dixon-Coles.
+    Loga comparao antes/depois da correo Dixon-Coles.
     """
     print(f"\n[Dixon-Coles] {jogo}")
     print(f"  λ_casa={lc:.2f} | λ_fora={lf:.2f} | ρ={resultado['rho_usado']}")
@@ -470,7 +470,7 @@ if __name__ == "__main__":
 
     log_comparacao("Arsenal vs Chelsea", casa, fora, r)
 
-    # Teste com liga específica
+    # Teste com liga especfica
     print("\n--- Por liga ---")
     for liga, rho_l in RHO_POR_LIGA.items():
         r2 = calcular_probabilidades(1.5, 1.3, liga=liga)
@@ -484,8 +484,8 @@ if __name__ == "__main__":
     print(f"\nOver 2.5:  {over['prob_over']*100:.1f}%")
     print(f"Under 2.5: {over['prob_under']*100:.1f}%")
 
-    # Teste estimação rho
-    print("\n--- Estimação rho com dados simulados ---")
+    # Teste estimao rho
+    print("\n--- Estimao rho com dados simulados ---")
     import random
     random.seed(42)
     historico = [{"gols_casa": random.randint(0,4),

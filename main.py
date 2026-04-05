@@ -58,10 +58,10 @@ async def enviar_resultado(sinal_id, resultado, odd_final):
     bot = Bot(token=TOKEN)
 
     if resultado == "verde":
-        emoji = "✅"
+        emoji = "[OK]"
         texto_resultado = "VERDE"
     else:
-        emoji = "❌"
+        emoji = "[ERRO]"
         texto_resultado = "VERMELHO"
 
     resumo = resumo_mensal()

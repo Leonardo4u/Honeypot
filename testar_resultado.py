@@ -11,7 +11,7 @@ jogos = [
     ("AS Roma", "Bologna"),
     ("Porto", "VfB Stuttgart"),
     ("FC Midtjylland", "Nottingham Forest"),
-    ("Grêmio", "Vitoria"),
+    ("Grmio", "Vitoria"),
 ]
 
 for casa, fora in jogos:

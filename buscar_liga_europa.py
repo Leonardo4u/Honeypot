@@ -12,4 +12,4 @@ r = requests.get(
 
 ligas = [l for l in r.json() if 'europa' in l['key'].lower() or 'europa' in l['title'].lower()]
 for l in ligas:
-    print(l['key'], '—', l['title'])
+    print(l['key'], '', l['title'])

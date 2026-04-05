@@ -912,3 +912,12 @@ Traceback (most recent call last):
   File "C:\Users\Leo\edge_protocol\tests\test_advanced_pipeline_modules.py", line 109, in run
     raise RuntimeError("sim error")
 RuntimeError: sim error
+2026-04-05 11:07:23,338 ERROR ALERT PB-02 em analise: provider_error_rate_high
+2026-04-05 11:48:36,942 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-05 12:14:43,785 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-05 12:18:11,920 ERROR api_error_alert_send_failed endpoint=odds_api:soccer_uefa_champs_league type=auth_failure status=401 telegram_status=400 body={"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+2026-04-05 12:18:21,417 ERROR api_error_alert_send_failed endpoint=odds_api:soccer_uefa_europa_league type=auth_failure status=401 telegram_status=400 body={"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+2026-04-05 12:18:31,011 ERROR api_error_alert_send_failed endpoint=odds_api:soccer_spain_la_liga type=auth_failure status=401 telegram_status=400 body={"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+2026-04-05 12:20:12,582 ERROR api_error_alert_send_failed endpoint=odds_api:soccer_epl type=auth_failure status=401 telegram_status=400 body={"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
+2026-04-05 12:21:40,733 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-05 12:24:22,389 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach

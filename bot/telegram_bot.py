@@ -13,24 +13,24 @@ from data.database import buscar_sinais_hoje, resumo_mensal, atualizar_resultado
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(
-        "⚡ Edge Protocol ativo!\n\n"
-        "Comandos disponíveis:\n"
-        "/hoje — Sinais do dia\n"
-        "/banca — Estado da banca\n"
-        "/historico — Resumo do mês\n"
-        "/resultado — Registrar resultado\n"
-        "/ajuda — Como usar o sistema"
+        " Edge Protocol ativo!\n\n"
+        "Comandos disponveis:\n"
+        "/hoje  Sinais do dia\n"
+        "/banca  Estado da banca\n"
+        "/historico  Resumo do ms\n"
+        "/resultado  Registrar resultado\n"
+        "/ajuda  Como usar o sistema"
     )
 
 async def hoje(update: Update, context: ContextTypes.DEFAULT_TYPE):
     sinais = buscar_sinais_hoje()
     if not sinais:
-        await update.message.reply_text("📋 Nenhum sinal enviado hoje ainda.")
+        await update.message.reply_text(" Nenhum sinal enviado hoje ainda.")
         return
 
     msg = f"📋 SINAIS DE HOJE ({len(sinais)})\n\n"
     for s in sinais:
-        status_emoji = "⏳" if s[10] == "pendente" else ("✅" if s[11] == "verde" else "❌")
+        status_emoji = "" if s[10] == "pendente" else ("[OK]" if s[11] == "verde" else "[ERRO]")
         msg += f"{status_emoji} {s[3]} | {s[4]}\n"
         msg += f"   Odd: {s[5]} | Score: {s[7]}/100\n"
         msg += f"   Stake: {s[8]}u | Status: {s[10]}\n\n"
@@ -51,9 +51,9 @@ async def banca(update: Update, context: ContextTypes.DEFAULT_TYPE):
     roi = ((banca_atual - banca_inicial) / banca_inicial) * 100
 
     if roi >= 0:
-        roi_emoji = "📈"
+        roi_emoji = ""
     else:
-        roi_emoji = "📉"
+        roi_emoji = ""
 
     msg = (
         f"🏦 ESTADO DA BANCA\n\n"
@@ -124,7 +124,7 @@ async def resultado(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         atualizar_resultado(sinal_id, resultado_str, lucro)
 
-        emoji = "✅" if resultado_str == "verde" else "❌"
+        emoji = "[OK]" if resultado_str == "verde" else "[ERRO]"
         msg = (
             f"{emoji} Resultado registrado!\n\n"
             f"Sinal ID: #{sinal_id}\n"
@@ -136,22 +136,22 @@ async def resultado(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text(msg)
 
     except ValueError:
-        await update.message.reply_text("ID e odd devem ser números.\nExemplo: /resultado 1 verde 1.92")
+        await update.message.reply_text("ID e odd devem ser nmeros.\nExemplo: /resultado 1 verde 1.92")
 
 async def ajuda(update: Update, context: ContextTypes.DEFAULT_TYPE):
     msg = (
-        "📖 COMO USAR O EDGE PROTOCOL\n\n"
+        " COMO USAR O EDGE PROTOCOL\n\n"
         "1. O sistema analisa jogos automaticamente\n"
-        "   às 08h, 13h e 17h todos os dias.\n\n"
+        "   s 08h, 13h e 17h todos os dias.\n\n"
         "2. Quando um sinal for aprovado, ele aparece\n"
         "   automaticamente no canal VIP.\n\n"
-        "3. Após o jogo, registre o resultado:\n"
+        "3. Aps o jogo, registre o resultado:\n"
         "   /resultado <id> <verde|vermelho> <odd>\n\n"
         "4. Acompanhe sua banca com /banca\n\n"
-        "⚠️ Nunca aposte mais do que o indicado.\n"
-        "Siga sempre a gestão de banca.\n\n"
-        "━━━━━━━━━━━━━━━\n"
-        "⚡ Edge Protocol"
+        " Nunca aposte mais do que o indicado.\n"
+        "Siga sempre a gesto de banca.\n\n"
+        "\n"
+        " Edge Protocol"
     )
     await update.message.reply_text(msg)
 

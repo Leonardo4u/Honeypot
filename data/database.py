@@ -35,7 +35,7 @@ def _adicionar_coluna_segura(cursor, tabela, coluna, tipo):
 
 @contextmanager
 def get_conn(db_path: Optional[str] = None):
-    """Context manager original — mantido para compatibilidade total."""
+    """Context manager original  mantido para compatibilidade total."""
     path = db_path or DB_PATH
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
@@ -52,14 +52,14 @@ def get_conn(db_path: Optional[str] = None):
         conn.close()
 
 
-# FIX-08: context manager simples para hot paths que não precisam
-# de row_factory nem de WAL tracking — reduz overhead de connect/close
+# FIX-08: context manager simples para hot paths que no precisam
+# de row_factory nem de WAL tracking  reduz overhead de connect/close
 @contextmanager
 def get_db_connection(db_path: Optional[str] = None):
     """
     Context manager leve para hot paths de leitura/escrita simples.
-    Não configura row_factory nem WAL (use get_conn para operações
-    que precisam de Row objects ou em primeira conexão ao banco).
+    No configura row_factory nem WAL (use get_conn para operaes
+    que precisam de Row objects ou em primeira conexo ao banco).
     """
     path = db_path or DB_PATH
     conn = sqlite3.connect(path)
@@ -522,26 +522,26 @@ def garantir_schema_minimo():
     garantir_indices_desempenho()
 
 
-# FIX-11: ponto único e determinístico de bootstrap de schema
+# FIX-11: ponto nico e determinstico de bootstrap de schema
 def bootstrap_completo(db_path=None):
     """
-    Inicializa ou migra o schema completo do banco em ordem determinística.
+    Inicializa ou migra o schema completo do banco em ordem determinstica.
 
-    É o único ponto de entrada recomendado para fresh setup.
-    Idempotente — seguro de chamar múltiplas vezes.
+     o nico ponto de entrada recomendado para fresh setup.
+    Idempotente  seguro de chamar mltiplas vezes.
 
-    Ordem de execução:
-      1. criar_banco()              — tabelas base e schema principal
-      2. garantir_colunas_sinais()  — colunas opcionais da tabela sinais
-      3. garantir_schema_historico_sinais() — índice de deduplicação histórica
-      4. garantir_tabela_execucoes()        — tabela de idempotência de jobs
-      5. garantir_tabelas_operacionais()    — auditoria, alertas, diagnósticos
+    Ordem de execuo:
+      1. criar_banco()               tabelas base e schema principal
+      2. garantir_colunas_sinais()   colunas opcionais da tabela sinais
+      3. garantir_schema_historico_sinais()  ndice de deduplicao histrica
+      4. garantir_tabela_execucoes()         tabela de idempotncia de jobs
+      5. garantir_tabelas_operacionais()     auditoria, alertas, diagnsticos
     """
     # Se um db_path customizado foi passado, redirecionar temporariamente
-    # (usado em testes com banco temporário)
+    # (usado em testes com banco temporrio)
     if db_path is not None:
         original_db_path = globals().get("DB_PATH")
-        # Não alteramos o módulo global — chamamos diretamente cada garantia
+        # No alteramos o mdulo global  chamamos diretamente cada garantia
         _bootstrap_em_path(db_path)
         return
 
@@ -553,7 +553,7 @@ def bootstrap_completo(db_path=None):
 
 
 def _bootstrap_em_path(db_path):
-    """Executa bootstrap em um caminho de banco específico (para testes)."""
+    """Executa bootstrap em um caminho de banco especfico (para testes)."""
     original_db_path = DB_PATH
     try:
         globals()["DB_PATH"] = db_path
@@ -719,7 +719,7 @@ def inserir_sinal(
 
 
 def contar_sinais_duplicados_mesmo_dia(liga, team_home, team_away, mercado, data_ref=None):
-    """Conta sinais com mesmo jogo/mercado registrados no mesmo dia de criação."""
+    """Conta sinais com mesmo jogo/mercado registrados no mesmo dia de criao."""
     data_alvo = data_ref or datetime.now(UTC).date().isoformat()
     jogo = f"{str(team_home).strip()} vs {str(team_away).strip()}"
     with get_conn() as conn:
@@ -790,9 +790,9 @@ def listar_sinais_duplicados_mesmo_dia(data_ref=None):
 def atualizar_resultado(sinal_id: int, resultado: str, lucro: float) -> None:
     """
     Finaliza um sinal com resultado e lucro.
-    BUG-04: UPDATE condicional — só atualiza se status ainda é 'pendente'.
-    Torna a operação idempotente: chamadas duplicadas não sobrescrevem
-    um resultado já registrado por outra execução concorrente.
+    BUG-04: UPDATE condicional  s atualiza se status ainda  'pendente'.
+    Torna a operao idempotente: chamadas duplicadas no sobrescrevem
+    um resultado j registrado por outra execuo concorrente.
     """
     with get_conn() as conn:
         c = conn.cursor()
@@ -828,8 +828,8 @@ def sinal_existe(sinal_id):
 
 def verificar_status_sinal(sinal_id):
     """
-    Retorna o status atual do sinal ou None se não existir.
-    Usado pelo guard de dupla finalização no settlement (BUG-04).
+    Retorna o status atual do sinal ou None se no existir.
+    Usado pelo guard de dupla finalizao no settlement (BUG-04).
     Separado de sinal_existe() para permitir mock independente em testes.
     """
     with get_conn() as conn:

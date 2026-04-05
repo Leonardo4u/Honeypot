@@ -16,7 +16,7 @@ API_KEY = os.getenv("ODDS_API_KEY")
 
 
 def _sinal_existe_em_path(sinal_id, db_path=None):
-    """Valida existência de sinal no banco alvo, respeitando db_path opcional."""
+    """Valida existncia de sinal no banco alvo, respeitando db_path opcional."""
     if db_path is None:
         return sinal_existe(sinal_id)
     conn = sqlite3.connect(db_path)
@@ -62,7 +62,7 @@ def criar_tabelas_validacao():
 
     conn.commit()
     conn.close()
-    print("Tabelas de validação criadas.")
+    print("Tabelas de validao criadas.")
 
 def registrar_aposta_clv(sinal_id, jogo, mercado, odd_entrada, prob_prevista):
     if not sinal_existe(sinal_id):
@@ -283,7 +283,7 @@ def buscar_sinais_para_fechar():
 
 if __name__ == "__main__":
     criar_tabelas_validacao()
-    print("Sistema de validação iniciado.")
+    print("Sistema de validao iniciado.")
 
     metricas = calcular_metricas()
     print(f"\nCLV Médio: {metricas['clv_medio']}%")
@@ -292,8 +292,8 @@ if __name__ == "__main__":
 
     if metricas['brier_medio'] > 0:
         if metricas['brier_medio'] < 0.20:
-            print("Calibração: EXCELENTE")
+            print("Calibrao: EXCELENTE")
         elif metricas['brier_medio'] < 0.25:
-            print("Calibração: BOA")
+            print("Calibrao: BOA")
         else:
-            print("Calibração: SUPERESTIMANDO — revisar modelo")
+            print("Calibrao: SUPERESTIMANDO  revisar modelo")

@@ -233,7 +233,7 @@ def _print_reliability(settled):
 
 
 def _print_sensitivity(settled):
-    """Imprime sensitivity table para EV, confiança e edge."""
+    """Imprime sensitivity table para EV, confiana e edge."""
     print("\nMagic numbers sensitivity")
     print("-------------------------")
 

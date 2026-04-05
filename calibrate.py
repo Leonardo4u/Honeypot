@@ -18,7 +18,7 @@ def _parse_args(argv):
         "out_path",
         nargs="?",
         default=os.path.join(BOT_DATA_DIR, "calibracao_prob.json"),
-        help="Arquivo de saída JSON",
+        help="Arquivo de sada JSON",
     )
     parser.add_argument("--segmented", action="store_true", help="Gera registry segmentado por liga e mercado")
     parser.add_argument("--min-segment-samples", type=int, default=100)

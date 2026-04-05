@@ -64,7 +64,7 @@ def calcular_resumo(sinais):
 
 def mercado_legivel(mercado):
     mapa = {
-        "1x2_casa": "Vitória Casa", "1x2_fora": "Vitória Fora",
+        "1x2_casa": "Vitria Casa", "1x2_fora": "Vitria Fora",
         "over_2.5": "Over 2.5", "under_2.5": "Under 2.5",
         "btts_sim": "Ambas Marcam", "btts_nao": "Nenhuma Marca",
     }
@@ -116,15 +116,15 @@ def criar_dashboard(wb, sinais, resumo):
     ws.row_dimensions[15].height = 10
     ws.row_dimensions[21].height = 10
 
-    merge_cel(ws, 2, 2, 12, "⚡  EDGE PROTOCOL — DASHBOARD DE PERFORMANCE",
+    merge_cel(ws, 2, 2, 12, "  EDGE PROTOCOL  DASHBOARD DE PERFORMANCE",
               bold=True, cor_fundo=COR_HEADER, cor_fonte="FFFFFF", tamanho=16, align="center")
 
-    merge_cel(ws, 3, 2, 12, f"Atualizado em: {datetime.now().strftime('%d/%m/%Y às %H:%M')}",
+    merge_cel(ws, 3, 2, 12, f"Atualizado em: {datetime.now().strftime('%d/%m/%Y s %H:%M')}",
               cor_fundo=COR_SUBHEADER, cor_fonte="FFFFFF", tamanho=9)
 
     cards = [
         ("TOTAL DE SINAIS", str(resumo["total"]), "2E75B6"),
-        ("VITÓRIAS", str(resumo["vitorias"]), "375623"),
+        ("VITRIAS", str(resumo["vitorias"]), "375623"),
         ("DERROTAS", str(resumo["derrotas"]), "9C0006"),
         ("WIN RATE", f"{resumo['win_rate']:.1f}%", "7030A0"),
         ("ROI TOTAL", f"{resumo['roi']:.2f}%", "C55A11" if resumo["roi"] < 0 else "375623"),
@@ -180,7 +180,7 @@ def criar_dashboard(wb, sinais, resumo):
         if s[10]:
             ligas[liga]["lucro"] += s[10]
 
-    headers_liga = ["Liga", "Sinais", "Vitórias", "Derrotas", "Win Rate", "Lucro (u)"]
+    headers_liga = ["Liga", "Sinais", "Vitrias", "Derrotas", "Win Rate", "Lucro (u)"]
     for col, h in enumerate(headers_liga, 2):
         cel(ws, 18, col, h, bold=True, cor_fundo=COR_SUBHEADER,
             cor_fonte="FFFFFF", borda=borda_fina(), tamanho=10)
@@ -210,7 +210,7 @@ def criar_dashboard(wb, sinais, resumo):
         if s[10]:
             mercados[m]["lucro"] += s[10]
 
-    headers_merc = ["Mercado", "Sinais", "Vitórias", "Derrotas", "Win Rate", "Lucro (u)"]
+    headers_merc = ["Mercado", "Sinais", "Vitrias", "Derrotas", "Win Rate", "Lucro (u)"]
     for col, h in enumerate(headers_merc, 2):
         cel(ws, 27, col, h, bold=True, cor_fundo=COR_SUBHEADER,
             cor_fonte="FFFFFF", borda=borda_fina(), tamanho=10)
@@ -257,15 +257,15 @@ def criar_aba_sinais(wb, sinais):
         if resultado == "verde":
             cor = COR_VERDE
             cor_txt = COR_VERDE_TEXTO
-            res_txt = "✅ VERDE"
+            res_txt = "[OK] VERDE"
         elif resultado == "vermelho":
             cor = COR_VERMELHO
             cor_txt = COR_VERM_TEXTO
-            res_txt = "❌ VERMELHO"
+            res_txt = "[ERRO] VERMELHO"
         else:
             cor = COR_PENDENTE
             cor_txt = COR_PEND_TEXTO
-            res_txt = "⏳ PENDENTE"
+            res_txt = " PENDENTE"
 
         ev_fmt = f"{ev*100:.2f}%" if ev else "-"
         lucro_fmt = f"{lucro:+.2f}" if lucro is not None else "-"
@@ -308,7 +308,7 @@ def criar_aba_mensal(wb, sinais, mes_ano):
 
     cards_mes = [
         ("Sinais", resumo_mes["total"]),
-        ("Vitórias", resumo_mes["vitorias"]),
+        ("Vitrias", resumo_mes["vitorias"]),
         ("Derrotas", resumo_mes["derrotas"]),
         ("Win Rate", f"{resumo_mes['win_rate']:.1f}%"),
         ("ROI", f"{resumo_mes['roi']:.2f}%"),
@@ -351,13 +351,13 @@ def criar_aba_mensal(wb, sinais, mes_ano):
 
         if resultado == "verde":
             cor = COR_VERDE
-            res_txt = "✅ VERDE"
+            res_txt = "[OK] VERDE"
         elif resultado == "vermelho":
             cor = COR_VERMELHO
-            res_txt = "❌ VERMELHO"
+            res_txt = "[ERRO] VERMELHO"
         else:
             cor = COR_PENDENTE
-            res_txt = "⏳ PENDENTE"
+            res_txt = " PENDENTE"
 
         ev_fmt = f"{ev*100:.2f}%" if ev else "-"
         lucro_fmt = f"{lucro:+.2f}" if lucro is not None else "-"
@@ -395,6 +395,6 @@ def gerar_excel():
     return EXCEL_PATH
 
 if __name__ == "__main__":
-    print("=== GERANDO RELATÓRIO EXCEL ===\n")
+    print("=== GERANDO RELATRIO EXCEL ===\n")
     gerar_excel()
-    print("Concluído!")
+    print("Concludo!")

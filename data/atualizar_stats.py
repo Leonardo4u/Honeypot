@@ -19,7 +19,7 @@ MAPEAMENTO_NOMES = {
     "Bragantino-SP": "RB Bragantino",
     "Atletico Mineiro": "Atletico-MG",
     "Vasco da Gama": "Vasco DA Gama",
-    "Grêmio": "Gremio",
+    "Grmio": "Gremio",
 }
 
 LIGAS_API_FOOTBALL = {
@@ -53,7 +53,7 @@ def _season_years(seasons_back=3):
 
 
 def _get_fixtures_with_retry(params, attempts=3, backoff_seconds=0.8):
-    """Consulta fixtures com retry/backoff leve para falhas transitórias."""
+    """Consulta fixtures com retry/backoff leve para falhas transitrias."""
     last_exc = None
     for attempt in range(1, max(1, int(attempts)) + 1):
         try:
@@ -214,7 +214,7 @@ def fetch_historico_br_ligas(seasons=3):
 
 def buscar_stats_api_football(liga_key, temporada=2024):
     if not API_FOOTBALL_KEY:
-        print("API_FOOTBALL_KEY não configurada.")
+        print("API_FOOTBALL_KEY no configurada.")
         return {}
 
     liga_id = LIGAS_API_FOOTBALL.get(liga_key)
@@ -288,7 +288,7 @@ def buscar_stats_api_football(liga_key, temporada=2024):
         return {}
 
 def atualizar_todas_ligas():
-    print("=== ATUALIZANDO MÉDIAS DE GOLS ===\n")
+    print("=== ATUALIZANDO MDIAS DE GOLS ===\n")
     todas_medias = {}
 
     for liga_key in LIGAS_API_FOOTBALL:
@@ -327,7 +327,7 @@ def salvar_medias_manuais():
 
 def carregar_medias():
     if not os.path.exists(STATS_PATH):
-        print("Criando arquivo de médias pela primeira vez...")
+        print("Criando arquivo de mdias pela primeira vez...")
         return salvar_medias_manuais()
 
     with open(STATS_PATH, "r", encoding="utf-8-sig") as f:

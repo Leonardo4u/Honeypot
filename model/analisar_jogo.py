@@ -62,7 +62,7 @@ def _carregar_calibrador_prob():
             try:
                 return BucketCalibrator.load(CALIBRACAO_PROB_PATH)
             except (OSError, ValueError, TypeError, json.JSONDecodeError):
-                # Fallback seguro: pass-through caso arquivo exista mas esteja inválido.
+                # Fallback seguro: pass-through caso arquivo exista mas esteja invlido.
                 _log_structured_warning(
                     jogo=None,
                     mercado=None,
@@ -120,7 +120,7 @@ def _contextual_factor_avancado(dados):
         + float(dados.get("ajuste_fadiga", 0) or 0)
     )
 
-    # Ajuste leve orientado por contexto; mantém comportamento anterior se dados ausentes.
+    # Ajuste leve orientado por contexto; mantm comportamento anterior se dados ausentes.
     h2h = get_h2h_features(
         str(dados.get("time_casa") or ""),
         str(dados.get("time_fora") or ""),
@@ -201,19 +201,19 @@ def _registrar_pick(result: dict, dados: dict):
 
 def analisar_jogo(dados, log_dc=True):
     """
-    Recebe um dicionário com os dados do jogo e retorna
-    a análise completa com EDGE Score e decisão.
+    Recebe um dicionrio com os dados do jogo e retorna
+    a anlise completa com EDGE Score e deciso.
 
-    Parâmetros do dicionário 'dados':
+    Parmetros do dicionrio 'dados':
     - liga:             nome da liga
     - jogo:             "Time Casa vs Time Fora"
-    - horario:          horário do jogo
-    - media_gols_casa:  média de gols marcados pelo time da casa
-    - media_gols_fora:  média de gols marcados pelo time de fora
+    - horario:          horrio do jogo
+    - media_gols_casa:  mdia de gols marcados pelo time da casa
+    - media_gols_fora:  mdia de gols marcados pelo time de fora
     - mercado:          "1x2_casa" | "over_2.5" | "btts_sim"
-    - odd:              odd disponível na casa de apostas
-    - ajuste_lesoes:    fator de ajuste por lesões (-0.10 a 0.0)
-    - ajuste_motivacao: fator de ajuste por motivação (-0.05 a 0.05)
+    - odd:              odd disponvel na casa de apostas
+    - ajuste_lesoes:    fator de ajuste por leses (-0.10 a 0.0)
+    - ajuste_motivacao: fator de ajuste por motivao (-0.05 a 0.05)
     - ajuste_fadiga:    fator de ajuste por fadiga (-0.08 a 0.0)
     - confianca_dados:  qualidade dos dados (0-100)
     - estabilidade_odd: estabilidade da odd (0-100)
@@ -229,12 +229,12 @@ def analisar_jogo(dados, log_dc=True):
 
     prediction_id = str(uuid.uuid4())
 
-    # ── Poisson + Dixon-Coles (passa liga para rho correto por liga) ──
+    # -- Poisson + Dixon-Coles (passa liga para rho correto por liga) --
     probs_1x2 = calcular_probabilidades(casa, fora, liga=liga)
     probs_ou = calcular_prob_over_under(casa, fora, linha=2.5)
     probs_btts = calcular_prob_btts(casa, fora)
 
-    # ── Seleciona probabilidade base pelo mercado ──────────────────
+    # -- Seleciona probabilidade base pelo mercado ------------
     if mercado == "1x2_casa":
         prob_base = probs_1x2["prob_casa"]
     elif mercado == "1x2_fora":
@@ -248,7 +248,7 @@ def analisar_jogo(dados, log_dc=True):
     else:
         prob_base = probs_1x2["prob_casa"]
 
-    # ── Blend de mercado + ajuste contextual avançado (com fallback) ──
+    # -- Blend de mercado + ajuste contextual avanado (com fallback) --
     odd_oponente = dados.get("odd_oponente_mercado")
     p_no_vig = None
     try:
@@ -280,7 +280,7 @@ def analisar_jogo(dados, log_dc=True):
     threshold_cfg = _obter_threshold_segmentado(liga, mercado)
     ev_floor = float(threshold_cfg.get("ev_floor", 0.04))
 
-    # ── EV usando probabilidade calibrada ──────────────────────────
+    # -- EV usando probabilidade calibrada ------------
     ev = calcular_ev(prob_calibrada, odd)
 
     if ev < ev_floor:
@@ -337,7 +337,7 @@ def analisar_jogo(dados, log_dc=True):
         _registrar_pick(result, dados)
         return result
 
-    # ── EDGE Score ─────────────────────────────────────────────────
+    # -- EDGE Score ------------
     ev_score = ev_para_score(ev)
     edge_score = calcular_edge_score(
         ev_score,
@@ -374,7 +374,7 @@ def analisar_jogo(dados, log_dc=True):
     reasoning_trace["market_features"] = market_features
     reasoning_trace["segment_threshold"] = threshold_cfg
 
-    # Kelly também usa probabilidade calibrada.
+    # Kelly tambm usa probabilidade calibrada.
     kelly_bruto_frac = calcular_kelly_fracionado(
         prob_modelo=prob_calibrada,
         odd=odd,
@@ -382,7 +382,7 @@ def analisar_jogo(dados, log_dc=True):
         teto=0.05,
     )
 
-    # ── Log Dixon-Coles quando ajuste for relevante (>2%) ──────────
+    # -- Log Dixon-Coles quando ajuste for relevante (>2%) ------------
     if log_dc and abs(probs_1x2["dc_delta_empate"]) >= 2.0:
         jogo_nome = dados.get("jogo", "?")
         log_comparacao(jogo_nome, casa, fora, probs_1x2)
@@ -440,20 +440,20 @@ def analisar_jogo(dados, log_dc=True):
 
 def formatar_sinal(analise):
     """
-    Formata a análise como mensagem para o Telegram.
+    Formata a anlise como mensagem para o Telegram.
     """
     if analise["decisao"] == "DESCARTAR":
         return None
 
-    emoji_decisao = "⚡" if analise["decisao"] == "PREMIUM" else "✅"
+    emoji_decisao = "" if analise["decisao"] == "PREMIUM" else "[OK]"
 
     mercados_legivel = {
-        "1x2_casa": "Vitória do time da casa",
-        "1x2_fora": "Vitória do time visitante",
+        "1x2_casa": "Vitria do time da casa",
+        "1x2_fora": "Vitria do time visitante",
         "over_2.5": "Mais de 2.5 gols na partida",
         "under_2.5": "Menos de 2.5 gols na partida",
         "btts_sim": "Ambas as equipes marcam",
-        "btts_nao": "Pelo menos um time não marca",
+        "btts_nao": "Pelo menos um time no marca",
     }
     mercado_texto = mercados_legivel.get(analise["mercado"], analise["mercado"])
 
@@ -463,7 +463,7 @@ def formatar_sinal(analise):
 
         dt = datetime.strptime(horario_raw, "%Y-%m-%dT%H:%M:%SZ")
         dt_brasil = dt - timedelta(hours=3)
-        horario_formatado = dt_brasil.strftime("%d/%m/%Y — %H:%M")
+        horario_formatado = dt_brasil.strftime("%d/%m/%Y  %H:%M")
     except Exception:
         horario_formatado = horario_raw
 
@@ -485,7 +485,7 @@ def formatar_sinal(analise):
 
 
 if __name__ == "__main__":
-    print("=== SIMULAÇÃO DE ANÁLISE + DIXON-COLES ===\n")
+    print("=== SIMULAO DE ANLISE + DIXON-COLES ===\n")
 
     jogo_teste = {
         "liga": "Premier League",
@@ -529,7 +529,7 @@ if __name__ == "__main__":
         print(msg)
 
     # Teste com Serie A (rho mais negativo)
-    print("\n=== TESTE SERIE A (ρ=-0.13) ===\n")
+    print("\n=== TESTE SERIE A (=-0.13) ===\n")
     jogo_italy = {**jogo_teste, "liga": "Serie A", "jogo": "AC Milan vs Inter"}
     r2 = analisar_jogo(jogo_italy)
     print(f"ρ usado: {r2['rho_usado']}")

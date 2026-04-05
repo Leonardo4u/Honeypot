@@ -43,5 +43,5 @@ for jogo in jogos:
 
         print(f"{jogo['jogo']} | {mercado}")
         print(f"  Odd: {odd} | EV: {analise.get('ev_percentual','N/A')} | Score: {analise.get('edge_score',0)}")
-        print(f"  Decisão: {analise['decisao']} | Filtro: {'PASSOU' if filtro['aprovado'] else 'BLOQUEADO — ' + filtro['motivo']}")
+        print(f"  Decisão: {analise['decisao']} | Filtro: {'PASSOU' if filtro['aprovado'] else 'BLOQUEADO  ' + filtro['motivo']}")
         print()

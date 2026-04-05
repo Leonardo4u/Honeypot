@@ -8,14 +8,14 @@ def calcular_ev(prob_estimada, odd):
     """
     Calcula o Expected Value (EV) de uma aposta.
     EV positivo = aposta com valor real.
-    EV = (probabilidade × odd) - 1
+    EV = (probabilidade  odd) - 1
     """
     ev = (prob_estimada * odd) - 1
     return round(ev, 4)
 
 def odd_para_prob(odd):
     """
-    Converte odd decimal para probabilidade implícita (com vig).
+    Converte odd decimal para probabilidade implcita (com vig).
     """
     return round(1 / odd, 4)
 
@@ -23,15 +23,15 @@ def calcular_edge_score(ev, confianca_dados, estabilidade_odd, contexto_jogo):
     """
     Calcula o EDGE Score final (0-100).
 
-    Parâmetros (todos de 0 a 100):
+    Parmetros (todos de 0 a 100):
     - ev:               baseado no EV calculado
-    - confianca_dados:  qualidade dos dados disponíveis
-    - estabilidade_odd: odd estável nas últimas horas
-    - contexto_jogo:    motivação, importância, fadiga
+    - confianca_dados:  qualidade dos dados disponveis
+    - estabilidade_odd: odd estvel nas ltimas horas
+    - contexto_jogo:    motivao, importncia, fadiga
 
     Pesos:
     - EV:               40%
-    - Confiança dados:  25%
+    - Confiana dados:  25%
     - Estabilidade odd: 20%
     - Contexto jogo:    15%
     """
@@ -46,7 +46,7 @@ def calcular_edge_score(ev, confianca_dados, estabilidade_odd, contexto_jogo):
 def ev_para_score(ev):
     """
     Converte EV decimal para score de 0-100.
-    EV de 0.04 (4%) = score 50 (mínimo aceitável)
+    EV de 0.04 (4%) = score 50 (mnimo aceitvel)
     EV de 0.12 (12%) = score 100
     """
     if ev <= 0:
@@ -59,7 +59,7 @@ def calcular_stake(edge_score, banca_atual, unidade_percentual=0.01):
     Calcula o valor da stake baseado no EDGE Score.
     Score 80+: 3 unidades
     Score 65-79: 2 unidades
-    Score 50-64: 1 unidade (opcional, não enviar sinal)
+    Score 50-64: 1 unidade (opcional, no enviar sinal)
     """
     unidade = banca_atual * unidade_percentual
 
@@ -80,7 +80,7 @@ def calcular_stake(edge_score, banca_atual, unidade_percentual=0.01):
 
 def decisao_sinal(edge_score):
     """
-    Retorna a decisão final baseada no EDGE Score.
+    Retorna a deciso final baseada no EDGE Score.
     """
     if edge_score >= 80:
         return "PREMIUM"
@@ -95,8 +95,8 @@ def decisao_sinal(edge_score):
 def calcular_kelly_fracionado(prob_modelo, odd, fracao=0.25, teto=0.05):
     """
     Calcula Kelly fracionado em escala 0-1.
-    Campo auxiliar para tornar a saída diretamente acionável,
-    sem substituir o módulo principal de banca.
+    Campo auxiliar para tornar a sada diretamente acionvel,
+    sem substituir o mdulo principal de banca.
     """
     try:
         p = float(prob_modelo)
@@ -119,8 +119,8 @@ def calcular_kelly_fracionado(prob_modelo, odd, fracao=0.25, teto=0.05):
 
 def classificar_recomendacao(edge_score, confianca, ev, min_conf=MIN_CONFIDENCE_ACTIONABLE):
     """
-    Classificação assertiva para consumo operacional.
-    Mantém decisao_sinal legado intacto e adiciona rótulo BET/SKIP/AVOID.
+    Classificao assertiva para consumo operacional.
+    Mantm decisao_sinal legado intacto e adiciona rtulo BET/SKIP/AVOID.
     """
     try:
         es = float(edge_score or 0.0)
@@ -139,7 +139,7 @@ def classificar_recomendacao(edge_score, confianca, ev, min_conf=MIN_CONFIDENCE_
 
 def montar_reasoning_trace(*, mercado, odd, prob_modelo, prob_implicita, ev, edge_score, confianca, min_conf):
     """
-    Explica por que o sinal foi aceito/bloqueado e quais critérios pesaram.
+    Explica por que o sinal foi aceito/bloqueado e quais critrios pesaram.
     """
     fatores = [
         f"mercado={mercado}",
@@ -161,9 +161,9 @@ def montar_reasoning_trace(*, mercado, odd, prob_modelo, prob_implicita, ev, edg
         descartados.append("edge_score_fraco")
 
     justificativa = (
-        "Confiança e EV dentro do mínimo operacional"
+        "Confiana e EV dentro do mnimo operacional"
         if float(confianca) >= float(min_conf) and float(ev) > 0
-        else "Confiança/EV insuficientes para ação"
+        else "Confiana/EV insuficientes para ao"
     )
 
     return {

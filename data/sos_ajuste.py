@@ -84,7 +84,7 @@ def calcular_sos(time_casa, time_fora, liga_key):
     }
 
 def _faixa_cap_sos(source_quality):
-    if source_quality in ("medias", "médias", "fallback", "fallback_sos"):
+    if source_quality in ("medias", "mdias", "fallback", "fallback_sos"):
         return 0.85, 1.15
     return 0.7, 1.5
 
@@ -180,7 +180,7 @@ if __name__ == "__main__":
 
     xg = carregar_xg()
     if not xg:
-        print("Arquivo xg_dados.json não encontrado.")
+        print("Arquivo xg_dados.json no encontrado.")
         print("Rode python data/xg_understat.py primeiro.")
     else:
         print(f"Times com xG: {len(xg)}\n")

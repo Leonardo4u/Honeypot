@@ -15,7 +15,7 @@ DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")
 def calcular_forma_local(time, ultimos=5):
     """
     Calcula forma recente do time usando o banco de dados local.
-    Usa os resultados já registrados no sistema.
+    Usa os resultados j registrados no sistema.
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()

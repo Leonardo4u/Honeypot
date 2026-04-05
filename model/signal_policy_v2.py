@@ -1,15 +1,15 @@
 """
 signal_policy_v2.py
 ====================
-Bloco 1 de 3 — EV mínimo dinâmico por mercado + Steam gate ponderado
+Bloco 1 de 3  EV mnimo dinmico por mercado + Steam gate ponderado
 
-Substitui os limiares fixos de signal_policy.py por funções que consideram:
-  - EV mínimo: varia por mercado, casa e custo operacional estimado
-  - Steam gate: Δodd × w_book × w_tempo (não queda fixa)
+Substitui os limiares fixos de signal_policy.py por funes que consideram:
+  - EV mnimo: varia por mercado, casa e custo operacional estimado
+  - Steam gate: odd  w_book  w_tempo (no queda fixa)
 
 Design:
-  - Tudo parametrizável via dicionários — sem magic numbers espalhados
-  - Cada função retorna um namedtuple com decisão + componentes (auditabilidade)
+  - Tudo parametrizvel via dicionrios  sem magic numbers espalhados
+  - Cada funo retorna um namedtuple com deciso + componentes (auditabilidade)
   - Integra com o logger existente via structured dict (sem acoplamento)
 """
 
@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 
 def _resolve_policy_v2_logs_dir() -> str:
-    """Resolve diretório de logs para policy v2 respeitando BOT_DATA_DIR."""
+    """Resolve diretrio de logs para policy v2 respeitando BOT_DATA_DIR."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     data_dir = os.getenv("BOT_DATA_DIR", os.path.join(root, "data"))
     if os.path.basename(os.path.normpath(data_dir)).lower() == "data":
@@ -39,7 +39,7 @@ def _resolve_policy_v2_logs_dir() -> str:
 
 
 def _estimate_clv(odds_at_pick: Optional[float], odds_reference: Optional[float]) -> Optional[float]:
-    """Estima CLV via log(odd_pick/odd_ref) quando ambas as odds são válidas."""
+    """Estima CLV via log(odd_pick/odd_ref) quando ambas as odds so vlidas."""
     try:
         odd_pick = float(odds_at_pick)
         odd_ref = float(odds_reference)
@@ -50,9 +50,9 @@ def _estimate_clv(odds_at_pick: Optional[float], odds_reference: Optional[float]
     return round(math.log(odd_pick / odd_ref), 6)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# 1. EV MÍNIMO DINÂMICO POR MERCADO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# 1. EV MNIMO DINMICO POR MERCADO
+# ------------
 
 class Mercado(str, Enum):
     HOME_WIN    = "home_win"
@@ -68,27 +68,27 @@ class Mercado(str, Enum):
     PLACAR_EX   = "exact_score"
 
 # Custo operacional estimado por mercado:
-# Inclui: risco de limitação de conta, spread bid-ask médio, latência de execução.
-# Mercados exóticos têm custo maior pois expõem o modelo mais rapidamente aos books.
+# Inclui: risco de limitao de conta, spread bid-ask mdio, latncia de execuo.
+# Mercados exticos tm custo maior pois expem o modelo mais rapidamente aos books.
 _EV_BASE: dict[Mercado, float] = {
-    Mercado.HOME_WIN:  0.030,   # mercado mais líquido, menor custo
+    Mercado.HOME_WIN:  0.030,   # mercado mais lquido, menor custo
     Mercado.DRAW:      0.038,   # mais ruidoso, exige mais margem
     Mercado.AWAY_WIN:  0.033,
-    Mercado.OVER_25:   0.028,   # totais são eficientes, mas menos exposição
-    Mercado.UNDER_25:  0.032,   # under: ZIP corrige bem, mas mercado é cínico
+    Mercado.OVER_25:   0.028,   # totais so eficientes, mas menos exposio
+    Mercado.UNDER_25:  0.032,   # under: ZIP corrige bem, mas mercado  cnico
     Mercado.OVER_15:   0.025,
     Mercado.UNDER_15:  0.035,
     Mercado.BTTS_SIM:  0.030,
-    Mercado.BTTS_NAO:  0.040,   # BTTS No é raro e arriscado de operar
-    Mercado.ASIAN_HCP: 0.025,   # handicap asiático: spread menor nos exchanges
-    Mercado.PLACAR_EX: 0.055,   # exótico: alto custo, alta variância
+    Mercado.BTTS_NAO:  0.040,   # BTTS No  raro e arriscado de operar
+    Mercado.ASIAN_HCP: 0.025,   # handicap asitico: spread menor nos exchanges
+    Mercado.PLACAR_EX: 0.055,   # extico: alto custo, alta varincia
 }
 
 # Modificadores aditivos por contexto
 _EV_MOD_LIQUIDEZ_BAIXA  = +0.015  # jogos com volume < threshold
 _EV_MOD_BOOK_LIMITADOR  = +0.020  # books conhecidos por limitar (bet365, William Hill)
 _EV_MOD_JOGO_TARDIO     = +0.008  # < 2h para kickoff: spread aumenta
-_EV_MOD_AUTOMATIZADO    = -0.005  # execução 100% automatizada: custo marginal baixo
+_EV_MOD_AUTOMATIZADO    = -0.005  # execuo 100% automatizada: custo marginal baixo
 
 
 @dataclass
@@ -103,7 +103,7 @@ class EVDecisao:
 
 class EVMinimoPolicy:
     """
-    Calcula EV mínimo exigido por aposta considerando mercado e contexto.
+    Calcula EV mnimo exigido por aposta considerando mercado e contexto.
 
     Uso:
         policy = EVMinimoPolicy(execucao_automatizada=True)
@@ -138,7 +138,7 @@ class EVMinimoPolicy:
         volume_estimado: float = 100_000,
     ) -> tuple[float, dict]:
         """
-        Retorna EV mínimo exigido e decomposição dos componentes.
+        Retorna EV mnimo exigido e decomposio dos componentes.
         """
         try:
             m = Mercado(mercado)
@@ -161,13 +161,13 @@ class EVMinimoPolicy:
         else:
             mods["book_limitador"] = 0.0
 
-        # Modificador: tempo até o jogo
+        # Modificador: tempo at o jogo
         if minutos_ate_jogo < 120:
             mods["jogo_tardio"] = _EV_MOD_JOGO_TARDIO
         else:
             mods["jogo_tardio"] = 0.0
 
-        # Modificador: automação
+        # Modificador: automao
         if self.automatizado:
             mods["automatizado"] = _EV_MOD_AUTOMATIZADO
         else:
@@ -202,16 +202,16 @@ class EVMinimoPolicy:
         return decisao
 
 
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 # 2. STEAM GATE PONDERADO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 
-# Peso por bookmaker — reflete qualidade do sinal (quanto o book é sharp-friendly)
-# Pinnacle/Betfair Exchange: sinal de referência
-# Books de varejo: podem estar rebalanceando livro, não steam real
+# Peso por bookmaker  reflete qualidade do sinal (quanto o book  sharp-friendly)
+# Pinnacle/Betfair Exchange: sinal de referncia
+# Books de varejo: podem estar rebalanceando livro, no steam real
 _BOOK_WEIGHTS: dict[str, float] = {
-    "pinnacle":           1.00,   # referência máxima
-    "betfair_exchange":   0.95,   # exchange = ação real
+    "pinnacle":           1.00,   # referncia mxima
+    "betfair_exchange":   0.95,   # exchange = ao real
     "sbobet":             0.90,
     "asian_handicap_mkt": 0.88,
     "matchbook":          0.82,
@@ -219,30 +219,30 @@ _BOOK_WEIGHTS: dict[str, float] = {
     "bet365":             0.45,   # varejo, rebalanceia muito
     "william_hill":       0.42,
     "paddy_power":        0.40,
-    "betfair_sportsbook": 0.38,   # não é o exchange
+    "betfair_sportsbook": 0.38,   # no  o exchange
     "bwin":               0.35,
     "unibet":             0.35,
     "default":            0.50,
 }
 
-# Peso temporal: quanto mais próximo do kickoff, mais o mercado já foi digerido
-# Muito perto (< 30min): pode ser ajuste de balanceamento, não informação nova
-# Zona ótima de sinal: 60-240min antes
+# Peso temporal: quanto mais prximo do kickoff, mais o mercado j foi digerido
+# Muito perto (< 30min): pode ser ajuste de balanceamento, no informao nova
+# Zona tima de sinal: 60-240min antes
 def _peso_tempo(minutos_ate_jogo: float) -> float:
     """
     Curva de peso temporal para steam.
 
-    Pico em ~120min antes do jogo (informação mais valiosa).
+    Pico em ~120min antes do jogo (informao mais valiosa).
     Decai para ambos os lados:
-      - Muito cedo (> 720min): menor convicção dos sharps
-      - Muito tarde (< 30min): ruído de balanceamento de livro
+      - Muito cedo (> 720min): menor convico dos sharps
+      - Muito tarde (< 30min): rudo de balanceamento de livro
 
     Modelado como gaussiana truncada em log-tempo.
     """
     if minutos_ate_jogo <= 0:
         return 0.0
     if minutos_ate_jogo < 15:
-        return 0.10   # muito perto: quase sempre ruído
+        return 0.10   # muito perto: quase sempre rudo
 
     # Pico aos 120 minutos
     mu_log  = math.log(120)
@@ -254,13 +254,13 @@ def _peso_tempo(minutos_ate_jogo: float) -> float:
 
 @dataclass
 class SteamDecisao:
-    delta_odd_pct: float       # variação percentual da odd
+    delta_odd_pct: float       # variao percentual da odd
     w_book: float              # peso do bookmaker
     w_tempo: float             # peso temporal
-    steam_score: float         # Δodd × w_book × w_tempo
+    steam_score: float         # odd  w_book  w_tempo
     limiar: float              # limiar configurado
     aprovado: bool             # True = steam real detectado (aposta a favor)
-    rejeitado_por_steam: bool  # True = sinal contrário, bloquear aposta
+    rejeitado_por_steam: bool  # True = sinal contrrio, bloquear aposta
     direcao: str               # "FAVOR" | "CONTRA" | "NEUTRO"
     componentes: dict
 
@@ -269,21 +269,21 @@ class SteamGatePolicy:
     """
     Avalia se o movimento de linha representa steam real de apostadores profissionais.
 
-    steam_score = |Δodd_pct| × w_book × w_tempo
+    steam_score = |odd_pct|  w_book  w_tempo
 
-    Lógica de decisão:
-      - steam_score >= limiar_ativo E direção FAVOR → sinal positivo (confirma aposta)
-      - steam_score >= limiar_ativo E direção CONTRA → bloquear (sharps contra nós)
-      - steam_score < limiar_ativo → ignorar movimento (ruído)
+    Lgica de deciso:
+      - steam_score >= limiar_ativo E direo FAVOR -> sinal positivo (confirma aposta)
+      - steam_score >= limiar_ativo E direo CONTRA -> bloquear (sharps contra ns)
+      - steam_score < limiar_ativo -> ignorar movimento (rudo)
 
-    Direção:
-      - FAVOR: odd do lado que queremos apostar está CAINDO (mercado valoriza igual a nós)
-      - CONTRA: odd está SUBINDO (sharps indo contra a nossa posição)
+    Direo:
+      - FAVOR: odd do lado que queremos apostar est CAINDO (mercado valoriza igual a ns)
+      - CONTRA: odd est SUBINDO (sharps indo contra a nossa posio)
     """
 
     def __init__(
         self,
-        limiar_steam_score: float = 0.025,   # score mínimo para considerar steam real
+        limiar_steam_score: float = 0.025,   # score mnimo para considerar steam real
         limiar_bloqueio:    float = 0.018,   # score para bloquear mesmo sem confirmar
         book_weights: Optional[dict[str, float]] = None,
     ):
@@ -309,7 +309,7 @@ class SteamGatePolicy:
             odd_abertura: odd no momento de abertura do mercado
             odd_atual: odd mais recente
             book: bookmaker fonte
-            minutos_ate_jogo: minutos restantes até o kickoff
+            minutos_ate_jogo: minutos restantes at o kickoff
             nossa_direcao: "down" se apostamos que evento vai acontecer (queremos queda)
                            "up" se apostamos contra (ex: lay, queremos alta)
         """
@@ -321,15 +321,15 @@ class SteamGatePolicy:
         w_tempo    = _peso_tempo(minutos_ate_jogo)
         steam_sc   = abs(delta_pct) * w_book * w_tempo
 
-        # Direção do steam vs nossa posição
+        # Direo do steam vs nossa posio
         if abs(delta_pct) < 0.005:
             direcao = "NEUTRO"
         elif delta_pct < 0 and nossa_direcao == "down":
-            direcao = "FAVOR"    # odd caiu, mercado indo na nossa direção
+            direcao = "FAVOR"    # odd caiu, mercado indo na nossa direo
         elif delta_pct > 0 and nossa_direcao == "up":
             direcao = "FAVOR"
         else:
-            direcao = "CONTRA"   # mercado indo contra nós
+            direcao = "CONTRA"   # mercado indo contra ns
 
         aprovado          = steam_sc >= self.limiar_ativo and direcao == "FAVOR"
         rejeitado_steam   = steam_sc >= self.limiar_block and direcao == "CONTRA"
@@ -380,10 +380,10 @@ class SteamGatePolicy:
         quorum_books: int = 2,    # quantos books precisam confirmar steam
     ) -> dict:
         """
-        Consenso de steam entre múltiplos books.
+        Consenso de steam entre mltiplos books.
 
-        Requer quórum de confirmações para declarar steam real.
-        Muito mais robusto que sinal de um único book.
+        Requer qurum de confirmaes para declarar steam real.
+        Muito mais robusto que sinal de um nico book.
         """
         decisoes = [
             self.avaliar(
@@ -423,9 +423,9 @@ class SteamGatePolicy:
         }
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# INTEGRAÇÃO — Gate combinado (EV + Steam)
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# INTEGRAO  Gate combinado (EV + Steam)
+# ------------
 
 @dataclass
 class GateCombinado:
@@ -460,7 +460,7 @@ def log_policy_v2_rejection(
     reject_reason: str,
     odds_reference: Optional[float] = None,
 ):
-    """Registra rejeições da policy v2 em JSONL dedicado para shadow/hard mode."""
+    """Registra rejeies da policy v2 em JSONL dedicado para shadow/hard mode."""
     logs_dir = _resolve_policy_v2_logs_dir()
     os.makedirs(logs_dir, exist_ok=True)
     filename = "policy_v2_shadow.log" if shadow_mode else "policy_v2_reject.log"
@@ -498,15 +498,15 @@ def gate_ev_steam(
     volume_estimado: float = 100_000,
 ) -> GateCombinado:
     """
-    Gate combinado: EV mínimo dinâmico + Steam ponderado.
+    Gate combinado: EV mnimo dinmico + Steam ponderado.
 
-    Lógica:
-      1. EV insuficiente → rejeita (independente do steam)
-      2. Steam CONTRA → rejeita mesmo com EV suficiente
-      3. EV OK + Steam neutro/favor → aprova
+    Lgica:
+      1. EV insuficiente -> rejeita (independente do steam)
+      2. Steam CONTRA -> rejeita mesmo com EV suficiente
+      3. EV OK + Steam neutro/favor -> aprova
 
-    Isso garante que não entramos em apostas onde o mercado
-    está se movendo ativamente contra nossa posição.
+    Isso garante que no entramos em apostas onde o mercado
+    est se movendo ativamente contra nossa posio.
     """
     ev_pol    = ev_policy    or EVMinimoPolicy()
     steam_pol = steam_policy or SteamGatePolicy()
@@ -553,15 +553,15 @@ def gate_ev_steam(
     )
 
 
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 # DEMO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 
 if __name__ == "__main__":
     import json
 
     print("=" * 65)
-    print("SIGNAL POLICY V2 — EV Dinâmico + Steam Gate Ponderado")
+    print("SIGNAL POLICY V2  EV Dinmico + Steam Gate Ponderado")
     print("=" * 65)
 
     ev_policy    = EVMinimoPolicy(execucao_automatizada=True)
@@ -573,7 +573,7 @@ if __name__ == "__main__":
             "mercado":         "over_2.5",
             "ev_calculado":    0.031,
             "odd_abertura":    1.90,
-            "odd_atual":       1.84,   # caiu 3.2% — steam a favor (over está sendo comprado)
+            "odd_atual":       1.84,   # caiu 3.2%  steam a favor (over est sendo comprado)
             "book":            "pinnacle",
             "minutos":         180,
         },
@@ -582,14 +582,14 @@ if __name__ == "__main__":
             "mercado":         "home_win",
             "ev_calculado":    0.038,
             "odd_abertura":    2.10,
-            "odd_atual":       2.22,   # subiu — sharps indo contra home
+            "odd_atual":       2.22,   # subiu  sharps indo contra home
             "book":            "bet365",
             "minutos":         45,
         },
         {
             "nome":            "Draw em Pinnacle, 2h antes, EV insuficiente",
             "mercado":         "draw",
-            "ev_calculado":    0.021,   # abaixo do mínimo para draw
+            "ev_calculado":    0.021,   # abaixo do mnimo para draw
             "odd_abertura":    3.40,
             "odd_atual":       3.38,
             "book":            "pinnacle",
@@ -607,7 +607,7 @@ if __name__ == "__main__":
     ]
 
     for c in cenarios:
-        print(f"\n{'─'*65}")
+        print(f"\n{''*65}")
         print(f"  {c['nome']}")
         result = gate_ev_steam(
             mercado=c["mercado"],
@@ -619,13 +619,13 @@ if __name__ == "__main__":
             ev_policy=ev_policy,
             steam_policy=steam_policy,
         )
-        status = "✓ APROVADO" if result.aprovado else "✗ REJEITADO"
+        status = " APROVADO" if result.aprovado else " REJEITADO"
         print(f"  {status}")
         print(f"  EV: {result.ev_decisao.ev_calculado:.4f} vs mínimo {result.ev_decisao.ev_minimo:.4f}")
         print(f"  Steam: score={result.steam_decisao.steam_score:.5f}  dir={result.steam_decisao.direcao}")
         print(f"  Motivo: {result.motivo_final}")
 
-    print(f"\n{'─'*65}")
+    print(f"\n{''*65}")
     print("  MULTI-BOOK STEAM CONSENSUS")
     movimentos = [
         {"odd_abertura": 1.90, "odd_atual": 1.84, "book": "pinnacle",       "minutos_ate_jogo": 150},
@@ -641,9 +641,9 @@ if __name__ == "__main__":
     for d in consenso["decisoes_por_book"]:
         print(f"    {d['book']:22s}  score={d['score']:.5f}  dir={d['direcao']}")
 
-    # EV mínimo por todos os mercados (tabela de referência)
-    print(f"\n{'─'*65}")
-    print("  TABELA EV MÍNIMO (Pinnacle, 3h antes, sistema automatizado)")
+    # EV mnimo por todos os mercados (tabela de referncia)
+    print(f"\n{''*65}")
+    print("  TABELA EV MNIMO (Pinnacle, 3h antes, sistema automatizado)")
     for m in Mercado:
         ev_min, mods = ev_policy.ev_minimo(m.value, book="pinnacle", minutos_ate_jogo=180)
         print(f"  {m.value:20s}: {ev_min:.4f}  (base={mods['base']:.3f})")

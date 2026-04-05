@@ -242,11 +242,11 @@ def gerar_alerta_abertura(jogo_dados):
     odd_m = jogo_dados.get("odd_media", "N/A")
 
     if janela == 72:
-        tipo = "⭐ CLÁSSICO"
+        tipo = " CLSSICO"
     elif janela == 48:
-        tipo = "🏆 COPA/EUROPA"
+        tipo = " COPA/EUROPA"
     else:
-        tipo = "📅 LIGA"
+        tipo = " LIGA"
 
     msg = (
         f"👁️ MODO OBSERVAÇÃO ATIVO\n\n"

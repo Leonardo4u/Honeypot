@@ -159,7 +159,7 @@ def _build_canary_quality_report(min_picks=20, db_path=DB_PATH):
 
 
 def build_report(min_picks=20, shadow_log_path=SHADOW_LOG_PATH, picks_log_path=PICKS_LOG_PATH, db_path=DB_PATH):
-    """Gera relatório e veredito PROMOTE/WAIT/DO NOT PROMOTE para policy v2."""
+    """Gera relatrio e veredito PROMOTE/WAIT/DO NOT PROMOTE para policy v2."""
     blocked_events = _read_jsonl(shadow_log_path)
     picks_rows = _read_picks(picks_log_path)
 
@@ -256,7 +256,7 @@ def _fmt_clv(value):
 
 
 def main(argv=None):
-    """CLI principal de análise de shadow mode da policy v2."""
+    """CLI principal de anlise de shadow mode da policy v2."""
     parser = argparse.ArgumentParser(description="Analisa shadow log da policy v2")
     parser.add_argument("--min-picks", type=int, default=20)
     args = parser.parse_args(argv)

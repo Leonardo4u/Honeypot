@@ -10,7 +10,7 @@ def inferir_escalacao_confirmada(jogo, agora_utc=None):
     status = str(jogo.get("lineup_status", "")).strip().lower()
     if status in ("confirmed", "confirmada", "ok"):
         return True, "feed:lineup_status"
-    if status in ("unconfirmed", "nao_confirmada", "não_confirmada", "pending", "unknown"):
+    if status in ("unconfirmed", "nao_confirmada", "no_confirmada", "pending", "unknown"):
         return False, "feed:lineup_status"
 
     horario_str = jogo.get("horario") or jogo.get("commence_time")

@@ -26,7 +26,7 @@ def gerar_dashboard_terminal():
     conn.close()
 
     print("\n" + "="*50)
-    print("  DASHBOARD DE VALIDAÇÃO — EDGE PROTOCOL")
+    print("  DASHBOARD DE VALIDAO  EDGE PROTOCOL")
     print("="*50)
 
     if not clvs:
@@ -54,7 +54,7 @@ def gerar_dashboard_terminal():
         acumulado = 0
         for i, (clv, ts) in enumerate(clvs[-10:]):
             acumulado += clv
-            barra = "█" * int(abs(clv)) if abs(clv) < 20 else "█" * 20
+            barra = "" * int(abs(clv)) if abs(clv) < 20 else "" * 20
             sinal = "+" if clv >= 0 else ""
             print(f"  #{i+1:2d} {sinal}{clv:6.2f}%  {barra}")
 
@@ -87,7 +87,7 @@ def gerar_dashboard_terminal():
             resultados = buckets[bucket]
             freq_real = sum(resultados) / len(resultados) * 100
             diff = abs(bucket - freq_real)
-            status = "✅" if diff < 10 else "⚠️"
+            status = "[OK]" if diff < 10 else ""
             print(f"  {bucket:3d}%            {freq_real:6.1f}%     {status}")
 
     print("\n" + "="*50)

@@ -211,7 +211,7 @@ class PickLogger:
     def _map_resultado_to_outcome(resultado: str) -> Optional[int]:
         """Mapeia resultado textual do banco para outcome binario do picks_log."""
         val = str(resultado or "").strip().lower()
-        if val in {"verde", "win", "won", "green", "acerto", "vitoria", "vitória", "1"}:
+        if val in {"verde", "win", "won", "green", "acerto", "vitoria", "vitria", "1"}:
             return 1
         if val in {"vermelho", "loss", "lost", "red", "erro", "derrota", "0"}:
             return 0
@@ -416,7 +416,7 @@ class PickLogger:
 
 
 def _resolve_data_dir() -> str:
-    """Resolve diretório de dados padrão respeitando BOT_DATA_DIR."""
+    """Resolve diretrio de dados padro respeitando BOT_DATA_DIR."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     return os.getenv("BOT_DATA_DIR", os.path.join(root, "data"))
 

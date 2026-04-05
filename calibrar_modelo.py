@@ -162,7 +162,7 @@ def _normalizar_liga_payload(payload):
 
 
 def _season_codes(seasons_back=HISTORICAL_SEASONS):
-    """Gera códigos YYYY da temporada atual + N anteriores."""
+    """Gera cdigos YYYY da temporada atual + N anteriores."""
     now = datetime.now(timezone.utc)
     start_year = (now.year % 100) if now.month >= 7 else ((now.year - 1) % 100)
     out = []
@@ -174,7 +174,7 @@ def _season_codes(seasons_back=HISTORICAL_SEASONS):
 
 
 def _download_csv_with_retry(url, attempts=3, backoff_seconds=0.8):
-    """Baixa CSV com retry/backoff e classificação de falhas sem derrubar o pipeline."""
+    """Baixa CSV com retry/backoff e classificao de falhas sem derrubar o pipeline."""
     last_error = None
     for attempt in range(1, max(1, int(attempts)) + 1):
         try:
@@ -278,7 +278,7 @@ def _team_counts(df_league):
 
 
 def fetch_history_multi_season(seasons_back=HISTORICAL_SEASONS, leagues_map=None):
-    """Baixa e consolida histórico multi-season por liga; salva `historico_<code>.csv`."""
+    """Baixa e consolida histrico multi-season por liga; salva `historico_<code>.csv`."""
     os.makedirs(HISTORICO_DIR, exist_ok=True)
     leagues = leagues_map or LIGAS_FOOTBALL_DATA
     seasons = _season_codes(seasons_back)
@@ -360,7 +360,7 @@ def fetch_history_multi_season(seasons_back=HISTORICAL_SEASONS, leagues_map=None
 
 
 def baixar_dados_historicos():
-    """Compat: mantém assinatura antiga e baixa janela padrão multi-season."""
+    """Compat: mantm assinatura antiga e baixa janela padro multi-season."""
     result = fetch_history_multi_season(seasons_back=HISTORICAL_SEASONS)
     return sum(info.get("total_matches", 0) for info in result["report"].values())
 
@@ -447,7 +447,7 @@ def print_coverage_report(coverage, min_n=50):
 
 
 def rebuild_medias_from_history(merged_by_code=None):
-    """Recalcula medias_gols.json a partir do histórico consolidado multi-season."""
+    """Recalcula medias_gols.json a partir do histrico consolidado multi-season."""
     if merged_by_code is None:
         merged_by_code = {}
         for liga, code in _all_leagues_map().items():
@@ -501,7 +501,7 @@ def rebuild_medias_from_history(merged_by_code=None):
 
 
 def _print_coverage_comparison(before_cov, after_cov, min_n=50):
-    """Imprime comparação before/after de cobertura para auditoria de promoção."""
+    """Imprime comparao before/after de cobertura para auditoria de promoo."""
     before_mean = before_cov.get("mean_n_per_team", 0.0)
     after_mean = after_cov.get("mean_n_per_team", 0.0)
     print("\n=== COVERAGE BEFORE/AFTER ===")
@@ -629,7 +629,7 @@ def calcular_brier_historico(df, n_amostras=1000, random_state=42):
 
             brier_scores.append((prob_max - acertou) ** 2)
 
-            if fonte == "medias" or fonte == "médias":
+            if fonte == "medias" or fonte == "mdias":
                 sem_xg += 1
         except Exception:
             continue
@@ -915,9 +915,9 @@ def rodar_calibracao_completa():
 def parse_args(argv=None):
     """Parseia argumentos da CLI de calibracao."""
     parser = argparse.ArgumentParser(description="Calibracao de modelo e ligas")
-    parser.add_argument("--fetch-history", action="store_true", help="Baixa e consolida histórico multi-season")
-    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca histórico BR via API-Football (BRA1)")
-    parser.add_argument("--seasons", type=int, default=HISTORICAL_SEASONS, help="Qtde de temporadas passadas além da atual")
+    parser.add_argument("--fetch-history", action="store_true", help="Baixa e consolida histrico multi-season")
+    parser.add_argument("--fetch-historico-br", action="store_true", help="Busca histrico BR via API-Football (BRA1)")
+    parser.add_argument("--seasons", type=int, default=HISTORICAL_SEASONS, help="Qtde de temporadas passadas alm da atual")
     parser.add_argument("--check-coverage", action="store_true", help="Mostra cobertura n por liga/time")
     parser.add_argument("--build-ligas", action="store_true", help="Gera calibracao_ligas.json com rho/home_advantage")
     parser.add_argument("--min-matches", type=int, default=50, help="Minimo de jogos por liga para calibrar")

@@ -107,7 +107,7 @@ def get_travel_bucket(home_city: Optional[str], away_city: Optional[str]) -> str
     if hc == ac:
         return "local"
 
-    # Heurística leve para sem dependências externas: países diferentes por sufixo.
+    # Heurstica leve para sem dependncias externas: pases diferentes por sufixo.
     if "," in hc and "," in ac:
         c1 = hc.split(",")[-1].strip()
         c2 = ac.split(",")[-1].strip()

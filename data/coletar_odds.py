@@ -34,10 +34,10 @@ def atualizar_contadores_provider_health(provider_health, status):
 
 def buscar_jogos_com_odds_com_status(liga, mercados="h2h,totals"):
     if not API_KEY:
-        # BUG-01 FIX: aviso explícito quando modo simulado é ativado
+        # BUG-01 FIX: aviso explcito quando modo simulado  ativado
         print(
-            "[AVISO] ODDS_API_KEY não configurada. "
-            "Usando dados simulados — análise real indisponível."
+            "[AVISO] ODDS_API_KEY no configurada. "
+            "Usando dados simulados  anlise real indisponvel."
         )
         return {
             "ok": True,
@@ -186,7 +186,7 @@ def formatar_jogos(dados_api):
     return jogos
 
 def _dados_simulados():
-    # BUG-01 FIX: data dinâmica para que formatar_jogos() não filtre o fixture
+    # BUG-01 FIX: data dinmica para que formatar_jogos() no filtre o fixture
     horario_simulado = (
         datetime.now(timezone.utc) + timedelta(hours=2)
     ).strftime("%Y-%m-%dT%H:%M:%SZ")

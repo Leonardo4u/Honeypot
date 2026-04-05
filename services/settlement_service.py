@@ -112,12 +112,12 @@ async def _executar_side_effects_pos_settlement(
         acertou = avaliacao["resultado"] == "verde"
         brier = context["atualizar_brier"](sinal_id, acertou)
         if brier is not None:
-            print(f"Brier #{sinal_id}: {brier:.4f} {'✅' if brier < 0.25 else '⚠️'}")
+            print(f"Brier #{sinal_id}: {brier:.4f} {'[OK]' if brier < 0.25 else ''}")
     except Exception as exc:
         print(f"Erro Brier: {exc}")
 
     if ids_msg:
-        reacao = "✅" if avaliacao["resultado"] == "verde" else "❌"
+        reacao = "[OK]" if avaliacao["resultado"] == "verde" else "[ERRO]"
         if ids_msg[0]:
             try:
                 await bot.set_message_reaction(

@@ -175,7 +175,7 @@ def calcular_media_gols_com_xg(time_casa, time_fora):
         defesa_casa = medias.get(time_casa, {}).get("gols_sofridos_casa", 1.2)
         media_gols_fora = round((ataque_fora + defesa_casa) / 2, 2)
 
-        return media_gols_casa, media_gols_fora, "médias"
+        return media_gols_casa, media_gols_fora, "mdias"
 
 if __name__ == "__main__":
     print("Testando EPL primeiro...\n")
@@ -188,4 +188,4 @@ if __name__ == "__main__":
             print(f"  xG marcado casa: {dados['xg_marcado_casa']}")
             print(f"  xG sofrido fora: {dados['xg_sofrido_fora']}")
     else:
-        print("Falhou. Verifique se o Chrome está instalado.")
+        print("Falhou. Verifique se o Chrome est instalado.")

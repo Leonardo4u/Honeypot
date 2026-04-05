@@ -1,21 +1,21 @@
 """
 portfolio_risk.py
 ==================
-Bloco 3 de 3 — Veto de correlação com Kelly marginal de portfólio
+Bloco 3 de 3  Veto de correlao com Kelly marginal de portflio
 
 Problema:
   Kelly individual trata cada aposta como independente.
-  Na prática, se você tem Arsenal -1 AH e Arsenal Over 2.5 abertas ao mesmo tempo,
+  Na prtica, se voc tem Arsenal -1 AH e Arsenal Over 2.5 abertas ao mesmo tempo,
   ambas dependem do mesmo evento raiz (Arsenal marcando muitos gols).
-  O risco conjunto é muito maior que a soma dos riscos individuais.
+  O risco conjunto  muito maior que a soma dos riscos individuais.
 
-Solução:
-  1. Matriz de correlação pré-definida por tipo de aposta × mesmo evento/liga
-  2. Kelly marginal: f_marginal = f_kelly × (1 - ρ_portfolio)
-  3. Veto explícito quando exposição correlacionada excede limiar de portfólio
-  4. Exposição máxima por time/evento como guardrail independente
+Soluo:
+  1. Matriz de correlao pr-definida por tipo de aposta  mesmo evento/liga
+  2. Kelly marginal: f_marginal = f_kelly  (1 - _portfolio)
+  3. Veto explcito quando exposio correlacionada excede limiar de portflio
+  4. Exposio mxima por time/evento como guardrail independente
 
-Referências:
+Referncias:
   - Kelly (1956) - A new interpretation of information rate
   - Thorp (2008) - The Kelly Criterion in Blackjack Sports Betting and the Stock Market
   - McLain (2019) - Portfolio Kelly Criterion for Correlated Bets
@@ -31,30 +31,30 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# MATRIZ DE CORRELAÇÃO POR TIPO DE APOSTA
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# MATRIZ DE CORRELAO POR TIPO DE APOSTA
+# ------------
 
-# Correlação entre mercados no MESMO jogo (estimada empiricamente)
-# ρ > 0: apostas tendem a ganhar/perder juntas
-# ρ < 0: apostas tendem a ser complementares
-# Nota: correlações abaixo são entre as apostas na direção que você as faz
-#       (ex: over + home win → ρ alto porque ambas melhoram com jogo aberto)
+# Correlao entre mercados no MESMO jogo (estimada empiricamente)
+#  > 0: apostas tendem a ganhar/perder juntas
+#  < 0: apostas tendem a ser complementares
+# Nota: correlaes abaixo so entre as apostas na direo que voc as faz
+#       (ex: over + home win ->  alto porque ambas melhoram com jogo aberto)
 
 CORRELACAO_MESMO_JOGO: dict[frozenset, float] = {
-    # Resultado + Totais (mesma direção)
+    # Resultado + Totais (mesma direo)
     frozenset({"home_win", "over_2.5"}):   0.42,
     frozenset({"home_win", "over_1.5"}):   0.38,
     frozenset({"away_win", "over_2.5"}):   0.35,
     frozenset({"home_win", "btts_yes"}):   0.30,
     frozenset({"away_win", "btts_yes"}):   0.28,
 
-    # Resultado + Totais (direção oposta)
-    frozenset({"home_win", "under_2.5"}):  -0.20,  # home ganha fechado = possível
+    # Resultado + Totais (direo oposta)
+    frozenset({"home_win", "under_2.5"}):  -0.20,  # home ganha fechado = possvel
     frozenset({"away_win", "under_2.5"}):  -0.18,
 
-    # Dupla exposição ao mesmo resultado
-    frozenset({"home_win", "asian_handicap"}): 0.68,   # quase sempre idêntico
+    # Dupla exposio ao mesmo resultado
+    frozenset({"home_win", "asian_handicap"}): 0.68,   # quase sempre idntico
     frozenset({"over_2.5", "over_1.5"}):       0.82,   # over_1.5 implica over_2.5 parcialmente
     frozenset({"btts_yes", "over_2.5"}):       0.55,
 
@@ -68,13 +68,13 @@ CORRELACAO_MESMO_JOGO: dict[frozenset, float] = {
     frozenset({"exact_score", "over_2.5"}):  0.45,
 }
 
-# Correlação padrão para pares não mapeados no MESMO jogo
+# Correlao padro para pares no mapeados no MESMO jogo
 CORRELACAO_MESMO_JOGO_DEFAULT = 0.15
 
-# Correlação entre jogos diferentes na MESMA liga (mesma rodada)
+# Correlao entre jogos diferentes na MESMA liga (mesma rodada)
 CORRELACAO_MESMA_LIGA = 0.05
 
-# Correlação entre jogos de ligas diferentes
+# Correlao entre jogos de ligas diferentes
 CORRELACAO_CROSS_LIGA = 0.02
 
 
@@ -84,7 +84,7 @@ def correlacao_par(
     mesmo_jogo: bool,
     mesma_liga: bool = False,
 ) -> float:
-    """Retorna correlação estimada entre dois mercados."""
+    """Retorna correlao estimada entre dois mercados."""
     if not mesmo_jogo:
         return CORRELACAO_MESMA_LIGA if mesma_liga else CORRELACAO_CROSS_LIGA
 
@@ -92,13 +92,13 @@ def correlacao_par(
     return CORRELACAO_MESMO_JOGO.get(chave, CORRELACAO_MESMO_JOGO_DEFAULT)
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# POSIÇÕES ABERTAS
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# POSIES ABERTAS
+# ------------
 
 @dataclass
 class PosicaoAberta:
-    """Uma aposta aberta no portfólio."""
+    """Uma aposta aberta no portflio."""
     bet_id:       str
     match_id:     str
     liga:         str
@@ -112,7 +112,7 @@ class PosicaoAberta:
 
     @property
     def exposicao(self) -> float:
-        """Perda máxima potencial (= stake)."""
+        """Perda mxima potencial (= stake)."""
         return self.stake
 
     @property
@@ -124,44 +124,44 @@ class PosicaoAberta:
         return {self.time_home, self.time_away}
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# GESTOR DE PORTFÓLIO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# GESTOR DE PORTFLIO
+# ------------
 
 @dataclass
 class KellyMarginalDecisao:
-    """Resultado da avaliação Kelly marginal."""
+    """Resultado da avaliao Kelly marginal."""
     aprovado:             bool
-    kelly_individual:     float     # Kelly sem considerar portfólio
-    kelly_marginal:       float     # Kelly ajustado pela correlação
-    stake_recomendado:    float     # em unidades monetárias
-    rho_portfolio:        float     # correlação ponderada com portfólio atual
-    exposicao_evento:     float     # exposição total no mesmo evento
-    exposicao_time:       float     # exposição total nos mesmos times
+    kelly_individual:     float     # Kelly sem considerar portflio
+    kelly_marginal:       float     # Kelly ajustado pela correlao
+    stake_recomendado:    float     # em unidades monetrias
+    rho_portfolio:        float     # correlao ponderada com portflio atual
+    exposicao_evento:     float     # exposio total no mesmo evento
+    exposicao_time:       float     # exposio total nos mesmos times
     motivo_veto:          Optional[str]
     componentes:          dict
 
 
 class PortfolioRiskManager:
     """
-    Gerencia risco de portfólio com Kelly marginal e veto de correlação.
+    Gerencia risco de portflio com Kelly marginal e veto de correlao.
 
     Fluxo para cada nova aposta candidata:
-      1. Calcular correlação com cada posição aberta
-      2. ρ_portfolio = média ponderada das correlações pelo stake
-      3. kelly_marginal = kelly_individual × (1 - ρ_portfolio)
-      4. Verificar guardrails: exposição por evento e por time
+      1. Calcular correlao com cada posio aberta
+      2. _portfolio = mdia ponderada das correlaes pelo stake
+      3. kelly_marginal = kelly_individual  (1 - _portfolio)
+      4. Verificar guardrails: exposio por evento e por time
       5. Aprovar/vetar com stake ajustado
     """
 
     def __init__(
         self,
         bankroll: float,
-        kelly_fracao: float = 0.25,             # Kelly fracionário global
-        max_exposicao_evento_pct: float = 0.06, # máx 6% do bankroll num mesmo jogo
-        max_exposicao_time_pct: float = 0.08,   # máx 8% em times do mesmo clube
-        max_exposicao_liga_pct: float = 0.15,   # máx 15% na mesma liga
-        max_correlacao_portfolio: float = 0.55, # veto se ρ_portfolio > 55%
+        kelly_fracao: float = 0.25,             # Kelly fracionrio global
+        max_exposicao_evento_pct: float = 0.06, # mx 6% do bankroll num mesmo jogo
+        max_exposicao_time_pct: float = 0.08,   # mx 8% em times do mesmo clube
+        max_exposicao_liga_pct: float = 0.15,   # mx 15% na mesma liga
+        max_correlacao_portfolio: float = 0.55, # veto se _portfolio > 55%
         min_kelly_marginal: float = 0.005,       # veta se kelly_marginal < 0.5%
     ):
         self.bankroll          = bankroll
@@ -173,16 +173,16 @@ class PortfolioRiskManager:
         self.min_kelly_marg    = min_kelly_marginal
         self.posicoes: list[PosicaoAberta] = []
 
-    # ── Kelly individual ─────────────────────────────────────────────────────
+    # -- Kelly individual ------------
 
     def kelly_individual(self, p_modelo: float, odd: float) -> float:
-        """f* = (b×p - q) / b × fracao"""
+        """f* = (bp - q) / b  fracao"""
         b = odd - 1.0
         q = 1.0 - p_modelo
         f_full = (b * p_modelo - q) / b
         return max(0.0, f_full * self.kelly_fracao)
 
-    # ── Correlação com portfólio ─────────────────────────────────────────────
+    # -- Correlao com portflio ------------
 
     def rho_portfolio(
         self,
@@ -190,11 +190,11 @@ class PortfolioRiskManager:
         posicoes: Optional[list[PosicaoAberta]] = None,
     ) -> tuple[float, list[dict]]:
         """
-        Correlação ponderada da candidata com o portfólio atual.
+        Correlao ponderada da candidata com o portflio atual.
 
-        ρ_portfolio = Σ(stake_i × ρ_i) / Σ(stake_i)
+        _portfolio = (stake_i  _i) / (stake_i)
 
-        Retorna (ρ_portfolio, lista de pares com correlação individual).
+        Retorna (_portfolio, lista de pares com correlao individual).
         """
         abertas = posicoes or self.posicoes
         if not abertas:
@@ -221,7 +221,7 @@ class PortfolioRiskManager:
         rho_total = soma_ponderada / soma_stakes if soma_stakes > 0 else 0.0
         return round(rho_total, 4), pares
 
-    # ── Exposições ───────────────────────────────────────────────────────────
+    # -- Exposies ------------
 
     def exposicao_evento(self, match_id: str) -> float:
         return sum(p.stake for p in self.posicoes if p.match_id == match_id)
@@ -232,7 +232,7 @@ class PortfolioRiskManager:
     def exposicao_liga(self, liga: str) -> float:
         return sum(p.stake for p in self.posicoes if p.liga == liga)
 
-    # ── Avaliação principal ──────────────────────────────────────────────────
+    # -- Avaliao principal ------------
 
     def avaliar(
         self,
@@ -251,10 +251,10 @@ class PortfolioRiskManager:
         Returns:
             KellyMarginalDecisao com stake recomendado e componentes explicativos.
         """
-        # Kelly sem portfólio
+        # Kelly sem portflio
         k_ind = self.kelly_individual(p_modelo, odd)
 
-        # Candidato temporário para calcular correlações
+        # Candidato temporrio para calcular correlaes
         candidato = PosicaoAberta(
             bet_id=bet_id,
             match_id=match_id,
@@ -263,19 +263,19 @@ class PortfolioRiskManager:
             time_away=time_away,
             mercado=mercado,
             odd=odd,
-            stake=k_ind * self.bankroll,  # stake provisório
+            stake=k_ind * self.bankroll,  # stake provisrio
             p_modelo=p_modelo,
             kelly_individual=k_ind,
         )
 
-        # Correlação com portfólio
+        # Correlao com portflio
         rho, pares = self.rho_portfolio(candidato)
 
         # Kelly marginal
         k_marginal = k_ind * (1.0 - rho)
         stake_cand = k_marginal * self.bankroll
 
-        # Guardrails de exposição
+        # Guardrails de exposio
         exp_evento = self.exposicao_evento(match_id) + stake_cand
         exp_time   = self.exposicao_times({time_home, time_away}) + stake_cand
         exp_liga   = self.exposicao_liga(liga) + stake_cand
@@ -332,7 +332,7 @@ class PortfolioRiskManager:
 
         aprovado = motivo_veto is None
 
-        # Stake final: arredondado para evitar frações ridículas
+        # Stake final: arredondado para evitar fraes ridculas
         stake_final = round(stake_cand, 2) if aprovado else 0.0
 
         if not aprovado:
@@ -353,17 +353,17 @@ class PortfolioRiskManager:
         )
 
     def registrar(self, decisao: KellyMarginalDecisao, posicao: PosicaoAberta):
-        """Registra aposta aprovada no portfólio."""
+        """Registra aposta aprovada no portflio."""
         if decisao.aprovado:
             posicao.stake = decisao.stake_recomendado
             self.posicoes.append(posicao)
 
     def fechar(self, bet_id: str):
-        """Remove posição do portfólio (settlou ou foi cancelada)."""
+        """Remove posio do portflio (settlou ou foi cancelada)."""
         self.posicoes = [p for p in self.posicoes if p.bet_id != bet_id]
 
     def snapshot(self) -> dict:
-        """Estado atual do portfólio."""
+        """Estado atual do portflio."""
         if not self.posicoes:
             return {
                 "n_posicoes": 0,
@@ -390,9 +390,9 @@ class PortfolioRiskManager:
         }
 
 
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 # DEMO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 
 if __name__ == "__main__":
     BANKROLL = 10_000.0
@@ -405,43 +405,43 @@ if __name__ == "__main__":
     )
 
     print("=" * 65)
-    print("PORTFOLIO RISK MANAGER — Kelly Marginal + Correlação")
+    print("PORTFOLIO RISK MANAGER  Kelly Marginal + Correlao")
     print("=" * 65)
 
     apostas_candidatas = [
-        # Primeira aposta: sem portfólio → kelly cheio
+        # Primeira aposta: sem portflio -> kelly cheio
         dict(match_id="m001", liga="Premier League", time_home="Arsenal",
              time_away="Chelsea", mercado="home_win", odd=2.10, p_modelo=0.55,
              bet_id="b001"),
-        # Segunda aposta: mesmo jogo, mercado correlacionado → kelly reduzido
+        # Segunda aposta: mesmo jogo, mercado correlacionado -> kelly reduzido
         dict(match_id="m001", liga="Premier League", time_home="Arsenal",
              time_away="Chelsea", mercado="over_2.5", odd=1.85, p_modelo=0.62,
              bet_id="b002"),
-        # Terceira: mesmos times, mercado diferente → alta correlação, possível veto
+        # Terceira: mesmos times, mercado diferente -> alta correlao, possvel veto
         dict(match_id="m001", liga="Premier League", time_home="Arsenal",
              time_away="Chelsea", mercado="asian_handicap", odd=1.95, p_modelo=0.57,
              bet_id="b003"),
-        # Quarta: jogo diferente, mesma liga → baixa correlação
+        # Quarta: jogo diferente, mesma liga -> baixa correlao
         dict(match_id="m002", liga="Premier League", time_home="Man City",
              time_away="Liverpool", mercado="home_win", odd=1.75, p_modelo=0.65,
              bet_id="b004"),
-        # Quinta: liga diferente → correlação mínima
+        # Quinta: liga diferente -> correlao mnima
         dict(match_id="m003", liga="Bundesliga", time_home="Bayern",
              time_away="Dortmund", mercado="over_2.5", odd=1.80, p_modelo=0.63,
              bet_id="b005"),
-        # Sexta: sem edge → Kelly = 0
+        # Sexta: sem edge -> Kelly = 0
         dict(match_id="m004", liga="Serie A", time_home="Juventus",
              time_away="Milan", mercado="draw", odd=3.20, p_modelo=0.28,
              bet_id="b006"),
     ]
 
     for ac in apostas_candidatas:
-        print(f"\n{'─'*65}")
+        print(f"\n{''*65}")
         print(f"  Candidata: {ac['bet_id']} | {ac['mercado']} | {ac['match_id']} | {ac['liga']}")
 
         dec = mgr.avaliar(**ac)
 
-        status = "✓ APROVADO" if dec.aprovado else "✗ VETADO"
+        status = " APROVADO" if dec.aprovado else " VETADO"
         print(f"  {status}")
         print(f"  Kelly individual: {dec.kelly_individual:.4f} → stake bruto R$ {dec.kelly_individual*BANKROLL:.2f}")
         print(f"  ρ_portfolio:      {dec.rho_portfolio:.4f}")
@@ -460,9 +460,9 @@ if __name__ == "__main__":
             )
             mgr.registrar(dec, pos)
 
-    print(f"\n{'═'*65}")
-    print("  SNAPSHOT DO PORTFÓLIO FINAL")
-    print("═" * 65)
+    print(f"\n{''*65}")
+    print("  SNAPSHOT DO PORTFLIO FINAL")
+    print("" * 65)
     snap = mgr.snapshot()
     for k, v in snap.items():
         if isinstance(v, dict):

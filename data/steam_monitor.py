@@ -55,7 +55,7 @@ def criar_tabelas_steam():
 
 def buscar_odds_todas_casas(liga_key, jogo_home, jogo_away, mercado):
     """
-    Busca odds de todas as casas disponíveis para um jogo específico.
+    Busca odds de todas as casas disponveis para um jogo especfico.
     """
     if not API_KEY:
         return None
@@ -164,7 +164,7 @@ def buscar_snapshot_abertura(jogo, mercado):
 
 def buscar_snapshots_recentes(jogo, mercado, horas=2):
     """
-    Busca snapshots das últimas N horas para calcular velocidade.
+    Busca snapshots das ltimas N horas para calcular velocidade.
     """
     conn = sqlite3.connect(DB_PATH)
     c = conn.cursor()
@@ -252,7 +252,7 @@ def calcular_steam(jogo, mercado, dados_atuais):
 
 def calcular_bonus_edge_score(steam_data):
     """
-    Calcula pontos bônus no EDGE Score baseado no steam.
+    Calcula pontos bnus no EDGE Score baseado no steam.
     Steam negativo: bloqueado pelo Gate 3
     Steam positivo fraco (3-5%): +3 pontos
     Steam positivo forte (>5%): +7 pontos
@@ -350,8 +350,8 @@ def gerar_alerta_steam(jogo, mercado, steam_data, sinal_id=None):
     """
     Gera mensagem de alerta para envio no Telegram.
     """
-    tipo = "📈 STEAM POSITIVO" if steam_data["magnitude"] < 0 else "📉 Steam negativo"
-    emoji = "🔥" if abs(steam_data["magnitude"]) > 5 else "⚡"
+    tipo = " STEAM POSITIVO" if steam_data["magnitude"] < 0 else " Steam negativo"
+    emoji = "" if abs(steam_data["magnitude"]) > 5 else ""
 
     msg = (
         f"{emoji} {tipo} DETECTADO\n\n"
@@ -362,7 +362,7 @@ def gerar_alerta_steam(jogo, mercado, steam_data, sinal_id=None):
         f"Movimento:    {steam_data['magnitude']:+.1f}%\n"
         f"Velocidade:   {steam_data['velocidade']:+.1f}% (2h)\n"
         f"Consenso:     {steam_data['consenso']:.0f}% das casas\n"
-        f"Pinnacle:     {'Lidera ✅' if steam_data['pinnacle_lidera'] else 'Segue'}\n\n"
+        f"Pinnacle:     {'Lidera [OK]' if steam_data['pinnacle_lidera'] else 'Segue'}\n\n"
         f"━━━━━━━━━━━━━━━\n"
         f"⚡ Edge Protocol"
     )
@@ -380,4 +380,4 @@ if __name__ == "__main__":
         salvar_snapshot("Arsenal vs Chelsea", "1x2_casa", dados, "abertura")
         print("Snapshot salvo.")
     else:
-        print("Jogo não encontrado (normal se não houver jogos hoje).")
+        print("Jogo no encontrado (normal se no houver jogos hoje).")

@@ -23,7 +23,7 @@ LIGA_ID_MAP = {
     "Bundesliga": 78,
     "Ligue 1": 61,
     "Brasileirao Serie A": 71,
-    "Brazil Série A": 71,
+    "Brazil Srie A": 71,
     "UEFA Champions League": 2,
     "UEFA Europa League": 3,
 }
@@ -186,7 +186,7 @@ def gate1_ev_e_odd(
 
 def gate2_escalacao(escalacao_confirmada):
     if not escalacao_confirmada:
-        return False, "Escalação não confirmada", REJECT_CODE_LINEUP_UNCONFIRMED
+        return False, "Escalao no confirmada", REJECT_CODE_LINEUP_UNCONFIRMED
     return True, "OK", None
 
 def gate3_odd_estavel(variacao_odd_percentual):
@@ -305,7 +305,7 @@ def gate5_motivacao(time_casa, time_fora, liga_nome):
     if sf <= 20:
         return False, f"Gate 5: {time_fora} sem motivação ({stf})", 0
     if sc <= 40 and sf <= 40:
-        return False, "Gate 5: ambos sem objetivo matemático", 0
+        return False, "Gate 5: ambos sem objetivo matemtico", 0
 
     pen = 0
     if sc <= 40:

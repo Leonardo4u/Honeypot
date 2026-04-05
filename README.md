@@ -45,6 +45,23 @@ Gerar **menos sinais, porém com maior qualidade e disciplina de risco**, monito
   - histórico segmentado (global/mercado)
   - alerta rolling de degradação para Telegram
 
+## 🆕 Atualizações recentes (2026-04-05)
+
+- **Monitor de erro de API com debounce robusto**
+  - chave de debounce estabilizada por `endpoint + error_type`
+  - controle thread-safe com lock e estado compartilhado em nível de módulo
+  - tempo de debounce configurável por `ALERT_DEBOUNCE_SECONDS` (fallback: `60`)
+  - log explícito quando alerta é suprimido por debounce
+
+- **Limpeza e padronização ASCII no código Python**
+  - script standalone adicionado em `clean_ascii.py`
+  - remoção/substituição de caracteres decorativos e não-ASCII em `.py`
+  - relatório detalhado de execução em `logs/clean_ascii_report.txt`
+
+- **Execução local sem alerta operacional no Telegram (opcional)**
+  - variável `EDGE_DISABLE_OPERATIONAL_ALERTS_TELEGRAM=1` para desabilitar envio operacional
+  - útil para execução local com logs sem spam no canal
+
 ### Exemplos rápidos de uso
 
 ```bash
@@ -149,7 +166,7 @@ Também estão documentadas em `.env.example` as variáveis avançadas de runtim
 `EDGE_IDLE_ASCII_MAX_H`, `EDGE_OPERATOR`, `EDGE_PROVIDER_ERROR_RATE_MAX`,
 `EDGE_ADVANCED_PIPELINE_ENABLED`, `EDGE_ADVANCED_PIPELINE_MC_SIMS`,
 `EDGE_PLAYBOOK_URL`, `EDGE_POLICY_V2_ENABLED`, `EDGE_POLICY_V2_SHADOW`,
-`BOT_DATA_DIR`.
+`BOT_DATA_DIR`, `ALERT_DEBOUNCE_SECONDS`, `EDGE_DISABLE_OPERATIONAL_ALERTS_TELEGRAM`.
 
 ### Variáveis usadas no projeto
 
@@ -214,6 +231,22 @@ python scripts/check_repo_hygiene.py
 ```
 
 Esse check bloqueia artefatos gerados no git (como `__pycache__`, `.pyc`, `.db` e `logs/*.xlsx`).
+
+### Limpeza ASCII automática em arquivos Python
+
+```bash
+# Simulação (não grava alteração)
+python clean_ascii.py --root . --dry-run --report-file logs/clean_ascii_report.txt
+
+# Aplicação real
+python clean_ascii.py --root . --report-file logs/clean_ascii_report.txt
+```
+
+Formato do relatório:
+
+```text
+[ARQUIVO] caminho.py | [LINHA] 42 | [REMOVIDO] X | [SUBSTITUIDO POR] Y
+```
 
 ### Bootstrap de ambiente (1 comando)
 

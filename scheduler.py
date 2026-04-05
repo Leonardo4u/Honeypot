@@ -44,12 +44,12 @@ from data.database import (
     liquidar_shadow_predictions_por_sinal,
     registrar_shadow_prediction,
     validar_schema_minimo,
-    # FIX-11: bootstrap_completo disponível para fresh setup
+    # FIX-11: bootstrap_completo disponvel para fresh setup
     bootstrap_completo,
-    # FIX-10: atualizar_resultado no namespace do módulo para ser mockável em testes
+    # FIX-10: atualizar_resultado no namespace do mdulo para ser mockvel em testes
     # via patch('scheduler.atualizar_resultado') nos testes existentes.
     atualizar_resultado,
-    # FIX: atualizar_fixture_referencia no namespace do módulo para ser mockável
+    # FIX: atualizar_fixture_referencia no namespace do mdulo para ser mockvel
     # via patch('scheduler.atualizar_fixture_referencia') nos testes.
     atualizar_fixture_referencia,
 )
@@ -102,6 +102,12 @@ load_dotenv()
 TOKEN = os.getenv("BOT_TOKEN")
 CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
+DISABLE_OPERATIONAL_ALERTS_TELEGRAM = os.getenv("EDGE_DISABLE_OPERATIONAL_ALERTS_TELEGRAM", "0").strip().lower() in (
+    "1",
+    "true",
+    "yes",
+    "on",
+)
 LOG_LEVEL = os.getenv("EDGE_LOG_LEVEL", "normal").strip().lower()
 OPERATOR_ID = os.getenv("EDGE_OPERATOR", "system")
 EDGE_VERSION = os.getenv("EDGE_VERSION", "dev")
@@ -202,11 +208,11 @@ EXECUCAO_STATS = {
     "total_avaliacoes_mercado": 0,
 }
 
-# Arquitetura proposta (fase 6): scheduler como composição de serviços.
-# - DataCollectionService: coleta e normalização de jogos por liga.
-# - FallbackEvaluationService: avaliação e persistência de fallback detalhado.
-# - ObservabilityService: padronização de warning estruturado com contexto operacional.
-# - DispatchSettlementService: composição do envio/persistência de sinais no runtime.
+# Arquitetura proposta (fase 6): scheduler como composio de servios.
+# - DataCollectionService: coleta e normalizao de jogos por liga.
+# - FallbackEvaluationService: avaliao e persistncia de fallback detalhado.
+# - ObservabilityService: padronizao de warning estruturado com contexto operacional.
+# - DispatchSettlementService: composio do envio/persistncia de sinais no runtime.
 DATA_COLLECTION_SERVICE = DataCollectionService(
     fetcher=buscar_jogos_com_odds_com_status,
     formatter=formatar_jogos,
@@ -255,7 +261,7 @@ MARKET_RUNTIME_CONFIG = [
 LIGA_KEY_MAP = {
     "EPL": "soccer_epl",
     "Premier League": "soccer_epl",
-    "Brazil Série A": "soccer_brazil_campeonato",
+    "Brazil Srie A": "soccer_brazil_campeonato",
     "Brasileirao Serie A": "soccer_brazil_campeonato",
     "UEFA Champions League": "soccer_uefa_champs_league",
     "UEFA Europa League": "soccer_uefa_europa_league",
@@ -553,7 +559,7 @@ def marcar_ciclo_falha(reason_code, detalhes=None):
 
 
 def _garantir_schema_db():
-    """Garante schema mínimo do SQLite para ambientes fresh (ex.: CI)."""
+    """Garante schema mnimo do SQLite para ambientes fresh (ex.: CI)."""
     global _DB_SCHEMA_READY
     if _DB_SCHEMA_READY:
         return True
@@ -1023,10 +1029,11 @@ def avaliar_slo_alertas(provider_health, total_avaliacoes_mercado, ciclo_duracao
 
 
 async def emitir_alerta_operacional(alerta):
+    chat_id = None if DISABLE_OPERATIONAL_ALERTS_TELEGRAM else CANAL_VIP
     await alert_service.emitir_alerta_operacional(
         alerta=alerta,
         token=TOKEN,
-        chat_id=CANAL_VIP,
+        chat_id=chat_id,
         playbook_link=PLAYBOOK_LINK,
         registrar_alerta_fn=registrar_alerta_operacional,
         log_event_fn=log_event,
@@ -1292,7 +1299,7 @@ async def processar_jogos(dry_run=False):
                 media_casa, media_fora, fonte_dados = obter_media_gols(home, away, liga_key)
 
                 _fonte_lower = fonte_dados.lower()
-                if "médias" in _fonte_lower or "medias" in _fonte_lower:
+                if "mdias" in _fonte_lower or "medias" in _fonte_lower:
                     jogos_com_fallback_xg.append(jogo["jogo"])
 
                 ajuste_casa, ajuste_fora = calcular_ajuste_forma(home, away)
@@ -1461,7 +1468,7 @@ async def processar_jogos(dry_run=False):
                             if steam_data:
                                 steam_bonus = calcular_bonus_edge_score(steam_data)
 
-                    if "fallback" in fonte_dados.lower() or "médias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
+                    if "fallback" in fonte_dados.lower() or "mdias" in fonte_dados.lower() or "medias" in fonte_dados.lower():
                         provider_health["fallback_used"] += 1
                         if not dry_run:
                             registrar_fallback_stats_medias(jogo, mercado, fonte_dados, source_quality)
@@ -1852,7 +1859,7 @@ async def processar_jogos(dry_run=False):
         if not msg:
             continue
 
-        # INTEGRATION: bloqueia sinais já enviados no mesmo dia (mesma liga/jogo/mercado) antes do envio Telegram.
+        # INTEGRATION: bloqueia sinais j enviados no mesmo dia (mesma liga/jogo/mercado) antes do envio Telegram.
         if not dry_run:
             team_home, team_away = _split_match_name(analise.get("jogo", ""))
             qtd_dup = contar_sinais_duplicados_mesmo_dia(
@@ -1963,7 +1970,7 @@ async def processar_jogos(dry_run=False):
             print(f"Sinal #{sinal_id}: {jogo['jogo']} | {item['mercado']} | Score:{analise['edge_score']} | Kelly:{kelly['kelly_final_pct']}%=R${stake_reais:.2f}{steam_info}")
 
     if not MINIMAL_RUNTIME_OUTPUT:
-        logging.info("[%s] Concluído. %s sinais enviados.", agora, sinais_enviados)
+        logging.info("[%s] Concludo. %s sinais enviados.", agora, sinais_enviados)
         logging.info(
             "Health summary: "
             f"ok={provider_health['ok']} "
@@ -2131,14 +2138,14 @@ async def verificar_clv_fechamento():
                     clv = atualizar_clv(sinal_id, odd_fechamento)
                     if clv is not None:
                         sinal = "+" if clv >= 0 else ""
-                        print(f"CLV #{sinal_id}: {sinal}{clv:.2f}% {'✅' if clv > 0 else '⚠️'}")
+                        print(f"CLV #{sinal_id}: {sinal}{clv:.2f}% {'[OK]' if clv > 0 else ''}")
         except Exception as e:
             print(f"Erro CLV #{sinal_id}: {e}")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-# FIX-10: settlement com side-effects extraídos em funções auxiliares
-# ─────────────────────────────────────────────────────────────────────────────
+# ------------
+# FIX-10: settlement com side-effects extrados em funes auxiliares
+# ------------
 
 
 def _registrar_shadow_prediction_runtime(analise, dados_analise):
@@ -2289,7 +2296,7 @@ async def enviar_resumo_diario():
         clv_linha = f"CLV Médio: {sinal}{metricas['clv_medio']}%\n"
 
     if metricas["total_apostas_brier"] > 0:
-        status = "✅" if metricas["brier_medio"] < 0.25 else "⚠️"
+        status = "[OK]" if metricas["brier_medio"] < 0.25 else ""
         brier_linha = f"Brier Score: {metricas['brier_medio']:.4f} {status}\n"
 
     cal = resumo_calibracao(50)
@@ -2360,7 +2367,7 @@ def rodar_analise_boot():
     executar_job_guardado("analise", 60, lambda: asyncio.run(processar_jogos()), force_once=True)
 
 def atualizar_stats_semanalmente():
-    print("Atualizando médias de gols...")
+    print("Atualizando mdias de gols...")
     atualizar_todas_ligas()
     print("Atualizando xG...")
     from data.xg_understat import atualizar_xg_todas_ligas
@@ -2440,14 +2447,14 @@ def iniciar_scheduler():
             MAGENTA
             + """
                                                                           
-  ▄▄▄▄▄▄▄                      ▄▄▄▄▄▄                                 ▄▄ 
- █▀██▀▀▀     █▄               █▀██▀▀▀█▄           █▄                   ██
-   ██        ██    ▄▄           ██▄▄▄█▀▄         ▄██▄                  ██
-   ████   ▄████ ▄████ ▄█▀█▄     ██▀▀▀  ████▄▄███▄ ██ ▄███▄ ▄███▀ ▄███▄ ██
-   ██     ██ ██ ██ ██ ██▄█▀   ▄ ██     ██   ██ ██ ██ ██ ██ ██    ██ ██ ██
-   ▀█████▄█▀███▄▀████▄▀█▄▄▄   ▀██▀    ▄█▀  ▄▀███▀▄██▄▀███▀▄▀███▄▄▀███▀▄██
-                   ██                                                    
-                 ▀▀▀                                                     
+                                                          
+                                                   
+                                                     
+                    
+                                   
+            
+                                                                       
+                                                                      
 """
                         + ANSI_RESET
         )
@@ -2457,16 +2464,16 @@ def iniciar_scheduler():
         print(f"SOS: ativo")
         print(f"Janela expandida: 72h clássicos / 48h copa / 12h liga")
         print(f"Excel: atualização automática ativa")
-        print("\nHorários programados:")
-        print("  09:00 — Análise da manhã")
-        print("  16:00 — Análise da tarde")
-        print("  A cada 2h — Monitoramento janela expandida (silencioso)")
-        print("  A cada 5min — CLV fechamento")
-        print("  A cada 30min — Steam monitoring")
-        print("  A cada 5min (17h-23h) — Verificação de resultados")
-        print("  23:30 — Resumo diário + Excel full refresh")
-        print("  Segunda 06:00 — Atualização de stats + xG")
-        print("  Segunda 06:30 — Backtest janela móvel + promoção")
+        print("\nHorrios programados:")
+        print("  09:00  Anlise da manh")
+        print("  16:00  Anlise da tarde")
+        print("  A cada 2h  Monitoramento janela expandida (silencioso)")
+        print("  A cada 5min  CLV fechamento")
+        print("  A cada 30min  Steam monitoring")
+        print("  A cada 5min (17h-23h)  Verificao de resultados")
+        print("  23:30  Resumo dirio + Excel full refresh")
+        print("  Segunda 06:00  Atualizao de stats + xG")
+        print("  Segunda 06:30  Backtest janela mvel + promoo")
         print("")
 
     schedule.every().day.at("09:00").do(rodar_analise)

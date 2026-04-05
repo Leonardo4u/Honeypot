@@ -216,7 +216,7 @@ def buscar_resultado_jogo(
 ) -> Optional[Dict[str, Any]]:
     """
     Busca o resultado real de um jogo na API-Football.
-    Retorna o placar final ou None se não encontrado.
+    Retorna o placar final ou None se no encontrado.
     """
     data_base = None
     if data:
@@ -299,11 +299,11 @@ def avaliar_mercado(resultado: Dict[str, Any], mercado: str, odd: float) -> Opti
         }
 
 if __name__ == "__main__":
-    print("=== TESTE DE VERIFICAÇÃO DE RESULTADO ===\n")
+    print("=== TESTE DE VERIFICAO DE RESULTADO ===\n")
     resultado = buscar_resultado_jogo("Arsenal", "Bournemouth")
     if resultado:
         print(f"Status: {resultado['status']}")
         if resultado['status'] == 'finalizado':
             print(f"Placar: {resultado['placar']}")
     else:
-        print("Jogo não encontrado.")
+        print("Jogo no encontrado.")

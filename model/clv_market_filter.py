@@ -1,25 +1,25 @@
 """
 clv_market_filter.py
 =====================
-Bloco 2 de 3 — Filtro de CLV histórico por mercado × liga
+Bloco 2 de 3  Filtro de CLV histrico por mercado  liga
 
 Objetivo:
-  Só operar combinações (mercado, liga) onde o CLV histórico acumulado
-  é positivo e estatisticamente significante. Combinações com CLV negativo
-  ou inconclusivo são bloqueadas mesmo que o modelo indique edge pontual.
+  S operar combinaes (mercado, liga) onde o CLV histrico acumulado
+   positivo e estatisticamente significante. Combinaes com CLV negativo
+  ou inconclusivo so bloqueadas mesmo que o modelo indique edge pontual.
 
 Componentes:
   1. CLVRecord:         registro de uma aposta individual
-  2. CLVBucket:         agregador de métricas por (mercado, liga)
-  3. CLVHistoryStore:   repositório em memória (plugável com BD)
-  4. CLVMarketFilter:   decisão de operar ou não uma combinação
-  5. CLVDiagnosticPanel: painel de decomposição por buckets de edge score
+  2. CLVBucket:         agregador de mtricas por (mercado, liga)
+  3. CLVHistoryStore:   repositrio em memria (plugvel com BD)
+  4. CLVMarketFilter:   deciso de operar ou no uma combinao
+  5. CLVDiagnosticPanel: painel de decomposio por buckets de edge score
 
-Lógica de significância:
-  - n_min_amostras: precisamos de histórico suficiente antes de confiar
-  - z_score do CLV médio vs 0 para testar se é estatisticamente > 0
+Lgica de significncia:
+  - n_min_amostras: precisamos de histrico suficiente antes de confiar
+  - z_score do CLV mdio vs 0 para testar se  estatisticamente > 0
   - Fator de decaimento temporal: apostas antigas pesam menos
-    (evita que um bom período antigo esconda deterioração recente)
+    (evita que um bom perodo antigo esconda deteriorao recente)
 """
 
 from __future__ import annotations
@@ -35,9 +35,9 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 # ESTRUTURAS
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 
 @dataclass
 class CLVRecord:
@@ -59,8 +59,8 @@ class CLVRecord:
         """
         CLV = prob_fair_close - prob_fair_aposta
 
-        Positivo = apostamos a preço melhor que o fechamento de mercado.
-        É a métrica mais honesta de qualidade de aposta, independente do resultado.
+        Positivo = apostamos a preo melhor que o fechamento de mercado.
+         a mtrica mais honesta de qualidade de aposta, independente do resultado.
         """
         p_aposta = (1.0 / self.odd_apostada) / self.overround_open
         p_close  = (1.0 / self.odd_fechamento) / self.overround_close
@@ -72,7 +72,7 @@ class CLVRecord:
 
     @property
     def edge_bucket(self) -> str:
-        """Bucket de edge score para diagnóstico granular."""
+        """Bucket de edge score para diagnstico granular."""
         s = self.edge_score
         if s < 70:   return "<70"
         if s < 73:   return "70-72"
@@ -84,18 +84,18 @@ class CLVRecord:
 
 @dataclass
 class CLVBucketStats:
-    """Estatísticas agregadas de uma combinação (mercado, liga) ou bucket."""
+    """Estatsticas agregadas de uma combinao (mercado, liga) ou bucket."""
     chave:           str
     n_apostas:       int = 0
     clv_soma:        float = 0.0
-    clv_soma_q:      float = 0.0     # soma dos quadrados (para variância online)
-    clv_ponderado:   float = 0.0     # CLV médio ponderado por stake
+    clv_soma_q:      float = 0.0     # soma dos quadrados (para varincia online)
+    clv_ponderado:   float = 0.0     # CLV mdio ponderado por stake
     stake_total:     float = 0.0
     roi_total:       float = 0.0
     n_positivos:     int = 0
 
     def update(self, record: CLVRecord, peso_temporal: float = 1.0):
-        """Atualização incremental via algoritmo de Welford (numericamente estável)."""
+        """Atualizao incremental via algoritmo de Welford (numericamente estvel)."""
         clv = record.clv * peso_temporal
         self.n_apostas  += 1
         delta            = clv - (self.clv_soma / self.n_apostas if self.n_apostas > 1 else 0)
@@ -122,7 +122,7 @@ class CLVBucketStats:
 
     @property
     def z_score(self) -> float:
-        """Z-score do CLV médio vs hipótese nula (CLV = 0)."""
+        """Z-score do CLV mdio vs hiptese nula (CLV = 0)."""
         if self.n_apostas < 2 or self.clv_std == 0:
             return 0.0
         stderr = self.clv_std / math.sqrt(self.n_apostas)
@@ -157,28 +157,28 @@ class CLVBucketStats:
         }
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# REPOSITÓRIO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# REPOSITRIO
+# ------------
 
 class CLVHistoryStore:
     """
-    Repositório de registros CLV com índice por (mercado, liga) e por bucket.
+    Repositrio de registros CLV com ndice por (mercado, liga) e por bucket.
 
-    Em produção: substituir _records por consulta ao BD.
-    Interface mantida idêntica para evitar acoplamento.
+    Em produo: substituir _records por consulta ao BD.
+    Interface mantida idntica para evitar acoplamento.
     """
 
     def __init__(self, decaimento_dias: float = 180.0):
         """
         Args:
             decaimento_dias: half-life temporal em dias.
-                Apostas com `decaimento_dias` dias atrás pesam 50% menos.
+                Apostas com `decaimento_dias` dias atrs pesam 50% menos.
         """
         self.decaimento = decaimento_dias
         self._records:  list[CLVRecord] = []
 
-        # Índices
+        # ndices
         self._por_chave: dict[str, CLVBucketStats] = defaultdict(
             lambda: CLVBucketStats(chave="")
         )
@@ -190,14 +190,14 @@ class CLVHistoryStore:
         )
 
     def _peso(self, record_date: date, referencia: date) -> float:
-        """Decaimento exponencial — apostas antigas pesam menos."""
+        """Decaimento exponencial  apostas antigas pesam menos."""
         dias = (referencia - record_date).days
         if dias < 0:
             return 1.0
         return math.exp(-math.log(2) * dias / self.decaimento)
 
     def adicionar(self, record: CLVRecord, referencia: Optional[date] = None):
-        """Registra aposta e atualiza todos os índices."""
+        """Registra aposta e atualiza todos os ndices."""
         ref    = referencia or date.today()
         peso   = self._peso(record.data, ref)
         chave  = f"{record.mercado}::{record.liga}"
@@ -205,7 +205,7 @@ class CLVHistoryStore:
 
         self._records.append(record)
 
-        # Inicializar chave se necessário
+        # Inicializar chave se necessrio
         if chave not in self._por_chave:
             self._por_chave[chave] = CLVBucketStats(chave=chave)
         if bucket not in self._por_bucket:
@@ -230,9 +230,9 @@ class CLVHistoryStore:
         return [v.resumo() for v in self._por_bucket.values() if v.n_apostas > 0]
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# FILTRO DE DECISÃO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# FILTRO DE DECISO
+# ------------
 
 @dataclass
 class CLVFilterDecisao:
@@ -249,22 +249,22 @@ class CLVFilterDecisao:
 
 class CLVMarketFilter:
     """
-    Filtra operações por combinação (mercado × liga) com base em CLV histórico.
+    Filtra operaes por combinao (mercado  liga) com base em CLV histrico.
 
-    Modos de operação:
-      - OPERAR:   CLV historicamente positivo e significante → stake normal
-      - AGUARDAR: histórico insuficiente → stake reduzido (exploração cautelosa)
-      - BLOQUEAR: CLV historicamente negativo e significante → veta aposta
-      - NEUTRO:   histórico inconcluso → stake levemente reduzido
+    Modos de operao:
+      - OPERAR:   CLV historicamente positivo e significante -> stake normal
+      - AGUARDAR: histrico insuficiente -> stake reduzido (explorao cautelosa)
+      - BLOQUEAR: CLV historicamente negativo e significante -> veta aposta
+      - NEUTRO:   histrico inconcluso -> stake levemente reduzido
     """
 
     def __init__(
         self,
         store: CLVHistoryStore,
-        n_min_para_bloquear: int = 30,    # mínimo de amostras para declarar BLOQUEAR
-        n_min_para_operar: int = 30,      # mínimo para stake cheio
-        stake_aguardar: float = 0.50,     # stake durante período de aprendizado
-        stake_neutro: float = 0.75,       # stake em combinação neutra
+        n_min_para_bloquear: int = 30,    # mnimo de amostras para declarar BLOQUEAR
+        n_min_para_operar: int = 30,      # mnimo para stake cheio
+        stake_aguardar: float = 0.50,     # stake durante perodo de aprendizado
+        stake_neutro: float = 0.75,       # stake em combinao neutra
         permitir_novas_combinacoes: bool = True,
     ):
         self.store              = store
@@ -277,7 +277,7 @@ class CLVMarketFilter:
     def avaliar(self, mercado: str, liga: str) -> CLVFilterDecisao:
         stats = self.store.stats_chave(mercado, liga)
 
-        # Combinação nova: sem histórico
+        # Combinao nova: sem histrico
         if stats is None or stats.n_apostas == 0:
             if not self.permitir_novas:
                 return CLVFilterDecisao(
@@ -287,7 +287,7 @@ class CLVMarketFilter:
                     n_apostas_historico=0,
                     clv_medio_historico=0.0,
                     z_score=0.0,
-                    motivo="Combinação nova e permit_novas_combinacoes=False",
+                    motivo="Combinao nova e permit_novas_combinacoes=False",
                     stake_multiplier=0.0,
                 )
             return CLVFilterDecisao(
@@ -354,18 +354,18 @@ class CLVMarketFilter:
         )
 
 
-# ════════════════════════════════════════════════════════════════════════════
-# PAINEL DE DIAGNÓSTICO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
+# PAINEL DE DIAGNSTICO
+# ------------
 
 class CLVDiagnosticPanel:
     """
-    Gera painel de diagnóstico de ROI e CLV por buckets de edge score.
+    Gera painel de diagnstico de ROI e CLV por buckets de edge score.
 
-    Responde à pergunta principal: "Apostas com edge score entre 72-76
-    têm CLV positivo? Vale a pena manter ou subir o limiar?"
+    Responde  pergunta principal: "Apostas com edge score entre 72-76
+    tm CLV positivo? Vale a pena manter ou subir o limiar?"
 
-    Output: tabela de buckets ordenada por z-score para facilitar decisão.
+    Output: tabela de buckets ordenada por z-score para facilitar deciso.
     """
 
     def __init__(self, store: CLVHistoryStore):
@@ -373,7 +373,7 @@ class CLVDiagnosticPanel:
 
     def painel_edge_buckets(self, mercado: Optional[str] = None) -> list[dict]:
         """
-        Retorna métricas por bucket de edge score (filtrando por mercado se informado).
+        Retorna mtricas por bucket de edge score (filtrando por mercado se informado).
         """
         buckets_raw = self.store.todos_buckets()
         if mercado:
@@ -401,7 +401,7 @@ class CLVDiagnosticPanel:
         return resultado
 
     def painel_mercado_liga(self) -> list[dict]:
-        """Retorna métricas por combinação mercado × liga."""
+        """Retorna mtricas por combinao mercado  liga."""
         return sorted(self.store.todas_chaves(), key=lambda x: -x["z_score"])
 
     def recomendacao_limiar(self, mercado: str) -> dict:
@@ -409,13 +409,13 @@ class CLVDiagnosticPanel:
         Responde: qual limiar de edge score maximiza CLV para este mercado?
 
         Analisa CLV por bucket e encontra o ponto de corte onde
-        CLV médio fica consistentemente positivo.
+        CLV mdio fica consistentemente positivo.
         """
         buckets = self.painel_edge_buckets(mercado)
         if not buckets:
             return {"mercado": mercado, "recomendacao": "SEM_DADOS"}
 
-        # Limiar ótimo: bucket mais baixo com CLV positivo E z > 1.0
+        # Limiar timo: bucket mais baixo com CLV positivo E z > 1.0
         limiares_possiveis = {
             "<70": 69, "70-72": 72, "73-75": 73,
             "76-78": 76, "79-81": 79, "82+": 82,
@@ -436,15 +436,15 @@ class CLVDiagnosticPanel:
 
     def imprimir_painel(self):
         """Output formatado para terminal/log."""
-        print("\n" + "═" * 75)
-        print("  CLV DIAGNOSTIC PANEL — Por Edge Score Bucket")
-        print("═" * 75)
-        print(f"  {'Mercado':15s}  {'Bucket':8s}  {'N':5s}  {'CLV Médio':10s}  "
+        print("\n" + "" * 75)
+        print("  CLV DIAGNOSTIC PANEL  Por Edge Score Bucket")
+        print("" * 75)
+        print(f"  {'Mercado':15s}  {'Bucket':8s}  {'N':5s}  {'CLV Mdio':10s}  "
               f"{'Z-score':8s}  {'%+CLV':6s}  {'ROI Total':10s}  {'Veredicto'}")
-        print("  " + "─" * 72)
+        print("  " + "" * 72)
 
         for b in self.painel_edge_buckets():
-            flag = "★" if b["z_score"] > 1.65 else " "
+            flag = "" if b["z_score"] > 1.65 else " "
             print(
                 f"  {b['mercado']:15s}  {b['edge_bucket']:8s}  {b['n_apostas']:5d}  "
                 f"{b['clv_medio']:+.4f}{'':4s}  {b['z_score']:+6.2f}   "
@@ -452,10 +452,10 @@ class CLVDiagnosticPanel:
                 f"{flag} {b['veredicto']}"
             )
 
-        print("\n  Por Mercado × Liga:")
-        print("  " + "─" * 72)
+        print("\n  Por Mercado  Liga:")
+        print("  " + "" * 72)
         for m in self.painel_mercado_liga()[:10]:
-            flag = "★" if m["significante"] else " "
+            flag = "" if m["significante"] else " "
             print(
                 f"  {m['chave']:35s}  n={m['n_apostas']:4d}  "
                 f"CLV={m['clv_medio']:+.4f}  z={m['z_score']:+.2f}  "
@@ -463,9 +463,9 @@ class CLVDiagnosticPanel:
             )
 
 
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 # DEMO
-# ════════════════════════════════════════════════════════════════════════════
+# ------------
 
 if __name__ == "__main__":
     import random
@@ -476,8 +476,8 @@ if __name__ == "__main__":
     filtro = CLVMarketFilter(store)
     painel = CLVDiagnosticPanel(store)
 
-    # Simular histórico: over_2.5 na Premier League tem CLV positivo,
-    # draw na Ligue 1 tem CLV negativo, Asian HCP na LaLiga é nova combinação
+    # Simular histrico: over_2.5 na Premier League tem CLV positivo,
+    # draw na Ligue 1 tem CLV negativo, Asian HCP na LaLiga  nova combinao
 
     def simular_apostas(mercado, liga, n, clv_media, clv_std, edge_base, dias_atras_max=180):
         for i in range(n):
@@ -501,18 +501,18 @@ if __name__ == "__main__":
                 resultado=1 if rng.random() < p_ap else 0,
             ))
 
-    # Dados simulados: padrões distintos por combinação
+    # Dados simulados: padres distintos por combinao
     simular_apostas("over_2.5",      "Premier League",  60, clv_media=+0.022, clv_std=0.04, edge_base=75)
     simular_apostas("over_2.5",      "Championship",    35, clv_media=+0.008, clv_std=0.05, edge_base=73)
     simular_apostas("draw",          "Ligue 1",         45, clv_media=-0.018, clv_std=0.04, edge_base=74)
     simular_apostas("home_win",      "Premier League",  55, clv_media=+0.015, clv_std=0.04, edge_base=76)
     simular_apostas("home_win",      "Bundesliga",      20, clv_media=+0.005, clv_std=0.05, edge_base=72)
     simular_apostas("asian_handicap","La Liga",          8, clv_media=+0.030, clv_std=0.06, edge_base=78)
-    # edge_bucket específico com CLV ruim:
+    # edge_bucket especfico com CLV ruim:
     simular_apostas("over_2.5",      "Serie A",         40, clv_media=-0.010, clv_std=0.04, edge_base=70)
 
     print("=" * 75)
-    print("CLV MARKET FILTER — Diagnóstico e Decisões")
+    print("CLV MARKET FILTER  Diagnstico e Decises")
     print("=" * 75)
 
     casos = [
@@ -521,11 +521,11 @@ if __name__ == "__main__":
         ("asian_handicap", "La Liga"),
         ("home_win",       "Bundesliga"),
         ("over_2.5",       "Serie A"),
-        ("btts_yes",       "Premier League"),   # combinação nova
+        ("btts_yes",       "Premier League"),   # combinao nova
     ]
     for mercado, liga in casos:
         d = filtro.avaliar(mercado, liga)
-        status = "✓" if d.aprovado else "✗"
+        status = "" if d.aprovado else ""
         print(f"\n  {status} {mercado:18s} × {liga:18s}")
         print(f"    veredicto:  {d.veredicto}")
         print(f"    CLV médio:  {d.clv_medio_historico:+.4f}  (z={d.z_score:.2f}, n={d.n_apostas_historico})")
@@ -534,7 +534,7 @@ if __name__ == "__main__":
 
     painel.imprimir_painel()
 
-    print("\n  Recomendação de limiar por mercado:")
+    print("\n  Recomendao de limiar por mercado:")
     for m in ["over_2.5", "home_win", "draw"]:
         rec = painel.recomendacao_limiar(m)
         print(f"    {m:18s}: limiar recomendado = {rec['limiar_recomendado']}")

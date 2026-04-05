@@ -7,10 +7,10 @@ ALIASES = {
     "Vasco DA Gama": "Vasco da Gama",
     "Vasco da Gama": "Vasco da Gama",
     "Atletico-MG": "Atletico Mineiro",
-    "Atlético Mineiro": "Atletico Mineiro",
+    "Atltico Mineiro": "Atletico Mineiro",
     "Atletico Mineiro": "Atletico Mineiro",
-    "Sao Paulo": "São Paulo",
-    "São Paulo": "São Paulo",
+    "Sao Paulo": "So Paulo",
+    "So Paulo": "So Paulo",
     "Fluminense FC": "Fluminense",
     "Bragantino-SP": "RB Bragantino",
 }
