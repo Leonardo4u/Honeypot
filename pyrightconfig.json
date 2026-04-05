@@ -1,8 +1,13 @@
 {
-  "typeCheckingMode": "off",
+  "typeCheckingMode": "standard",
   "reportMissingImports": "warning",
   "include": [
-    "**/*.py"
+    "data",
+    "model/picks_log.py",
+    "services/scheduler_services.py",
+    "services/settlement_service.py",
+    "services/alert_service.py",
+    "services/dispatch_service.py"
   ],
   "exclude": [
     "**/__pycache__",
@@ -19,19 +24,26 @@
   "executionEnvironments": [
     {
       "root": "data",
-      "typeCheckingMode": "basic"
-    },
-    {
-      "root": "scripts",
-      "typeCheckingMode": "basic"
-    },
-    {
-      "root": ".",
-      "typeCheckingMode": "off",
       "extraPaths": [
+        ".",
         "model",
-        "data",
         "services"
+      ]
+    },
+    {
+      "root": "services",
+      "extraPaths": [
+        ".",
+        "data",
+        "model"
+      ]
+    },
+    {
+      "root": "model",
+      "extraPaths": [
+        "data",
+        "services",
+        "."
       ]
     }
   ],

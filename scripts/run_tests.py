@@ -1,11 +1,5 @@
-import sys
 import unittest
 from pathlib import Path
-
-
-ROOT = Path(__file__).resolve().parents[1]
-if str(ROOT) not in sys.path:
-    sys.path.insert(0, str(ROOT))
 
 
 TEST_MODULES = [
@@ -23,10 +17,20 @@ TEST_MODULES = [
     "tests.test_database_integration",
 ]
 
+ROOT = Path(__file__).resolve().parents[1]
+
 
 def main():
     loader = unittest.TestLoader()
-    suite = loader.loadTestsFromNames(TEST_MODULES)
+    suite = unittest.TestSuite()
+    for module_name in TEST_MODULES:
+        module_path = ROOT / (module_name.replace(".", "/") + ".py")
+        discovered = loader.discover(
+            start_dir=str(module_path.parent),
+            pattern=module_path.name,
+            top_level_dir=str(ROOT),
+        )
+        suite.addTests(discovered)
     runner = unittest.TextTestRunner(verbosity=2)
     result = runner.run(suite)
     return 0 if result.wasSuccessful() else 1
