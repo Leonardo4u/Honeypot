@@ -1,7 +1,6 @@
-import sys
-sys.path.insert(0, 'data')
-from coletar_odds import buscar_jogos_com_odds, formatar_jogos
 from datetime import datetime, timezone, timedelta
+
+from data.coletar_odds import buscar_jogos_com_odds, formatar_jogos
 
 agora = datetime.now(timezone.utc)
 print(f"Agora (UTC): {agora.strftime('%Y-%m-%d %H:%M')}")

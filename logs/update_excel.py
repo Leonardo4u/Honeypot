@@ -21,8 +21,12 @@ from datetime import datetime, date
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
 
-# ── CONFIG ────────────────────────────────────────────────────
+# Garante import absoluto de pacotes do projeto quando executado como script.
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+if BASE_DIR not in sys.path:
+    sys.path.insert(0, BASE_DIR)
+
+# ── CONFIG ────────────────────────────────────────────────────
 EXCEL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "bot_apostas.xlsx")
 LOG_PATH   = "update_log.txt"
 
@@ -311,9 +315,7 @@ def main():
             log("full_refresh: regenerando arquivo completo...")
             try:
                 wb.close()
-                sys.path.insert(0, BASE_DIR)
-                sys.path.insert(0, os.path.join(BASE_DIR, "data"))
-                from exportar_excel import gerar_excel
+                from data.exportar_excel import gerar_excel
 
                 caminho = gerar_excel()
                 log(f"full_refresh concluído: {caminho}")

@@ -2,12 +2,12 @@ import sqlite3
 import json
 import os
 try:
-    from dotenv import load_dotenv
+    from dotenv import load_dotenv as _load_dotenv
 except ModuleNotFoundError:
-    def load_dotenv():
-        return False
+    def _load_dotenv(*_args, **_kwargs) -> bool:
+        return bool(False)
 
-load_dotenv()
+_load_dotenv()
 
 FORMA_PATH = os.path.join(os.path.dirname(__file__), "forma_recente.json")
 DB_PATH = os.path.join(os.path.dirname(__file__), "edge_protocol.db")

@@ -511,7 +511,7 @@ def _print_coverage_comparison(before_cov, after_cov, min_n=50):
 
 
 def calibrar_rho_por_liga(df):
-    from poisson import estimar_rho, RHO_POR_LIGA
+    from model.poisson import estimar_rho, RHO_POR_LIGA
 
     print("\n=== CALIBRACAO RHO POR LIGA ===")
     print(f"{'Liga':<28} {'Atual':>8} {'Calibrado':>10} {'Delta':>8} {'N jogos':>8}")
@@ -552,7 +552,7 @@ def build_ligas_calibration(min_matches=50, recency_halflife=38, preloaded_df=No
         print("Sem partidas validas para calibracao.")
         return {}
 
-    from poisson import estimar_rho
+    from model.poisson import estimar_rho
 
     ligas_payload = {}
     summary_rows = []
@@ -596,8 +596,8 @@ def build_ligas_calibration(min_matches=50, recency_halflife=38, preloaded_df=No
 
 
 def calcular_brier_historico(df, n_amostras=1000, random_state=42):
-    from poisson import calcular_probabilidades
-    from xg_understat import calcular_media_gols_com_xg
+    from model.poisson import calcular_probabilidades
+    from data.xg_understat import calcular_media_gols_com_xg
 
     print(f"\n=== BRIER SCORE HISTORICO (amostra: {n_amostras} jogos) ===")
     amostra = df.sample(min(n_amostras, len(df)), random_state=random_state)
@@ -687,8 +687,8 @@ def _odd_valida(valor):
 
 
 def calcular_win_rate_historico(df):
-    from poisson import calcular_probabilidades, calcular_prob_over_under
-    from xg_understat import calcular_media_gols_com_xg
+    from model.poisson import calcular_probabilidades, calcular_prob_over_under
+    from data.xg_understat import calcular_media_gols_com_xg
 
     print("\n=== WIN RATE HISTORICO DO MODELO ===")
 
@@ -770,9 +770,9 @@ def calcular_win_rate_historico(df):
 
 
 def popular_banco_historico(df, n_max=2000):
-    from poisson import calcular_probabilidades, calcular_prob_over_under
-    from xg_understat import calcular_media_gols_com_xg
-    from database import garantir_schema_historico_sinais
+    from model.poisson import calcular_probabilidades, calcular_prob_over_under
+    from data.xg_understat import calcular_media_gols_com_xg
+    from data.database import garantir_schema_historico_sinais
 
     print(f"\n=== POPULANDO BANCO COM HISTORICO (max {n_max} registros) ===")
 

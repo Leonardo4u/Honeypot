@@ -1,14 +1,12 @@
 import requests
 import os
-import sys
 from datetime import datetime, date, timezone
+from typing import Any, Dict, List, Optional
 from dotenv import load_dotenv
 from data.ingestion_resilience import request_with_retry
 import unicodedata
 
 load_dotenv()
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__)))
 
 API_FOOTBALL_KEY = os.getenv("API_FOOTBALL_KEY")
 
@@ -39,14 +37,14 @@ SETTLEMENT_JANELA_POR_COMPETICAO = {
 }
 
 
-def _normalizar_nome_time(nome):
+def _normalizar_nome_time(nome: Any) -> str:
     txt = unicodedata.normalize("NFKD", str(nome or ""))
     txt = txt.encode("ascii", "ignore").decode("ascii")
     txt = " ".join(txt.lower().replace("-", " ").split())
     return txt
 
 
-def _match_times(time_casa, time_fora, home_api, away_api):
+def _match_times(time_casa: str, time_fora: str, home_api: str, away_api: str) -> int:
     casa_ref = _normalizar_nome_time(time_casa)
     fora_ref = _normalizar_nome_time(time_fora)
     casa_api = _normalizar_nome_time(home_api)
@@ -66,7 +64,7 @@ def _match_times(time_casa, time_fora, home_api, away_api):
     return score
 
 
-def _extrair_kickoff_utc(fixture):
+def _extrair_kickoff_utc(fixture: Dict[str, Any]) -> Optional[datetime]:
     kickoff = fixture.get("fixture", {}).get("date")
     if not kickoff:
         return None
@@ -78,7 +76,12 @@ def _extrair_kickoff_utc(fixture):
         return None
 
 
-def _avaliar_fixture(fixture, time_casa, time_fora, horario_ref=None):
+def _avaliar_fixture(
+    fixture: Dict[str, Any],
+    time_casa: str,
+    time_fora: str,
+    horario_ref: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
     home = fixture.get("teams", {}).get("home", {}).get("name", "")
     away = fixture.get("teams", {}).get("away", {}).get("name", "")
     name_score = _match_times(time_casa, time_fora, home, away)
@@ -103,7 +106,7 @@ def _avaliar_fixture(fixture, time_casa, time_fora, horario_ref=None):
     }
 
 
-def _resolver_status_fixture(fixture):
+def _resolver_status_fixture(fixture: Dict[str, Any]) -> Dict[str, Any]:
     status = fixture.get("fixture", {}).get("status", {}).get("short")
     goals = fixture.get("goals", {})
     gols_casa = goals.get("home")
@@ -133,7 +136,7 @@ def _resolver_status_fixture(fixture):
     return payload
 
 
-def _buscar_fixture_por_id(fixture_id):
+def _buscar_fixture_por_id(fixture_id: Optional[str]) -> Optional[Dict[str, Any]]:
     if not fixture_id:
         return None
 
@@ -158,7 +161,13 @@ def _buscar_fixture_por_id(fixture_id):
     return fixtures[0]
 
 
-def _buscar_fixture_por_janela(time_casa, time_fora, data_base, horario_ref=None, janela_dias=2):
+def _buscar_fixture_por_janela(
+    time_casa: str,
+    time_fora: str,
+    data_base: date,
+    horario_ref: Optional[str] = None,
+    janela_dias: int = 2,
+) -> Optional[Dict[str, Any]]:
     candidatos = []
     for offset in range(-janela_dias, janela_dias + 1):
         data_alvo = (data_base.fromordinal(data_base.toordinal() + offset)).isoformat()
@@ -190,14 +199,21 @@ def _buscar_fixture_por_janela(time_casa, time_fora, data_base, horario_ref=None
     return candidatos[0]["fixture"]
 
 
-def obter_janela_settlement_dias(liga=None):
+def obter_janela_settlement_dias(liga: Optional[str] = None) -> int:
     if not liga:
         return SETTLEMENT_JANELA_PADRAO_DIAS
 
     chave = str(liga).strip()
     return int(SETTLEMENT_JANELA_POR_COMPETICAO.get(chave, SETTLEMENT_JANELA_PADRAO_DIAS))
 
-def buscar_resultado_jogo(time_casa, time_fora, data=None, horario=None, fixture_id=None, liga=None):
+def buscar_resultado_jogo(
+    time_casa: str,
+    time_fora: str,
+    data: Optional[str] = None,
+    horario: Optional[str] = None,
+    fixture_id: Optional[str] = None,
+    liga: Optional[str] = None,
+) -> Optional[Dict[str, Any]]:
     """
     Busca o resultado real de um jogo na API-Football.
     Retorna o placar final ou None se não encontrado.
@@ -240,14 +256,14 @@ def buscar_resultado_jogo(time_casa, time_fora, data=None, horario=None, fixture
             return None
 
         payload = _resolver_status_fixture(fixture)
-        payload["match_strategy"] = match_strategy
+        payload["match_strategy"] = match_strategy or "unknown"
         return payload
 
     except Exception as e:
         print(f"Erro ao buscar resultado: {e}")
         return None
 
-def avaliar_mercado(resultado, mercado, odd):
+def avaliar_mercado(resultado: Dict[str, Any], mercado: str, odd: float) -> Optional[Dict[str, Any]]:
     """
     Avalia se a aposta ganhou ou perdeu baseado no resultado e mercado.
     """

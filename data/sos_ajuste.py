@@ -1,10 +1,7 @@
 import json
 import os
-import sys
 import sqlite3
 from datetime import datetime
-
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "model"))
 
 XG_PATH = os.path.join(os.path.dirname(__file__), "xg_dados.json")
 SOS_PATH = os.path.join(os.path.dirname(__file__), "sos_dados.json")
@@ -133,7 +130,7 @@ def ajustar_xg_por_sos(xg_bruto_casa, xg_bruto_fora, time_casa, time_fora, liga_
 
 def comparar_probabilidades(xg_casa_bruto, xg_fora_bruto, xg_casa_ajustado, xg_fora_ajustado):
     try:
-        from poisson import calcular_probabilidades
+        from model.poisson import calcular_probabilidades
 
         prob_bruto = calcular_probabilidades(xg_casa_bruto, xg_fora_bruto)
         prob_ajustado = calcular_probabilidades(xg_casa_ajustado, xg_fora_ajustado)

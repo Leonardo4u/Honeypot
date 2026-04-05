@@ -1,11 +1,8 @@
-import sys
-sys.path.insert(0, 'data')
-sys.path.insert(0, 'model')
-from coletar_odds import buscar_jogos_com_odds, formatar_jogos
-from analisar_jogo import analisar_jogo
-from atualizar_stats import carregar_medias
-from xg_understat import calcular_media_gols_com_xg
-from filtros import aplicar_triple_gate
+from data.coletar_odds import buscar_jogos_com_odds, formatar_jogos
+from model.analisar_jogo import analisar_jogo
+from data.atualizar_stats import carregar_medias
+from data.xg_understat import calcular_media_gols_com_xg
+from model.filtros import aplicar_triple_gate
 
 dados = buscar_jogos_com_odds('soccer_brazil_campeonato')
 jogos = formatar_jogos(dados)

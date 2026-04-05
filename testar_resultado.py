@@ -1,13 +1,8 @@
-import sys
-import asyncio
-import os
 from dotenv import load_dotenv
 
 load_dotenv()
-sys.path.insert(0, 'data')
-sys.path.insert(0, 'model')
 
-from verificar_resultados import buscar_resultado_jogo
+from data.verificar_resultados import buscar_resultado_jogo
 
 print("Testando busca de resultado...\n")
 

@@ -11,7 +11,6 @@ try:
     from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
     from openpyxl.utils import get_column_letter
     from openpyxl.chart import BarChart, Reference, LineChart
-    from openpyxl.chart.series import DataPoint
 except ImportError:
     print("Instale openpyxl: pip install openpyxl")
     exit()

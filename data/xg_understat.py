@@ -38,7 +38,6 @@ def _media_ponderada_temporal(valores, decay_base=0.9):
 def buscar_xg_liga(liga_key, temporada=2024):
     from selenium import webdriver
     from selenium.webdriver.chrome.service import Service
-    from selenium.webdriver.chrome.options import Options
     from webdriver_manager.chrome import ChromeDriverManager
 
     liga_nome = LIGAS_UNDERSTAT.get(liga_key)
@@ -47,7 +46,7 @@ def buscar_xg_liga(liga_key, temporada=2024):
 
     url = f"https://understat.com/league/{liga_nome}/{temporada}"
 
-    options = Options()
+    options = webdriver.ChromeOptions()  # pyright: ignore[reportCallIssue]
     options.add_argument("--headless")
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
@@ -55,11 +54,12 @@ def buscar_xg_liga(liga_key, temporada=2024):
     options.add_argument("--log-level=3")
     options.add_experimental_option("excludeSwitches", ["enable-logging"])
 
+    driver = None
     try:
         driver = webdriver.Chrome(
-            service=Service(ChromeDriverManager().install()),
+            service=Service(ChromeDriverManager().install()),  # pyright: ignore[reportCallIssue]
             options=options
-        )
+        )  # pyright: ignore[reportCallIssue]
         driver.get(url)
         time.sleep(3)
 
@@ -117,7 +117,8 @@ def buscar_xg_liga(liga_key, temporada=2024):
     except Exception as e:
         print(f"Erro: {e}")
         try:
-            driver.quit()
+            if driver is not None:
+                driver.quit()
         except Exception:
             pass
         return {}
