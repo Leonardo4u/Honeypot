@@ -5,6 +5,7 @@ import json
 from datetime import datetime, timezone
 from dotenv import load_dotenv
 from data.database import sinal_existe
+from oddspapi import OddsPapi
 
 load_dotenv()
 
@@ -94,6 +95,28 @@ def registrar_aposta_clv(sinal_id, jogo, mercado, odd_entrada, prob_prevista):
     return True
 
 def buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key):
+    # Fonte primaria: OddsPapi (com controle de cota mensal em oddspapi.py).
+    try:
+        client = OddsPapi()
+        data_ref = datetime.now().strftime("%Y-%m-%d")
+        conn_data = sqlite3.connect(DB_PATH)
+        c_data = conn_data.cursor()
+        c_data.execute(
+            "SELECT data FROM sinais WHERE jogo = ? ORDER BY id DESC LIMIT 1",
+            (jogo,),
+        )
+        row_data = c_data.fetchone()
+        conn_data.close()
+        if row_data and row_data[0]:
+            data_ref = str(row_data[0])
+
+        odd_close = client.buscar_odd_fechamento(jogo=jogo, mercado=mercado, data=data_ref)
+        if odd_close is not None:
+            return float(odd_close)
+    except Exception as e:
+        print(f"Aviso OddsPapi (fallback The Odds API): {e}")
+
+    # Fallback secundario: implementacao existente com The Odds API.
     if not API_KEY:
         return None
 
