@@ -921,3 +921,14 @@ RuntimeError: sim error
 2026-04-05 12:20:12,582 ERROR api_error_alert_send_failed endpoint=odds_api:soccer_epl type=auth_failure status=401 telegram_status=400 body={"ok":false,"error_code":400,"description":"Bad Request: chat not found"}
 2026-04-05 12:21:40,733 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
 2026-04-05 12:24:22,389 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-05 13:24:03,241 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-05 13:27:43,647 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-05 14:44:50,548 ERROR -> FAIL: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-05 14:44:50,548 ERROR FAIL em analise: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-05 14:44:50,759 ERROR -> FAIL: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-05 14:44:50,759 ERROR FAIL em analise: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-05 14:47:35,781 ERROR ALERT PB-02 em analise: slo_fallback_rate_breach
+2026-04-06 17:00:54,332 ERROR -> FAIL: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-06 17:00:54,336 ERROR FAIL em analise: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-06 17:00:54,551 ERROR -> FAIL: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
+2026-04-06 17:00:54,551 ERROR FAIL em analise: Can't parse reactiontype: field "custom_emoji_id" must be a valid number
