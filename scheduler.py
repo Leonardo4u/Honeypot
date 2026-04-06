@@ -93,11 +93,23 @@ from services.scheduler_services import (
     DispatchSettlementService,
 )
 from services import alert_service, dispatch_service, settlement_service
+from oddspapi import processar_clv_finalizados
+from settlement_fallback import processar_fallback
 
 from dotenv import load_dotenv
 from telegram import Bot
 
 load_dotenv()
+
+
+def _env_int(nome, padrao):
+    valor = os.getenv(nome, str(padrao))
+    try:
+        return int(str(valor).strip())
+    except (TypeError, ValueError):
+        return padrao
+
+
 TOKEN = os.getenv("BOT_TOKEN")
 CANAL_VIP = os.getenv("CANAL_VIP")
 CANAL_FREE = os.getenv("CANAL_FREE")
@@ -114,9 +126,11 @@ MINIMAL_RUNTIME_OUTPUT = os.getenv("EDGE_MINIMAL_OUTPUT", "1").strip().lower() i
 SHOW_STARTUP_BANNER = os.getenv("EDGE_SHOW_STARTUP_BANNER", "1").strip().lower() in ("1", "true", "yes", "on")
 FORCE_ANSI_COLOR = os.getenv("EDGE_FORCE_ANSI_COLOR", "0").strip().lower() in ("1", "true", "yes", "on")
 IDLE_ASCII_ANIM = os.getenv("EDGE_IDLE_ASCII_ANIM", "0").strip().lower() in ("1", "true", "yes", "on")
-IDLE_ASCII_FRAME_MS = int(os.getenv("EDGE_IDLE_ASCII_FRAME_MS", "120"))
-IDLE_ASCII_MAX_W = int(os.getenv("EDGE_IDLE_ASCII_MAX_W", "52"))
-IDLE_ASCII_MAX_H = int(os.getenv("EDGE_IDLE_ASCII_MAX_H", "18"))
+IDLE_DOT_HEARTBEAT = os.getenv("EDGE_IDLE_DOT_HEARTBEAT", "1").strip().lower() in ("1", "true", "yes", "on")
+IDLE_DOT_INTERVAL_SECONDS = max(1, _env_int("EDGE_IDLE_DOT_INTERVAL_SECONDS", 5))
+IDLE_ASCII_FRAME_MS = _env_int("EDGE_IDLE_ASCII_FRAME_MS", 120)
+IDLE_ASCII_MAX_W = _env_int("EDGE_IDLE_ASCII_MAX_W", 52)
+IDLE_ASCII_MAX_H = _env_int("EDGE_IDLE_ASCII_MAX_H", 18)
 
 _DB_SCHEMA_READY = False
 
@@ -156,9 +170,11 @@ JOB_LABELS = {
     "resumo": "resumo diario",
     "clv": "monitoramento CLV",
     "steam": "monitoramento steam",
+    "clv_oddspapi": "atualizacao CLV OddsPapi",
+    "settlement_fallback": "settlement fallback automatizado",
 }
 
-MAX_SINAIS_DIA = int(os.getenv("EDGE_MAX_SINAIS_DIA", "10"))
+MAX_SINAIS_DIA = _env_int("EDGE_MAX_SINAIS_DIA", 10)
 MAX_MERCADOS_POR_JOGO = 2
 CORRELACAO_PENALTY_STEP = 2.0
 DRIFT_MIN_FALLBACK_LIMIAR = 0.35
@@ -178,11 +194,11 @@ CANARY_MODE_ENABLED = os.getenv("EDGE_CANARY_ENABLED", "0").strip().lower() in (
 QUALITY_CANARY_MIN_EDGE = 0.75
 QUALITY_CANARY_MIN_SCORE = 82.0
 QUALITY_CANARY_STAKE_FRACTION = 0.01
-ANALISE_JOGO_TIMEOUT_SEGUNDOS = int(os.getenv("ANALISE_JOGO_TIMEOUT", "30"))
-CICLO_TIMEOUT_SEGUNDOS = int(os.getenv("CICLO_TIMEOUT", "110"))
+ANALISE_JOGO_TIMEOUT_SEGUNDOS = _env_int("ANALISE_JOGO_TIMEOUT", 30)
+CICLO_TIMEOUT_SEGUNDOS = _env_int("CICLO_TIMEOUT", 110)
 _advanced_pipeline_env_raw = os.getenv("EDGE_ADVANCED_PIPELINE_ENABLED", os.getenv("ADVANCED_PIPELINE_ENABLED", "0"))
 ADVANCED_PIPELINE_ENABLED = _advanced_pipeline_env_raw.strip().lower() in ("1", "true", "yes", "on")
-ADVANCED_PIPELINE_MC_SIMS = int(os.getenv("EDGE_ADVANCED_PIPELINE_MC_SIMS", "2000"))
+ADVANCED_PIPELINE_MC_SIMS = _env_int("EDGE_ADVANCED_PIPELINE_MC_SIMS", 2000)
 PLAYBOOK_LINK = os.getenv("EDGE_PLAYBOOK_URL", "docs/runbooks/emergency.md")
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), "logs", "update_excel.py")
 BASE_DIR = os.path.dirname(__file__)
@@ -190,10 +206,11 @@ BOT_DATA_DIR = os.getenv("BOT_DATA_DIR", os.path.join(BASE_DIR, "data"))
 POLICY_V2_ENABLED = os.getenv("EDGE_POLICY_V2_ENABLED", "0").strip().lower() in ("1", "true", "yes", "on")
 POLICY_V2_SHADOW_MODE = os.getenv("EDGE_POLICY_V2_SHADOW", "1").strip().lower() in ("1", "true", "yes", "on")
 MODEL_SHADOW_MODE = os.getenv("EDGE_MODEL_SHADOW_MODE", "1").strip().lower() in ("1", "true", "yes", "on")
-MODEL_SHADOW_PROMOTION_WINDOW_DAYS = int(os.getenv("EDGE_MODEL_SHADOW_WINDOW_DAYS", "21"))
-MODEL_SHADOW_BOOTSTRAP_ITERS = int(os.getenv("EDGE_MODEL_SHADOW_BOOTSTRAP_ITERS", "2000"))
+MODEL_SHADOW_PROMOTION_WINDOW_DAYS = _env_int("EDGE_MODEL_SHADOW_WINDOW_DAYS", 21)
+MODEL_SHADOW_BOOTSTRAP_ITERS = _env_int("EDGE_MODEL_SHADOW_BOOTSTRAP_ITERS", 2000)
 MIN_CONFIANCA_EFETIVA = max(float(MIN_CONFIANCA), float(MIN_CONFIDENCE_ACTIONABLE))
 DRY_RUN_RELAXED_GATES = os.getenv("EDGE_DRY_RUN_RELAXED_GATES", "0").strip().lower() in ("1", "true", "yes", "on")
+RESULTS_CHECK_INTERVAL_MIN = max(5, _env_int("EDGE_RESULTS_CHECK_INTERVAL_MIN", 30))
 
 EXECUCAO_CICLO = {
     "job_nome": None,
@@ -277,19 +294,19 @@ def log_event(categoria, etapa, entidade, status, reason_code=None, detalhes=Non
     if MINIMAL_RUNTIME_OUTPUT:
         if categoria == "scheduler" and etapa == "job_guard" and status == "start":
             label = JOB_LABELS.get(entidade, entidade)
-            logging.info("%s...", label)
+            print(f"{label}...")
             return
 
         if categoria == "scheduler" and etapa == "job_guard" and status == "end":
             label = JOB_LABELS.get(entidade, entidade)
-            logging.info("%s -> OK", label)
+            print(f"{label} -> OK")
             return
 
         if categoria == "scheduler" and etapa == "cycle_totals":
             enviados = 0
             if isinstance(detalhes, dict):
                 enviados = int(detalhes.get("enviados", 0) or 0)
-            logging.info("enviado %s sinais", enviados)
+            print(f"enviado {enviados} sinais")
             return
 
         if status in ("failed", "critical"):
@@ -452,21 +469,42 @@ def _esperar_ocioso_com_animacao(segundos):
     if segundos <= 0:
         return
 
+    def _esperar_com_pontos(total_segundos):
+        if not IDLE_DOT_HEARTBEAT:
+            time.sleep(total_segundos)
+            return
+
+        fim_local = time.time() + total_segundos
+        escreveu = False
+        while True:
+            restante = fim_local - time.time()
+            if restante <= 0:
+                break
+            time.sleep(min(IDLE_DOT_INTERVAL_SECONDS, restante))
+            if time.time() < fim_local:
+                sys.stdout.write(".")
+                sys.stdout.flush()
+                escreveu = True
+
+        if escreveu:
+            sys.stdout.write("\n")
+            sys.stdout.flush()
+
     if os.environ.get('EDGE_IDLE_ASCII_ANIM', 'true').lower() == 'false':
-        time.sleep(segundos)
+        _esperar_com_pontos(segundos)
         return
 
     if not IDLE_ASCII_ANIM:
-        time.sleep(segundos)
+        _esperar_com_pontos(segundos)
         return
 
     if not _ANSI_ENABLED:
-        time.sleep(segundos)
+        _esperar_com_pontos(segundos)
         return
 
     frames = _carregar_frames_idle()
     if not frames:
-        time.sleep(segundos)
+        _esperar_com_pontos(segundos)
         return
 
     atraso = max(0.05, IDLE_ASCII_FRAME_MS / 1000.0)
@@ -2115,9 +2153,12 @@ async def monitorar_steam_sinais_ativos():
 async def verificar_clv_fechamento():
     pendentes = buscar_sinais_para_fechar()
     if not pendentes:
+        print("CLV: nenhum sinal pendente para fechamento.")
         return
 
     agora = datetime.now(timezone.utc)
+    sinais_na_janela = 0
+    sinais_atualizados = 0
 
     for sinal_id, jogo, mercado, liga_nome in pendentes:
         conn = sqlite3.connect(DB_PATH)
@@ -2134,15 +2175,21 @@ async def verificar_clv_fechamento():
             minutos_para_jogo = (horario_jogo - agora).total_seconds() / 60
 
             if -10 <= minutos_para_jogo <= 10:
+                sinais_na_janela += 1
                 liga_key = LIGA_KEY_MAP.get(liga_nome, "soccer_epl")
                 odd_fechamento = buscar_odd_fechamento_pinnacle(jogo, mercado, liga_key)
                 if odd_fechamento:
                     clv = atualizar_clv(sinal_id, odd_fechamento)
                     if clv is not None:
+                        sinais_atualizados += 1
                         sinal = "+" if clv >= 0 else ""
                         print(f"CLV #{sinal_id}: {sinal}{clv:.2f}% {'[OK]' if clv > 0 else ''}")
         except Exception as e:
             print(f"Erro CLV #{sinal_id}: {e}")
+
+    print(
+        f"CLV: pendentes={len(pendentes)} | na_janela={sinais_na_janela} | atualizados={sinais_atualizados}"
+    )
 
 
 # ------------
@@ -2341,7 +2388,7 @@ def rodar_analise():
     executar_job_guardado("analise", 60, lambda: asyncio.run(processar_jogos()))
 
 def rodar_verificacao():
-    executar_job_guardado("verificacao", 5, lambda: asyncio.run(verificar_resultados_automatico()))
+    executar_job_guardado("verificacao", RESULTS_CHECK_INTERVAL_MIN, lambda: asyncio.run(verificar_resultados_automatico()))
 
 def rodar_resumo():
     executar_job_guardado("resumo", 60, lambda: asyncio.run(enviar_resumo_diario()))
@@ -2351,6 +2398,20 @@ def rodar_clv():
 
 def rodar_steam():
     executar_job_guardado("steam", 30, lambda: asyncio.run(monitorar_steam_sinais_ativos()))
+
+def rodar_clv_oddspapi():
+    executar_job_guardado(
+        "clv_oddspapi",
+        1440,
+        lambda: processar_clv_finalizados({"DB_PATH": DB_PATH, "ODDSPAPI_CLV_DAYS": 7}),
+    )
+
+def rodar_settlement_fallback():
+    executar_job_guardado(
+        "settlement_fallback",
+        1440,
+        lambda: processar_fallback({"DB_PATH": DB_PATH, "SETTLEMENT_FALLBACK_DAYS": 2}),
+    )
 
 def rodar_janela_expandida():
     executar_job_guardado("janela_expandida", 120, lambda: asyncio.run(monitorar_janela_expandida()))
@@ -2457,7 +2518,9 @@ def iniciar_scheduler():
         print("  A cada 2h  Monitoramento janela expandida (silencioso)")
         print("  A cada 5min  CLV fechamento")
         print("  A cada 30min  Steam monitoring")
-        print("  A cada 5min (17h-23h)  Verificao de resultados")
+        print("  07:00  Atualizao CLV OddsPapi (ltimos 7 dias)")
+        print("  07:10  Settlement fallback (sinais presos > 2 dias)")
+        print(f"  A cada {RESULTS_CHECK_INTERVAL_MIN}min (17h-23h)  Verificao de resultados")
         print("  23:30  Resumo dirio + Excel full refresh")
         print("  Segunda 06:00  Atualizao de stats + xG")
         print("  Segunda 06:30  Backtest janela mvel + promoo")
@@ -2465,12 +2528,14 @@ def iniciar_scheduler():
 
     schedule.every().day.at("09:00").do(rodar_analise)
     schedule.every().day.at("16:00").do(rodar_analise)
+    schedule.every().day.at("07:00").do(rodar_clv_oddspapi)
+    schedule.every().day.at("07:10").do(rodar_settlement_fallback)
     schedule.every(2).hours.do(rodar_janela_expandida)
     schedule.every(5).minutes.do(rodar_clv)
     schedule.every(30).minutes.do(rodar_steam)
 
     for hora in range(17, 24):
-        for minuto in range(0, 60, 5):
+        for minuto in range(0, 60, RESULTS_CHECK_INTERVAL_MIN):
             horario = f"{hora:02d}:{minuto:02d}"
             if horario == "23:30":
                 schedule.every().day.at("23:30").do(rodar_resumo)
