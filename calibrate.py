@@ -81,6 +81,7 @@ def main(argv=None):
     calibrator = BucketCalibrator(n_buckets=10, k=20).fit(predictions, outcomes)
 
     os.makedirs(os.path.dirname(args.out_path), exist_ok=True)
+    reg = None
     if not args.segmented:
         calibrator.save(args.out_path)
     else:
@@ -121,7 +122,7 @@ def main(argv=None):
 
     print(f"Calibrador salvo em: {args.out_path}")
     print(f"Amostras: {len(predictions)} | base_rate: {calibrator.base_rate:.4f}")
-    if args.segmented:
+    if args.segmented and reg is not None:
         print(
             "Segmentado: "
             f"ligas={len(getattr(reg, 'by_league', {}))} "
