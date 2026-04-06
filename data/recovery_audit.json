@@ -1,0 +1,982 @@
+{
+  "2026-04-01_Arsenal_Chelsea_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "72a7c414-02ac-46b3-9721-249899d80a67",
+      "1f717a07-f19e-4080-9742-96247b2691d3",
+      "947c91ba-a0b9-4f14-8f0f-a1b024fafbb7",
+      "f1650521-731e-4596-a665-5c81249fff31",
+      "8d69ce48-8390-48f8-8cde-347a8781406e",
+      "8f34c4cd-df59-4123-8385-c81d55547e8b",
+      "0324e410-e78f-469a-a641-05095e1dcd26",
+      "54adea10-0559-44d3-a0ba-9aae24a37963",
+      "03a3fdbe-0d8f-49c8-a567-356541808dce",
+      "c026254a-0427-4895-9903-4ddda2069db5",
+      "7ca3ca6d-3e06-4c21-853c-ee21952f7b25",
+      "862c1035-0787-44ed-a9c0-8a4707debe8a",
+      "907365c5-5e1d-4a3d-8f7d-7b8d7ccd69ee",
+      "a12fbb81-c755-42f2-96ee-9d9bab02b0ce",
+      "1103fd8a-bf1b-493f-8c8f-3ac18b38ed93",
+      "068f5452-3b80-4788-9586-18b7e7e631b4",
+      "460649db-ee19-4bef-8f53-1c55c17e6f8f",
+      "aadeb6f3-3719-4e21-99f1-d86eab45b02c",
+      "9a62e7ac-2f4c-420b-a0df-4533f4bfbf1c",
+      "b1284b3d-46c7-452a-a5ed-f3ed72ebd07b",
+      "c651c145-17e3-4b4b-9b19-84acf8fcc4a2",
+      "777b0baf-67d3-4888-ba96-4a9d1e85600b",
+      "e1946a33-bdec-4aa9-9a40-807f8038f5d5",
+      "25a4fd9d-4bc0-4d3c-ac1b-adf448375c02"
+    ]
+  },
+  "2026-04-01_Botafogo_Mirassol_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "a0246a51-cd99-4161-8fde-7f13b528c362",
+      "13107342-9c29-4f6b-92d4-ace365291323",
+      "2287d0c6-f82b-4c2d-84bf-8cc6e5980a40",
+      "d5fa24a5-ce37-4171-9a7a-9751d32a8f47",
+      "030ffead-ff26-4417-a7a4-c92c41ed09bc",
+      "84028660-5774-4db4-b318-e53e77ccc804",
+      "602da6a6-ef17-4906-8cc1-f1919a78b438",
+      "e4684a23-f1df-46a4-8b18-dbf61cd7fc40",
+      "bba9d212-20f7-48ed-a113-d3b3df78f595",
+      "5379d0ba-5334-4641-af32-b5dea2d0aef6",
+      "d9caf4e2-015d-4397-a6f4-81744599fb2e",
+      "df5d538a-48b9-493e-a550-173b9eb5f11d"
+    ]
+  },
+  "2026-04-01_Internacional_Sao Paulo_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "0ff61147-1289-4125-993f-b5cea724a363",
+      "3ee485b0-759d-4476-bc99-98925d6c9516",
+      "f0b9fb55-000e-4e2a-9c72-291a262268df",
+      "635c0820-1948-4800-9d23-6e6f55be3b8a",
+      "2eab5292-3c52-4731-9980-47536f435bb4",
+      "12c4d96e-d458-410d-b66e-10ca900a2c9d",
+      "3f5f6e79-3089-4ff6-afa0-f5cedb03a7fc",
+      "f374eeb5-ec96-41bf-a5af-1503586b360f",
+      "fc59be5e-fa80-46a1-b083-b5b84c33b0a0",
+      "84d4941d-831c-4d81-9976-6243b2a1310d",
+      "1d54d0c9-c936-486c-9b61-b4f324a92bf0",
+      "ab9ab72b-7b32-4efc-98ec-d7565e8fcd26"
+    ]
+  },
+  "2026-04-01_Bahia_Atletico Paranaense_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "611aaed3-9216-42bc-b2b4-af3b09c52643",
+      "e4e3f28f-af09-4e64-9767-ab898bee22ab",
+      "107ec62e-908c-4915-860a-0458511395ee",
+      "6082f9c1-bbdf-4470-a55c-e94af5309868",
+      "15964144-440e-4daa-a813-fcbac029a0ba",
+      "fc744a1b-145c-4172-aaba-0ad3f0e83e4e",
+      "97d5f657-4b28-4331-a72e-e3a7fda2b5ad",
+      "5cbe8bb7-e64b-44ed-9e94-7669fc29f748",
+      "3f679972-3b61-4eb5-be7d-a6e04246b805",
+      "82e20add-d3be-48d2-9962-0ce2123a2ca9",
+      "d7e704f6-fdbd-48f6-9507-8a59cc60f1eb",
+      "f4b203c5-ff89-4fbb-8278-84c8df4fd7fb"
+    ]
+  },
+  "2026-04-01_Cruzeiro_Vitoria_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "8762698b-57c4-4088-a564-9d215556fa3b",
+      "8e0a7caa-60f0-47df-ab75-b007c48c756c",
+      "89b2028c-6c54-4f65-a0e7-d2f92762d086",
+      "7c6cf1e4-1f1d-477b-8c8b-6933277f4779",
+      "f0cf5565-9b67-4fbf-9a18-340d95f15d65",
+      "78e6f3b6-7d96-4982-aabc-d1c3879190d0",
+      "dc2cd004-6ac1-4197-88c6-833624f1e42a",
+      "31529ef5-1588-433a-a7b7-30a23910500e",
+      "e14acd15-2c8e-4471-9c42-5e2514d63fb4",
+      "b7868ce3-046d-477d-9d54-2a91695d9d28",
+      "a3ccfcc8-356c-45d6-a0ca-87363e5c1a46",
+      "387bc2e7-291c-4444-b78c-3caa8f2dc88b"
+    ]
+  },
+  "2026-04-01_Coritiba_Vasco da Gama_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "c337550f-258f-403f-bd38-cd2e9c0fab02",
+      "8876caf9-91e9-4fd5-8085-eaec33dae39c",
+      "a8514104-75c3-4ccb-a18d-78155f790380",
+      "e2d459a0-2309-486d-9fbe-f8dc33a3c135",
+      "50bac9e4-eb56-44d0-8b7b-6875ab6e45ba",
+      "7c9965a2-db16-4c6e-9251-47d29ba24e68",
+      "bf1aa0e2-8905-4880-a33a-1475e69c3ad2",
+      "b90f47e6-1c22-4b78-8221-ad052a877b5d",
+      "203af00b-444c-452d-ba94-3d0283b6c94d",
+      "41fa31e2-cf8c-4dff-ad02-7a4de9118dcf",
+      "21973fe3-4716-435d-9e54-0766e7684960",
+      "be13e88b-ddd7-410e-b659-96e4307ab28b"
+    ]
+  },
+  "2026-04-01_Fluminense_Corinthians_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "e005b87d-b9e1-45f9-99fd-4d2a3a561ad0",
+      "d1e524a2-05b9-4d80-af3c-12580678a9b0",
+      "4de39b9d-ea11-42e1-9b1f-8a5f025baadf",
+      "6d656ab8-6d06-4cb9-b348-bfec29dae675",
+      "8730ddb6-aef9-4812-98f5-69858886b473",
+      "96199f85-67cf-4114-a947-debb88d62190",
+      "0504394e-bee2-4033-a12d-3648752173d3",
+      "6a5de531-8a51-47f9-b534-2e682c333b41",
+      "4b588ad1-fc9e-476d-93a1-3ac8e1f99a7e",
+      "751b3d55-4456-41a9-aa56-f003de4a0704",
+      "30ec4d41-7c55-49c2-8e70-b6fd7731b8e7",
+      "756e35f2-dd59-4343-8f33-1f66ee147fbf"
+    ]
+  },
+  "2026-04-02_Chapecoense_Atletico Mineiro_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "98c3dbf0-2a5a-4c47-940c-0aed1409b03c",
+      "6d8214b3-dba1-4865-9153-4c229452920e",
+      "9e6c022f-a25f-4854-a773-accf4957d726",
+      "437643d1-b8ff-44ab-9bcb-28a816ebb193",
+      "b4151020-e325-40b4-8547-43023764361c",
+      "6c3c9091-9967-464e-9219-a1634155e4dc",
+      "ed6cbf15-d182-4f14-89c0-8873e9085e68",
+      "91c7c3c2-9b8e-4045-af40-96fcaa02e1bb"
+    ]
+  },
+  "2026-04-02_Santos_Remo_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "5c4cb7f2-c0ca-4fe0-8bb6-4501a9ad631a",
+      "c1504058-6def-4558-92c9-8da5de468107",
+      "1471193f-cb92-467e-ba11-938d50da8e90",
+      "3d8df97b-efbb-4fc0-be3a-6d04714b9f5d",
+      "42b268a4-c250-4615-98ec-577b805c0337",
+      "2eedb5e5-4b8d-45c1-bf56-9352674cdbd4",
+      "d3bbf343-c8b7-4354-b7f7-00cd31771abe",
+      "411409b2-4889-4364-8626-049f525dfdc7"
+    ]
+  },
+  "2026-04-02_Arsenal_Chelsea_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "f0bd4ac4-d809-460a-ac2d-b87553805819",
+      "76f99994-542a-44e2-8e28-5ce50bd3ff74",
+      "2369f825-39f1-496d-aded-7c60fe713cb2",
+      "f2e0323d-c804-42c6-be0e-1868fea62ebb"
+    ]
+  },
+  "2026-04-02_Bragantino-SP_Flamengo_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "6d6bd23f-c929-4198-97e7-41c29475479d",
+      "ed0515fc-1259-40b2-8bce-54154d95e2e7",
+      "bd9e239b-3960-4c15-a1d2-31621335165e",
+      "33a7cdee-2440-4a97-b67d-a2cb6535d132"
+    ]
+  },
+  "2026-04-02_Palmeiras_Grêmio_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "0c97fb52-9a92-4e4f-9da0-75595037d3c4",
+      "0fb4347b-42f6-471f-8d25-72452a08f8ea",
+      "dea6da45-eac4-45a2-a9e0-bd6dd4c700b8",
+      "2acff0bf-666b-4051-8515-2001034fd3b8"
+    ]
+  },
+  "2026-04-03_Rayo Vallecano_Elche CF_La Liga - Spain": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "49f035ac-1f2c-4b11-b1fd-b38a580b50ca",
+      "685fdac9-4172-4ff0-b739-59c9f87c583f",
+      "9400ee1f-af26-4b89-9dff-610da62d33bb",
+      "e9e1736c-9436-4267-ada1-0b8c2746ff2e"
+    ]
+  },
+  "2026-04-03_Paris Saint Germain_Toulouse_Ligue 1 - France": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "88edc84f-1786-4793-81c9-1442c007203d",
+      "f39d12bf-15aa-4139-ad25-352dc9010f6a",
+      "c542d42c-0c3e-4833-bd47-b7e9b769678b",
+      "09abb96b-5423-4743-9338-af393a5002b6"
+    ]
+  },
+  "2026-04-04_Sao Paulo_Cruzeiro_Brazil Série A": {
+    "gols_casa": 4,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1492208",
+    "outcomes_derivados": {
+      "1x2_casa": "1",
+      "1x2_fora": "0",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "c0ce4645-7f01-48f1-9335-6f8f86a83f70",
+      "5a87d577-e335-4d95-b11d-ea78efcfe76a",
+      "5de69947-b827-4db0-93a3-69ead6261479",
+      "a703d066-4180-4e21-8e51-750a1efeff5d"
+    ]
+  },
+  "2026-04-04_Coritiba_Fluminense_Brazil Série A": {
+    "gols_casa": 1,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1492204",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "0",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "6636fdd9-3e6e-428d-aeff-888347535011",
+      "8d235630-ec66-4655-8d84-4eb7abcf92a3",
+      "48cb1706-12fd-480b-8d2b-4dc4943a51d1",
+      "af29eda6-117c-4b8a-baf2-8760a18b2b5c"
+    ]
+  },
+  "2026-04-04_Vasco da Gama_Botafogo_Brazil Série A": {
+    "gols_casa": 1,
+    "gols_fora": 2,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1492209",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "1",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "439dbbe3-efe2-400d-9b34-4aaa3fbc7eb0",
+      "16db9ff4-eef8-4775-a95e-166c03581a8a",
+      "5d859dcf-31a7-4d3d-bc94-b3813cdeecd1",
+      "9a6cb721-909d-4d05-9f4e-0684461fdadf"
+    ]
+  },
+  "2026-04-04_Mallorca_Real Madrid_La Liga - Spain": {
+    "gols_casa": 2,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1391114",
+    "outcomes_derivados": {
+      "1x2_casa": "1",
+      "1x2_fora": "0",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "95d2eb9a-74c7-483d-9d08-acefa3fe0621",
+      "362d8545-cf7f-4edd-8546-136de6adac7e",
+      "11043448-b641-4350-9079-3739d021e5e7",
+      "25cbf64c-ec62-42b9-9df6-3f2f6bce715e"
+    ]
+  },
+  "2026-04-04_Real Betis_Espanyol_La Liga - Spain": {
+    "gols_casa": 0,
+    "gols_fora": 0,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1391111",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "0",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "17630bc3-b683-4001-b54f-d3eed9163a90",
+      "1cffde3e-5531-4091-bdb1-9a2b5f58fb3e",
+      "eba1a74b-7894-4aca-9fc1-71e18fb6a657",
+      "e9b8fd76-7c3e-45bf-b98b-b1e24fbde3dc"
+    ]
+  },
+  "2026-04-04_Atlético Madrid_Barcelona_La Liga - Spain": {
+    "gols_casa": 1,
+    "gols_fora": 2,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1391110",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "1",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "2a23bdfb-b2f8-4503-8583-8b579aa12db7",
+      "92067eec-df9b-4dfb-857a-9c7da1d78cb8",
+      "098a4d59-2ea3-4f29-9c4c-2fe7d694b821",
+      "a7018c5a-5ecb-41c8-9e62-4f2507a9f1ea"
+    ]
+  },
+  "2026-04-04_Hellas Verona_Fiorentina_Serie A - Italy": {
+    "gols_casa": 0,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1378173",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "1",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "72a8162c-1ca6-41b0-a910-fc004cf3e9de",
+      "b9fa489f-be28-419a-bb16-8efca1b14a1d",
+      "327c591d-646e-4b66-a52c-0c289b6ef5b7",
+      "fef330dd-e09f-43b7-a801-558ece5ab885"
+    ]
+  },
+  "2026-04-04_Lazio_Parma_Serie A - Italy": {
+    "gols_casa": 1,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1378167",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "0",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "41ac7fe7-b5c1-49c0-80fc-f18eec61ee2b",
+      "6d936629-de0e-4b70-8a14-68b2d8f442f7",
+      "9a8b22f1-bab7-400d-8fdc-321ecec06791",
+      "7b7a661e-53e8-4b99-b04b-4a9f7b789045"
+    ]
+  },
+  "2026-04-04_VfB Stuttgart_Borussia Dortmund_Bundesliga - Germany": {
+    "gols_casa": 0,
+    "gols_fora": 2,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1388557",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "1",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "2ff353ae-b314-4143-a67f-052b06bbb67f",
+      "4aacebda-22b6-410f-84d4-9300d9b2f722",
+      "e81661d9-9d2a-4611-8109-c06ac0a0b651",
+      "bfd9699b-b873-49ba-beb1-59baf802db4c"
+    ]
+  },
+  "2026-04-04_Strasbourg_Nice_Ligue 1 - France": {
+    "gols_casa": 3,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1387949",
+    "outcomes_derivados": {
+      "1x2_casa": "1",
+      "1x2_fora": "0",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "b26f8155-fd56-410a-bfaf-336b1b12e452",
+      "056cd81b-74b5-43e4-9f06-9cabddd0cd37",
+      "d7d181b6-8625-423c-bc65-48933758fab7",
+      "b3923ece-b988-4806-a5f3-f2b407accd3e"
+    ]
+  },
+  "2026-04-04_Brest_Rennes_Ligue 1 - France": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "c99eebaf-ee0d-4d4a-b385-926e01bb4477",
+      "c653806a-944d-45d3-b132-2e5639effb1d",
+      "5004110d-8b2e-45b9-970f-d54057a8e037",
+      "dab4fc9b-63a7-4a23-a819-e2071ad9333f"
+    ]
+  },
+  "2026-04-04_Lille_RC Lens_Ligue 1 - France": {
+    "gols_casa": 3,
+    "gols_fora": 0,
+    "status_api": "FT",
+    "confianca": "BAIXO",
+    "match_score": 0.8695652173913043,
+    "fixture_id": "1387944",
+    "outcomes_derivados": {
+      "1x2_casa": "1",
+      "1x2_fora": "0",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "b00e7f79-cae6-470c-a554-7e0523d098b1",
+      "5becda3a-4049-423b-980f-f6e29fa6c9de",
+      "c06bfbea-0aa5-43df-baa2-d67e60737dc9",
+      "3295f7a5-f9b8-4264-82d9-55a085d91ea4"
+    ]
+  },
+  "2026-04-04_Arsenal_Chelsea_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "b2245ab5-cb2f-4528-aeef-e8d4d978649f"
+    ]
+  },
+  "2026-04-05_Arsenal_Chelsea_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "19572b24-c8d4-4ab2-8055-c8bbea659d83"
+    ]
+  },
+  "2026-04-05_Chapecoense_Vitoria_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "16138489-0d82-45b6-9c54-b4c60232bbc7",
+      "adde44c0-5465-4565-81da-732b2b1e9bbe",
+      "de818c8b-5860-444a-9d75-3946899331e7",
+      "fdfcd20c-56b1-4f02-87f6-746488e1c6e1"
+    ]
+  },
+  "2026-04-05_Atletico Mineiro_Atletico Paranaense_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "4837302a-54eb-47f0-b759-6db27ccab15e",
+      "e28117ac-1c15-4550-882c-29fa777e0027",
+      "0765c478-01ad-4351-a2e0-c05a24e6a16a",
+      "a9f045f9-ce4e-4623-a166-fe7cc2cb424c"
+    ]
+  },
+  "2026-04-05_Flamengo_Santos_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "d0d3eb55-cb1d-486d-9b28-889645d83aa6",
+      "e7ea4421-b968-45ba-904a-4ecb69166547",
+      "3d962fd7-d577-4787-af72-22e48ef3b5ff",
+      "c2ca121f-4a8b-4ee7-a1c1-915841b768ba"
+    ]
+  },
+  "2026-04-05_Bahia_Palmeiras_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "a23de625-d050-4bc7-a509-9da5a379d651",
+      "eb5024c5-cb81-4c16-a846-f7f7a54f4862",
+      "0f4de16e-4945-4608-9c33-7f96a1a8e6de",
+      "0f47485f-2742-45f5-b18e-b2c0d7475da1"
+    ]
+  },
+  "2026-04-05_Corinthians_Internacional_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "84dc8784-9fb2-4aed-83cb-e262c9438657",
+      "732c0ec2-32b5-4fda-ba86-ec530c2d4bff",
+      "a7ca991c-831c-456a-ae25-7fe1db4388f3",
+      "aa3af401-a342-422f-8dd4-c8c28e84811a"
+    ]
+  },
+  "2026-04-05_Mirassol_Bragantino-SP_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "adbf2e2c-40dd-4782-bb0e-145f72cc76a8",
+      "5285e7f4-a364-4b9e-a03b-e9811004eb81",
+      "4420c854-b144-409d-8735-fc23cd13f94b",
+      "648d38ab-c8f8-4310-a1db-4a12308fcb5a"
+    ]
+  },
+  "2026-04-05_Grêmio_Remo_Brazil Série A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "60788d64-260a-4de2-bcf2-ae370ae804f6",
+      "dfc29807-ca59-4ec3-8e8c-c4feb4effd31",
+      "c0b13ece-26b3-4bc8-a56e-89342fa266f5",
+      "6ce015ae-be94-4b44-92ab-89e1a5096030"
+    ]
+  },
+  "2026-04-05_Getafe_Athletic Bilbao_La Liga - Spain": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "85e1c816-b34f-4793-9edf-8bb2a178b23e",
+      "b7c252e1-7c52-4869-8d3a-db29b1772164",
+      "0c86d8f8-f024-4271-b167-9fdc677cf0e3",
+      "e6a1f1c1-2bda-40b9-8221-8fd90d5658be"
+    ]
+  },
+  "2026-04-05_Valencia_Celta Vigo_La Liga - Spain": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "aa2531f0-289d-4368-8c0e-ca0106ec404f",
+      "20882eb7-df66-4909-807f-04bcc60bafb3",
+      "209ef32d-977c-48f8-8392-724ec4be97dc",
+      "9c64df36-ce16-44e0-b883-9c73412da451"
+    ]
+  },
+  "2026-04-05_Oviedo_Sevilla_La Liga - Spain": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "b5820f52-c5c2-4d0f-b0bb-51a9ce011e91",
+      "df7c44d0-8612-4004-959c-2ff680c7a9b8",
+      "02ea7ec1-28ff-44f5-ab1d-0a7a7a6638fa",
+      "ffcfff92-b1c9-4f96-8479-d5690772cd1f"
+    ]
+  },
+  "2026-04-05_Alavés_CA Osasuna_La Liga - Spain": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "656f8067-2b89-4f5e-9f4f-1493510f250e",
+      "8afaa447-cdb8-44cb-8eb4-609275d94ff1",
+      "d27dad3d-3e58-421b-aa14-c4a4f694f624",
+      "3c6a7d9f-4285-4684-9e1b-87fb98825f1d"
+    ]
+  },
+  "2026-04-05_Cremonese_Bologna_Serie A - Italy": {
+    "gols_casa": 1,
+    "gols_fora": 2,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1378164",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "1",
+      "over_2.5": "1",
+      "under_2.5": "0"
+    },
+    "prediction_ids_afetados": [
+      "a38f0c59-ddff-454d-ba3c-58cede4502bc",
+      "ce4a17c8-e6a4-4020-99a1-d5342041f36c",
+      "8498a201-ab75-47ac-9ea2-86ac2f38144a",
+      "7a990ac1-9c6a-4f1b-b1d7-ffcc886bc269"
+    ]
+  },
+  "2026-04-05_Pisa_Torino_Serie A - Italy": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "94d18b2f-30c7-4f5c-beef-1909d6cb09e5",
+      "2bf04bd7-5763-4205-b5b6-35cb5b087e8b",
+      "4cad92a8-7b6e-47aa-9e3e-aa01ddb26d1c",
+      "0fa520f1-078e-4197-827e-f15b53e44312"
+    ]
+  },
+  "2026-04-05_Inter Milan_AS Roma_Serie A - Italy": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "53029cb9-aa8a-40db-bd37-b28db99594f3",
+      "fbed2d67-5aa4-4e84-8b2c-0341306753e7",
+      "c5f6a8a3-f41e-4c66-bcf8-7ecb2f40dec4",
+      "4524a9eb-e0bf-44aa-85a7-f300fb5459f0"
+    ]
+  },
+  "2026-04-05_Union Berlin_FC St. Pauli_Bundesliga - Germany": {
+    "gols_casa": 1,
+    "gols_fora": 1,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1388558",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "0",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "23dd2727-4ef7-4f6d-8da4-f3c289d8ae11",
+      "f7caa979-431f-4b9b-9f03-e25bb0ff2cd5",
+      "552acc07-fad0-47d3-b26f-b8e0725c1eff",
+      "ae0373e6-c76f-4015-8a08-011d584b74fd"
+    ]
+  },
+  "2026-04-05_Eintracht Frankfurt_1. FC Köln_Bundesliga - Germany": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "05fb50d0-db89-468e-a430-ffdaa7d68feb",
+      "0e6d3a9d-469b-4b03-a4c8-3b3381ad2cf9",
+      "47bc75f3-2d05-4957-9b43-f8479b679875",
+      "8104c08c-18de-4f2b-89d4-7c5abca5f73c"
+    ]
+  },
+  "2026-04-05_Angers_Lyon_Ligue 1 - France": {
+    "gols_casa": 0,
+    "gols_fora": 0,
+    "status_api": "FT",
+    "confianca": "MEDIO",
+    "match_score": 20.0,
+    "fixture_id": "1387941",
+    "outcomes_derivados": {
+      "1x2_casa": "0",
+      "1x2_fora": "0",
+      "over_2.5": "0",
+      "under_2.5": "1"
+    },
+    "prediction_ids_afetados": [
+      "2ebbf9a5-e25f-4b6d-b73b-e5f8cd55eba9",
+      "dedefbdd-a338-4502-a1e2-64710702c014",
+      "9bae29d9-403d-4fd6-b374-10dbca718592",
+      "45d80a18-776b-43a6-b31f-2c64e4f302de"
+    ]
+  },
+  "2026-04-05_Le Havre_Auxerre_Ligue 1 - France": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "a4f4ac39-5cb6-4a82-882b-e30f536744a9",
+      "c0562573-e9f6-4e11-b1fd-99aecb8ccaf4",
+      "09bb5a4e-dad2-4f67-b2f7-6e624e640224",
+      "d71593ad-394b-4985-aab3-356e548ccff1"
+    ]
+  },
+  "2026-04-05_Lorient_Paris FC_Ligue 1 - France": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "3a7ac939-aebf-43ab-9059-4802eaea6c19",
+      "6e025a91-8491-4e19-b64d-98f322f2c4c4",
+      "ad69686f-7d5f-45c6-9ed1-904366be1850",
+      "f1a7f54e-25ae-42fe-8998-6c523f5d6892"
+    ]
+  },
+  "2026-04-05_Metz_Nantes_Ligue 1 - France": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "67c9d0f5-c75a-417b-971d-ac3585d3b359",
+      "06882cf0-3aeb-4d1a-a15b-5541027324e6",
+      "a77eb66e-e195-43ab-aeca-10c781e51eb2",
+      "ec60a2b1-9dda-452c-a5ae-2554ec7713e4"
+    ]
+  },
+  "2026-04-05_AS Monaco_Marseille_Ligue 1 - France": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "9dbdcd9a-b67c-411b-b77c-ba17ec8068fd",
+      "c8e28b87-045b-42fb-ac8e-3d0f8319e370",
+      "b5fe8678-cc0c-471d-962f-303b22f208e3",
+      "ba8d811c-17d5-4a8b-8af4-fcf3ebb18059"
+    ]
+  },
+  "2026-04-05_TeamCorr_TeamE_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "ef786c0d-5242-4d39-a762-17370de6a898",
+      "15f8bfb9-8e91-4e67-9f33-6e4f67a57989",
+      "8b08025c-82cc-4364-af2b-46c1109956c2",
+      "e9a595f2-bbc6-4d29-857d-17920bde65ef"
+    ]
+  },
+  "2026-04-05_TeamGate_TeamE_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "11672407-74e6-4580-b669-4fc15b1099da",
+      "fc9efc5b-71df-47c6-a8a6-d819f6fa2687",
+      "942f8551-8e2a-4c5a-996e-a4af14655c28",
+      "99601c16-1c62-48e6-8005-8e630ee86457"
+    ]
+  },
+  "2026-04-05_TeamReject_TeamD_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "d2e7fbae-64f1-4d7d-bea7-051c5204429a",
+      "6f9710a5-ce00-40f2-aa7a-e6409e089801",
+      "ace8b581-8394-40c8-bf03-b9737f2b7811",
+      "7c4b6257-77a0-4de6-aaf9-4446276f68cb"
+    ]
+  },
+  "2026-04-05_TeamNoSignal_TeamC_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "9f550b69-3ea6-43c2-9177-f0699fe06987",
+      "3e4fb1d8-f747-484f-8304-60e33ce8858e",
+      "b932d8f8-4868-4477-99b0-0349b651ce76",
+      "9d1b5b77-3e19-41b1-b081-761f20fbcbd5"
+    ]
+  },
+  "2026-04-05_TeamStrong_TeamA_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "ceb94f87-0b5b-420d-966e-f0fca1a9e480",
+      "50d8fbe9-6a1b-4697-93e7-3b4ac7062350",
+      "7ab922a9-24ca-488f-a044-4f442c1374a2",
+      "fe1f712c-4d01-46ea-b6fa-309fb6586f45"
+    ]
+  },
+  "2026-04-05_TeamWeak_TeamB_Premier League": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "4cb29f72-1da1-464c-8c4c-167c5ee8318b",
+      "6ed77247-5fd2-46ea-a0c6-8e21c2ea7e28",
+      "5d98175d-3b98-4928-b306-4eb732250d53",
+      "1a8aa4d6-da96-455b-85a0-f4db376a436e"
+    ]
+  },
+  "2026-04-05_Flamengo_Palmeiras_Brasileirao Serie A": {
+    "gols_casa": null,
+    "gols_fora": null,
+    "status_api": null,
+    "confianca": "SEM_MATCH",
+    "match_score": 0.0,
+    "fixture_id": null,
+    "outcomes_derivados": {},
+    "prediction_ids_afetados": [
+      "f3b49cd6-8bd9-4fec-b874-46ca72b7720c",
+      "b0ed7d86-d6aa-4cdf-bdca-3a2a315aa237",
+      "c5f113c9-ee9a-4d10-a39f-2c3b712609b6",
+      "de25a011-d09e-479b-9b43-6283929df1e2"
+    ]
+  }
+}
