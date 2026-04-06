@@ -17,6 +17,7 @@ AES:
 import sys
 import json
 import os
+import unicodedata
 from datetime import datetime, date
 from openpyxl import load_workbook
 from openpyxl.styles import PatternFill, Font, Alignment, Border, Side
@@ -73,6 +74,21 @@ def formatar_celula(c, v, bold=False, bg=None, fg="000000",
         c.fill = F(bg)
     if border:
         c.border = bf()
+
+
+def _sheet_key(nome):
+    normalizado = unicodedata.normalize("NFKD", str(nome or ""))
+    sem_acentos = "".join(ch for ch in normalizado if not unicodedata.combining(ch))
+    return sem_acentos.strip().lower()
+
+
+def _obter_aba_por_aliases(wb, *aliases):
+    mapa = {_sheet_key(nome): nome for nome in wb.sheetnames}
+    for alias in aliases:
+        alvo = mapa.get(_sheet_key(alias))
+        if alvo:
+            return wb[alvo]
+    raise KeyError(f"Nenhuma aba encontrada para aliases={aliases}")
 
 # -- MONTA LINHA DA APOSTA ------------
 def linha_aposta(a):
@@ -202,7 +218,7 @@ def atualizar_resultado(wb, aposta):
 
 # -- ATUALIZA HISTRICO DE BANCA ------------
 def _atualizar_historico_banca(wb, aposta):
-    ws = wb["Gesto de Banca"]
+    ws = _obter_aba_por_aliases(wb, "Gestao de Banca", "Gesto de Banca")
     if not aposta.get("banca_apos") or not aposta.get("retorno"):
         return
 
