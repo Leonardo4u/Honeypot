@@ -110,3 +110,16 @@
 [2026-04-05 09:51:56] Iniciando ação: nova_aposta
 [2026-04-05 09:51:56] Nova aposta inserida: #83 — Le Havre vs Auxerre [over_2.5]
 [2026-04-05 09:51:56] Arquivo salvo: C:\Users\Leo\edge_protocol\logs\bot_apostas.xlsx
+[2026-04-05 14:44:51] Iniciando ação: resultado
+[2026-04-05 14:44:51] Resultado atualizado: #83 — Vermelho R$-1.0
+[2026-04-05 14:44:51] ERRO ao processar: 'Worksheet Gesto de Banca does not exist.'
+[2026-04-05 23:30:46] Iniciando ação: full_refresh
+[2026-04-05 23:30:46] full_refresh: regenerando arquivo completo...
+[2026-04-05 23:30:46] full_refresh concluído: C:\Users\Leo\edge_protocol\data\..\logs\edge_protocol_resultados.xlsx
+[2026-04-06 10:27:27] Iniciando ação: nova_aposta
+[2026-04-06 10:27:27] Nova aposta inserida: #84 — Juventus vs Genoa [1x2_fora]
+[2026-04-06 10:27:27] Arquivo salvo: C:\Users\Leo\edge_protocol\logs\bot_apostas.xlsx
+[2026-04-06 17:00:55] Iniciando ação: resultado
+[2026-04-06 17:00:55] Resultado atualizado: #84 — Vermelho R$-1.0
+[2026-04-06 17:00:55] Histórico banca: dia 2026-04-06 adicionado — R$1,146.20
+[2026-04-06 17:00:55] Arquivo salvo: C:\Users\Leo\edge_protocol\logs\bot_apostas.xlsx
